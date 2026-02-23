@@ -83,7 +83,7 @@ class ISPAG_Achat_Renderer {
     public static function reload_article_row($html, $article_id){
         // $repo = new ISPAG_Achat_Article_Repository();
         // $article = $repo->get_article_by_id($article_id);
-        $article = apply_filters('ispag_get_article_by_id', null, $article_id);
+        $article = apply_filters('ispag_get_purchse_article_by_id', null, $article_id);
 
         if (!$article) { 
             wp_send_json_error(['message' => 'Article introuvable']);
@@ -112,7 +112,7 @@ class ISPAG_Achat_Renderer {
 
     public static function render_article_modal($html, $article_id){
         $repo = new ISPAG_Achat_Article_Repository();
-        $article = $repo->get_article_by_id($article_id);
+        $article = $repo->get_article_by_id(null, $article_id);
         // $article = apply_filters('ispag_get_article_by_id', null, $article_id);
 
         $standard_titles = apply_filters('ispag_get_standard_titles_by_type', $article->Type);
@@ -131,7 +131,7 @@ class ISPAG_Achat_Renderer {
         $repo = new ISPAG_Achat_Article_Repository();
         $is_new = false;
         if($article_id){
-            $article = $repo->get_article_by_id($article_id);
+            $article = $repo->get_article_by_id(null, $article_id);
         }
         elseif($article){
 

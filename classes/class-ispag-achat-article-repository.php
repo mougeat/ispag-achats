@@ -20,6 +20,7 @@ class ISPAG_Achat_Article_Repository {
         }
         add_filter('ispag_get_achat_article_by_project_article_id', [self::$instance, 'get_achat_article_by_project_article_id'], 10, 2);
         add_filter('ispag_get_articles_by_order', [self::$instance, 'get_articles_by_order'], 10, 2);
+        add_filter('ispag_get_purchse_article_by_id', [self::$instance, 'get_article_by_id'], 10, 2);
 
     }
  
@@ -103,9 +104,9 @@ class ISPAG_Achat_Article_Repository {
         
         $sql = $this->wpdb->prepare("SELECT Id FROM {$this->table} WHERE IdCommandeClient = %d LIMIT 1", $id);
         $id_result = $this->wpdb->get_var($sql);
-        return $this->get_article_by_id($id_result);
+        return $this->get_article_by_id(null, $id_result);
     }
-    public function get_article_by_id($id) {
+    public function get_article_by_id($html, $id) {
         // $sql = $this->wpdb->prepare("SELECT * FROM {$this->table} WHERE Id = %d", $id);
         $sql = $this->wpdb->prepare(
             "SELECT 

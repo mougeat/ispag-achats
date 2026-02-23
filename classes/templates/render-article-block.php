@@ -76,7 +76,7 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
     <div class="ispag-article-prices">
         <div class="ispag-article-qty"><b><?php echo $qty; ?></b> pcs</div>
         <?php if ($user_can_view_order): ?>
-            <div class="ispag-article-prix-net" style="color:#00a32a; font-weight:bold;"><?php echo number_format($prix_net, 2); ?> €</div>
+            <div class="ispag-article-prix-net" style="color:#00a32a; font-weight:bold;"><?php echo number_format($article->UnitPrice, 2); ?> €</div>
             <div class="ispag-article-rabais" style="font-size:0.8em; color:#888;">-<?php echo $article->discount; ?>%</div>
         <?php endif; ?>
     </div>
