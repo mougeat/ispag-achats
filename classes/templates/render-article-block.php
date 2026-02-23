@@ -1,117 +1,96 @@
 <?php
-// echo '<pre>';
-// var_dump($article);
-// echo '</pre>';
+/**
+ * ISPAG Purchase Article Item View - Aligned with Project UI
+ */
+$article_not_invoiced = null;
+$user_can_view_order = current_user_can('display_sales_prices'); // Harmonisation du nom de la variable
+
+// 1. Logique d'alertes (Identique au projet)
+// Alerte Facturation : Reçu mais pas encore facturé
+if($article->Recu && !$article->Facture){
+    $article_not_invoiced = 'ispag-article-not-invoiced';
+}
+
+// Alerte Retard Livraison : Pas reçu et date de livraison dépassée
+$article_not_delivered = null;
+if(!$article->Recu && time() > $article->TimestampDateLivraisonConfirme && $article->TimestampDateLivraisonConfirme != 0){
+    $article_not_delivered = 'ispag-article-not-delivered';
+}
+
+$class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary' : '';
 ?>
- <div class="ispag-article <?php echo $class_secondary ?? null; ?>" data-article-id="<?php echo $id; ?>" data-level-secondary="<?php echo $class_secondary ?? null; ?>" >
 
-    <!-- Checkbox -->
-    <input type="checkbox" class="ispag-article-checkbox" data-article-id="<?php echo $id; ?>" <?php echo $checked_attr; ?> >
+<div class="ispag-article <?php echo $class_secondary; ?> <?php echo $article_not_invoiced; ?> <?php echo $article_not_delivered; ?>" data-article-id="<?php echo $id; ?>">
+    
+    <div class="ispag-loading-overlay"><div class="ispag-spinner"></div></div>
 
-    <!-- Image -->
-    <div class="ispag-article-image">
-        <?php
-        $content = trim($article->image);
-        $content = str_replace('../../', '', $content); // on enlève les ../../
-        if (strpos($content, '<svg') === 0) {
-            echo $content;
-        } else {
-            $src = htmlspecialchars($content, ENT_QUOTES);
-            echo '<img src="' . $src . '" alt="image">';
-        }
-        ?>
+    <div class="ispag-article-visual-group">
+        <input type="checkbox" class="ispag-article-checkbox" data-article-id="<?php echo $id; ?>" <?php echo $checked_attr; ?> >
+        <div class="ispag-article-image">
+            <?php 
+            $content = str_replace('../../', '', trim($article->image));
+            if (strpos($content, '<svg') === 0) echo $content; 
+            else echo '<img src="' . htmlspecialchars($content, ENT_QUOTES) . '" alt="image">';
+            ?>
+        </div>
     </div>
 
-    <!-- Titre + date de livraison -->
     <div class="ispag-article-header">
-        <span class="ispag-article-title"><?php echo esc_html(stripslashes($article->RefSurMesure)); ?></span>
-        <div><!-- section soudure -->
-        <?php
-            echo apply_filters('ispag_get_welding_text', null, $article->Id, false);
-        ?>
+        <div class="ispag-title-container">
+            <span class="ispag-article-title"><?php echo esc_html(stripslashes($article->RefSurMesure)); ?></span>
         </div>
-        <div> <!-- section button -->
-
- 
-        <!-- Bouton plan -->
-        <?php if (!empty($article->last_drawing_url)):
-
-            if($user_can_manage_order OR $user_is_owner){
-                $url = $article->last_drawing_url;
-                $text = __('Check drawing for validation', 'creation-reservoir');
-            } else{
-                $url = $article->last_drawing_url;
-                $text = __('Drawing', 'creation-reservoir');
-            }
-
-            // if (empty($article->DrawingApproved) || $article->DrawingApproved === 0) {
-            if($article->last_doc_type['slug'] == 'product_drawing'){
-                $badge = '<span class="ispag-badge '. $article->last_doc_type['badge_class'] . '">' . esc_html__('To be approved', 'creation-reservoir') . '</span>';
-            } elseif($article->last_doc_type['slug'] == 'drawingApproval'){
-                $badge = '<span class="ispag-badge '. $article->last_doc_type['badge_class'] . '">' . esc_html__('Approved', 'creation-reservoir') . '</span>';
-            }
-            else{
-                $badge = '<span class="ispag-badge '. $article->last_doc_type['badge_class'] . '">' . esc_html__($article->last_doc_type['label'], 'creation-reservoir') . '</span>';
-            }
-            ?>
-            <div class="drawing-button-wrapper">      
-                <div class="btn-inner-wrapper">       
-                    <a href="<?php echo esc_url($url); ?>" target="_blank" class="ispag-btn ispag-btn-secondary-outlined"><?php echo esc_html($text); ?></a>
-                </div>
-                <?php echo $badge; ?>
-            </div>
-        <?php endif; ?>
-
-        <?php
-        // on liste les document et spreadsheet (si existe)
-        if(!empty($article->documents)){
-            foreach ($article->documents as $doc) {
-                ?>
-                <a href="<?php echo esc_url($doc['url']); ?>" target="_blank" class="ispag-btn ispag-btn-grey-outlined"><?php echo esc_html__($doc['label'], 'creation-reservoir'); ?></a>
-                <?php           
-            }
-        }
-        ?>
-        </div>
-
-        <?php if (!empty($article->TimestampDateLivraisonConfirme) ) {
-            $text_delivery = (!empty($article->Recu) && $article->Recu != 0)
-                ? esc_html__('Delivered on', 'creation-reservoir')
-                : esc_html__('Delivery ETA', 'creation-reservoir');
-            ?>
-            <div class="ispag-article-date">📦 <?php echo $text_delivery; ?> : <?php echo esc_html($article->date_livraison_conf); ?></div>
-        <?php } ?>
-    </div>
         
+        <div class="ispag-article-meta">
+            <?php echo apply_filters('ispag_get_welding_text', null, $article->Id, false); ?>
+        </div>
 
-    <!-- Statut & Facturation -->
-    <div class="ispag-article-status">
-        <div class="ispag-article-livre"><?php echo esc_html($status ?? ''); ?></div>
-        <div class="ispag-article-facture"><?php echo esc_html($facture ?? ''); ?></div>
+        <div class="ispag-article-buttons-row">
+            <?php if (!empty($article->last_drawing_url)): 
+                $url_plan = $article->last_drawing_url;
+                $text_plan = ($user_can_manage_order || $user_is_owner) ? __('Check drawing for validation', 'creation-reservoir') : __('Drawing', 'creation-reservoir');
+                
+                $badge_class = $article->last_doc_type['badge_class'] ?? 'ispag-badge-secondary';
+                $badge_label = ($article->last_doc_type['slug'] == 'product_drawing') ? __('To be approved', 'creation-reservoir') : (($article->last_doc_type['slug'] == 'drawingApproval') ? __('Approved', 'creation-reservoir') : __($article->last_doc_type['label'], 'creation-reservoir'));
+            ?>
+                <div class="ispag-drawing-wrapper">
+                    <a href="<?php echo esc_url($url_plan); ?>" target="_blank" class="ispag-btn ispag-btn-secondary-outlined"><?php echo esc_html($text_plan); ?></a>
+                    <span class="ispag-badge <?php echo $badge_class; ?>"><?php echo esc_html($badge_label); ?></span>
+                </div>
+            <?php endif; ?>
+
+            <?php if(!empty($article->documents)): foreach ($article->documents as $doc): ?>
+                <a href="<?php echo esc_url($doc['url']); ?>" target="_blank" class="ispag-btn ispag-btn-grey-outlined"><?php echo esc_html__($doc['label'], 'creation-reservoir'); ?></a>
+            <?php endforeach; endif; ?>
+        </div>
+
+        <div class="ispag-article-dates">
+            <?php if (!empty($article->TimestampDateLivraisonConfirme)): ?>
+                <span class="date-item">📦 <?php echo ($article->Recu) ? __('Delivered on', 'creation-reservoir') : __('Delivery ETA', 'creation-reservoir'); ?> : <?php echo $article->date_livraison_conf; ?></span>
+            <?php endif; ?>
+            <?php if ($article->Recu && $user_can_view_order && $article->Facture): ?>
+                <span class="date-item">💲 <?php echo __('Invoiced', 'creation-reservoir'); ?></span>
+            <?php endif; ?>
+        </div>
     </div>
 
-    <!-- Quantité, prix, rabais, net -->
     <div class="ispag-article-prices">
-        <div class="ispag-article-qty"><?php echo __('Quantity', 'creation-reservoir'); ?> : <?php echo $qty; ?></div>
+        <div class="ispag-article-qty"><b><?php echo $qty; ?></b> pcs</div>
         <?php if ($user_can_view_order): ?>
-            <div class="ispag-article-prix-brut"><?php echo __('Gross unit price', 'creation-reservoir') . ': ' . $article->UnitPrice; ?> €</div>
-            <div class="ispag-article-rabais"><?php echo __('Discount', 'creation-reservoir') . ': ' . $article->discount; ?> %</div>
-            <div class="ispag-article-prix-net"><?php echo __('Net price', 'creation-reservoir') . ': ' . $prix_net ?? null; ?> €</div>
+            <div class="ispag-article-prix-net" style="color:#00a32a; font-weight:bold;"><?php echo number_format($prix_net, 2); ?> €</div>
+            <div class="ispag-article-rabais" style="font-size:0.8em; color:#888;">-<?php echo $article->discount; ?>%</div>
         <?php endif; ?>
     </div>
 
-    <!-- Boutons d'actions -->
     <div class="ispag-article-actions">
-        <button class="ispag-btn ispag-btn-secondary-outlined ispag-btn-view" data-article-id="<?php echo $id; ?>"><?php echo __('See product', 'creation-reservoir'); ?></button>
-        <?php
-        if (($user_can_generate_tank AND (empty($article->DrawingApproved) || $article->DrawingApproved === 0)) OR current_user_can('manage_order')) { ?>
-        <button class="ispag-btn ispag-btn-warning-outlined ispag-btn-edit" data-article-id="<?php echo $id; ?>"><?php echo __('Edit product', 'creation-reservoir'); ?></button>
-        <?php } ?>
-        <?php
-        // echo $user_can_edit_order ? '<button class="ispag-btn ispag-btn-red-outlined ispag-btn-copy" data-article-id="'. $id . '">' . __('Replicate', 'creation-reservoir') . '</button>' : '' ;
-        echo $user_can_edit_order ? '<button class="ispag-btn ispag-btn-delete" data-article-id="' . $id . '">' .__('Delete', 'creation-reservoir'). '</button>' : '';
-        // echo ((($user_can_generate_tank AND (empty($article->DrawingApproved) || $article->DrawingApproved === 0)) OR current_user_can('manage_order')) AND $article->Type == 1) ? apply_filters('ispag_get_fitting_btn', '', $id) : '';
-        ?>
+        <button class="ispag-btn ispag-btn-secondary-outlined ispag-btn-view" data-article-id="<?php echo $id; ?>" title="<?php echo __('See product', 'creation-reservoir'); ?>"><i class="fas fa-search"></i></button>
+        
+        <?php if (($user_can_generate_tank && empty($article->DrawingApproved)) || current_user_can('manage_order')): ?>
+            <button class="ispag-btn ispag-btn-warning-outlined ispag-btn-edit" data-article-id="<?php echo $id; ?>" title="<?php echo __('Edit product', 'creation-reservoir'); ?>"><i class="fas fa-edit"></i></button>
+        <?php endif; ?>
+
+        <?php if (current_user_can('manage_order')): ?>
+            <button class="ispag-btn ispag-btn-delete" data-article-id="<?php echo $id; ?>" title="<?php echo __('Delete', 'creation-reservoir'); ?>"><i class="fas fa-trash"></i></button>
+        <?php endif; ?>
     </div>
 
-</div> <!-- .ispag-article -->
+</div>

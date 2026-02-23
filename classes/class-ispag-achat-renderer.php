@@ -30,7 +30,8 @@ class ISPAG_Achat_Renderer {
                     echo self::get_delete_purchase_btn($achat_id);
                 echo '</div>';
             echo '</div>';
-            echo self::display_modal();
+            // echo self::display_modal();
+            echo ISPAG_Detail_Page::display_modal();
             return;
         }
 
@@ -75,7 +76,8 @@ class ISPAG_Achat_Renderer {
 
         echo '</div>'; // .ispag-achat-modern-container
         
-        echo self::display_modal();
+        // echo self::display_modal();
+        echo ISPAG_Detail_Page::display_modal();
     }
 
     public static function reload_article_row($html, $article_id){
@@ -155,18 +157,18 @@ class ISPAG_Achat_Renderer {
         return;
     }
  
-    private static function display_modal(){
-        return '<div id="ispag-modal" class="ispag-product-modal" style="display:none;">
-            <div class="ispag-modal-content">
-                <span class="ispag-modal-close">&times;</span>
-                <div id="ispag-modal-body">
-                    <!-- Le contenu sera injecté ici en JS -->
-                </div>
-            </div>
-        </div>
-        ' . apply_filters('ispag_get_modal_fitting', '');
+    // private static function display_modal(){ 
+    //     return '<div id="ispag-modal" class="ispag-product-modal" style="display:none;">
+    //         <div class="ispag-modal-content">
+    //             <span class="ispag-modal-close">&times;</span>
+    //             <div id="ispag-modal-body">
+    //                 <!-- Le contenu sera injecté ici en JS -->
+    //             </div>
+    //         </div>
+    //     </div>
+    //     ' . apply_filters('ispag_get_modal_fitting', '');
 
-    }
+    // }
 
     private static function get_delivery_btn($achat_id = null){
         $achat = apply_filters('ispag_get_achat_by_id', null, $achat_id);

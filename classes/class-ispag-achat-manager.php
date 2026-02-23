@@ -169,9 +169,12 @@ class ISPAG_Achat_Manager {
         $fournisseurs = $wpdb->get_results("SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC");
 
         include plugin_dir_path(__FILE__) . 'templates/achat-detail.php';
+
+        // echo ISPAG_Detail_Page::display_modal();
+        
         return ob_get_clean();
     }
-
+ 
     public static function bulk_selected_article($html, $achat_id){
         $can_manage_order = current_user_can('manage_order'); 
         if(!$can_manage_order){
