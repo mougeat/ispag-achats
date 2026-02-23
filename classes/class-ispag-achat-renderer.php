@@ -47,8 +47,8 @@ class ISPAG_Achat_Renderer {
 
             echo '<div class="ispag-achat-articles-list">';
             foreach ($articles as $article) {
-                $escaped_group = esc_html(stripslashes($article->Groupe));
-                $group_id = 'group-title-' . md5($article->Groupe);
+                $escaped_group = esc_html(stripslashes($article->Groupe ?? ''));
+                $group_id = 'group-title-' . md5($article->Groupe ?? '');
                 
                 echo '<div class="ispag-article-group-wrapper">';
                     echo '<div class="ispag-article-group-header">';
@@ -101,10 +101,13 @@ class ISPAG_Achat_Renderer {
         $checked_attr = ''; // checkbox à cocher en JS si besoin
         $facture = $article->Facture ? __('Invoiced', 'creation-reservoir') : __('Not invoiced', 'creation-reservoir');
         $qty = (int) $article->Qty;
-        $deal_id = $article->hubspot_deal_id;
+        $deal_id = $article->hubspot_deal_id ?? $article->deal_id ?? 0;
         $user_can_edit_order = current_user_can('edit_supplier_order');
         $user_can_view_order = current_user_can('view_supplier_order');
         $user_can_generate_tank = current_user_can('generate_tank');
+
+        $user_can_manage_order = $user_can_edit_order; 
+        $user_is_owner = true; // Ou ta logique propriétaire ISPAG
 
 
         include plugin_dir_path(__FILE__) . 'templates/render-article-block.php'; 
