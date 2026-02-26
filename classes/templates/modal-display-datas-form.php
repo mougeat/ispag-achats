@@ -26,6 +26,7 @@ $can_view_prices = $user_can_view_order;
 
 <div class="ispag-modal-body-scroll">
     <form class="ispag-edit-article-form" <?= $id_attr ?>>
+        <input type="text" id="current-editing-article-id" value="<?= esc_attr($article->Id) ?>">
         <input type="hidden" name="IdArticleStandard" value="<?= esc_attr($article->IdArticleStandard) ?>">
         
         <div class="ispag-modal-grid">
@@ -75,7 +76,7 @@ $can_view_prices = $user_can_view_order;
 
         <?php if ($article->Type == 1): ?>
             <div class="ispag-modal-grid">
-                <?php do_action('ispag_render_tank_dimensions_form', $article->IdCommandeClient); ?>
+                <?php do_action('ispag_render_tank_dimensions_form', $article->IdCommandeClient, 'purchase'); ?>
             </div>
         <?php endif; ?>
 

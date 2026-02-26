@@ -44,16 +44,28 @@ $can_edit = current_user_can('edit_supplier_order');
                 $value = !empty($value) ? date('d.m.Y', $value) : '';
                 $fieldType = 'date';
             }
+
+            // Récupération de l'ID fournisseur pour le data-attribute
+            $supplier_id = '';
+            if ($field === 'Fournisseur') {
+                // On cherche l'ID dans ton tableau $fournisseurs basé sur le nom ($value)
+                foreach ($fournisseurs as $f) {
+                    if ($f->Fournisseur === $value) {
+                        $supplier_id = $f->Id;
+                        break;
+                    }
+                }
+            }
         ?>
         <div>
             <strong><?php echo $label; ?></strong><br>
             <span class="ispag-inline-edit"
+                <?php if ($field === 'Fournisseur'): ?> id="tank-supplier-display" data-is-supplier="true" data-supplier-id="<?php echo esc_attr($supplier_id); ?>" <?php endif; ?>
                 data-source="purchase"
                 data-name="<?php echo esc_attr($field); ?>"
                 data-value="<?php echo esc_attr($value); ?>"
                 data-deal="<?php echo esc_attr($achat->Id); ?>"
                 data-field-type="<?php echo esc_attr($fieldType); ?>"
-                <?php echo ($field === 'Fournisseur') ? 'data-is-supplier="true"' : ''; ?>
                 <?php echo $can_edit ? '' : 'data-readonly="true"'; ?>>
                 
                 <?php echo esc_html($value); ?>
@@ -66,6 +78,8 @@ $can_edit = current_user_can('edit_supplier_order');
             </span>
         </div>
         <?php endforeach; ?>
+        
+        
 
         <div id="achat-status-wrapper" data-achat-id="<?php echo esc_attr($achat->Id); ?>">
             <strong>📌 <?php echo __('Status', 'creation-reservoir'); ?></strong><br>

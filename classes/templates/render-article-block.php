@@ -76,6 +76,19 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
     <div class="ispag-article-prices">
         <div class="ispag-article-qty"><b><?php echo $qty; ?></b> pcs</div>
         <?php if ($user_can_view_order): ?>
+
+            <!-- AFFICHAGE DU DETAILS DE PRIX D'UNE CUVE -->
+             <div class="ispag-purchase-details" style="font-size: 0.85em; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                <div class="ispag-row">
+                    <span>Cuve nue :</span>
+                    <input type="text" name="tank-bare-price" id="tank-bare-price-<?php echo $id; ?>"> €
+                </div>
+                <div class="ispag-row">
+                    <span>Accessoires :</span>
+                    <input type="text" name="tank-accessories-price" id="tank-acc-price-<?php echo $id; ?>"> €
+                </div>
+            </div>
+
             <div class="ispag-article-prix-net" style="color:#00a32a; font-weight:bold;"><?php echo number_format($article->UnitPrice, 2); ?> €</div>
             <div class="ispag-article-rabais" style="font-size:0.8em; color:#888;">-<?php echo $article->discount; ?>%</div>
         <?php endif; ?>
