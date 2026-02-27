@@ -26,7 +26,7 @@ $can_view_prices = $user_can_view_order;
 
 <div class="ispag-modal-body-scroll">
     <form class="ispag-edit-article-form" <?= $id_attr ?>>
-        <input type="text" id="current-editing-article-id" value="<?= esc_attr($article->Id) ?>">
+        <input type="hidden" id="current-editing-article-id" value="<?= esc_attr($article->Id) ?>">
         <input type="hidden" name="IdArticleStandard" value="<?= esc_attr($article->IdArticleStandard) ?>">
         
         <div class="ispag-modal-grid">

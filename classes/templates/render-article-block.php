@@ -57,7 +57,7 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
                     <span class="ispag-badge <?php echo $badge_class; ?>"><?php echo esc_html($badge_label); ?></span>
                 </div>
             <?php endif; ?>
-
+ 
             <?php if(!empty($article->documents)): foreach ($article->documents as $doc): ?>
                 <a href="<?php echo esc_url($doc['url']); ?>" target="_blank" class="ispag-btn ispag-btn-grey-outlined"><?php echo esc_html__($doc['label'], 'creation-reservoir'); ?></a>
             <?php endforeach; endif; ?>
@@ -100,6 +100,13 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
         <?php if (($user_can_generate_tank && empty($article->DrawingApproved)) || current_user_can('manage_order')): ?>
             <button class="ispag-btn ispag-btn-warning-outlined ispag-btn-edit" data-article-id="<?php echo $id; ?>" title="<?php echo __('Edit product', 'creation-reservoir'); ?>"><i class="fas fa-edit"></i></button>
         <?php endif; ?>
+
+        <?php 
+            if ((($user_can_generate_tank && empty($article->DemandeAchatOk)) || $user_can_manage_order) ) {
+                echo apply_filters('ispag_get_fitting_btn', '', $article->IdCommandeClient, $article->Id);
+                echo $article->btn_heatExchanger;
+            }
+        ?>  
 
         <?php if (current_user_can('manage_order')): ?>
             <button class="ispag-btn ispag-btn-delete" data-article-id="<?php echo $id; ?>" title="<?php echo __('Delete', 'creation-reservoir'); ?>"><i class="fas fa-trash"></i></button>
