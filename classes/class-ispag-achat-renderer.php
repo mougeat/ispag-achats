@@ -81,8 +81,7 @@ class ISPAG_Achat_Renderer {
     }
 
     public static function reload_article_row($html, $article_id){
-        // $repo = new ISPAG_Achat_Article_Repository();
-        // $article = $repo->get_article_by_id($article_id);
+
         $article = apply_filters('ispag_get_purchse_article_by_id', null, $article_id);
 
         if (!$article) { 
@@ -143,12 +142,8 @@ class ISPAG_Achat_Renderer {
             echo '<p>Article introuvable.</p>';
             wp_die();
         }
-        // $article = apply_filters('ispag_get_article_by_id', null, $article_id);
 
-        // $standard_titles = apply_filters('ispag_get_standard_titles_by_type', $article->Type);
-
-        // error_log('STANDARD ARTICLE TYPE : ' . $article->Type);
-        // error_log('STANDARD ARTICLE : ' . print_r($standard_titles, true));
+        // error_log('PURCHASE ARTICLE : ' . print_r($article, true));
         $user_can_edit_order = current_user_can('edit_supplier_order');
         $user_can_view_order = current_user_can('view_supplier_order');
         $id_attr = $is_new ? '' : ' data-article-id="' . intval($article_id) . '"';
@@ -160,18 +155,6 @@ class ISPAG_Achat_Renderer {
         return;
     }
  
-    // private static function display_modal(){ 
-    //     return '<div id="ispag-modal" class="ispag-product-modal" style="display:none;">
-    //         <div class="ispag-modal-content">
-    //             <span class="ispag-modal-close">&times;</span>
-    //             <div id="ispag-modal-body">
-    //                 <!-- Le contenu sera injecté ici en JS -->
-    //             </div>
-    //         </div>
-    //     </div>
-    //     ' . apply_filters('ispag_get_modal_fitting', '');
-
-    // }
 
     private static function get_delivery_btn($achat_id = null){
         $achat = apply_filters('ispag_get_achat_by_id', null, $achat_id);

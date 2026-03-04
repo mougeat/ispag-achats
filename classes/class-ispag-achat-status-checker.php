@@ -319,12 +319,12 @@ class ISPAG_Achat_Status_Checker {
         );
 
         // Log de la requête unique
-        error_log("[{$current_time_str}] Optimized SQL Query (IN $ids_string): " . $query . PHP_EOL, 3, $log_file);
+        // error_log("[{$current_time_str}] Optimized SQL Query (IN $ids_string): " . $query . PHP_EOL, 3, $log_file);
 
         $achats = $wpdb->get_results($query);
 
         if (!empty($achats)) {
-            error_log("[{$current_time_str}] Found " . count($achats) . " total results." . PHP_EOL, 3, $log_file);
+            // error_log("[{$current_time_str}] Found " . count($achats) . " total results." . PHP_EOL, 3, $log_file);
             
             foreach ($achats as $achat) {
                 // Ex: envoyer un mail, notifier un admin, mettre à jour un champ...

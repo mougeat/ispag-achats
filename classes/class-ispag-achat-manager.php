@@ -328,10 +328,10 @@ class ISPAG_Achat_Manager {
         $allowed_fields = ['Fournisseur', 'RefCommande', 'ConfCmdFournisseur', 'TimestampDateCreation'];
         $table = $wpdb->prefix . 'achats_commande_liste_fournisseurs';
 
-        error_log("🔧 handle_inline_edit() called with args: " . print_r($args, true));
+        // error_log("🔧 handle_inline_edit() called with args: " . print_r($args, true));
 
         if (!in_array($args['field'], $allowed_fields)) {
-error_log("❌ Champ non autorisé : {$args['field']}");
+// error_log("❌ Champ non autorisé : {$args['field']}");
             return false;
         }
 
@@ -341,10 +341,10 @@ error_log("❌ Champ non autorisé : {$args['field']}");
                 $args['value']
             ));
             
-            error_log("🔍 Résultat ID fournisseur pour '{$args['value']}': " . var_export($supplier_id, true));
+            // error_log("🔍 Résultat ID fournisseur pour '{$args['value']}': " . var_export($supplier_id, true));
 
             if (!$supplier_id) {
-error_log("❌ Fournisseur non trouvé");
+// error_log("❌ Fournisseur non trouvé");
                 return false;
             }
 
@@ -360,9 +360,9 @@ error_log("❌ Fournisseur non trouvé");
         );
 
         if ($res === false) {
-error_log("❌ Erreur lors de la mise à jour : " . $wpdb->last_error);
+// error_log("❌ Erreur lors de la mise à jour : " . $wpdb->last_error);
         } else {
-            error_log("✅ Mise à jour réussie (lignes modifiées : $res)");
+            // error_log("✅ Mise à jour réussie (lignes modifiées : $res)");
         }
 
         return $res !== false;

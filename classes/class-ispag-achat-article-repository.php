@@ -21,6 +21,7 @@ class ISPAG_Achat_Article_Repository {
         add_filter('ispag_get_achat_article_by_project_article_id', [self::$instance, 'get_achat_article_by_project_article_id'], 10, 2);
         add_filter('ispag_get_articles_by_order', [self::$instance, 'get_articles_by_order'], 10, 2);
         add_filter('ispag_get_purchse_article_by_id', [self::$instance, 'get_article_by_id'], 10, 2);
+        
 
     }
  
@@ -31,10 +32,6 @@ class ISPAG_Achat_Article_Repository {
             return [];
         }
 
-        // $sql = $this->wpdb->prepare(
-        //     "SELECT c.*, dp.Type FROM {$this->table} c LEFT JOIN {$this->table_projet} dp ON dp.Id = c.IdCommandeClient WHERE c.IdCommande = %d ORDER BY tri ASC",
-        //     $order_id
-        // );
         $sql = $this->wpdb->prepare(
             "SELECT 
                 c.*, 
@@ -42,10 +39,25 @@ class ISPAG_Achat_Article_Repository {
                 tp.image,
                 ap.supplier_reference AS RefSurMesureSupplier, 
                 ap.supplier_description AS DescSurMesureSupplier, 
-                ap.purchase_price AS UnitPriceSupplier, 
                 ap.currency, 
-                ap.discount, 
-                ap.delivery_days
+                ap.delivery_days,
+                -- Prix Brut : priorité commande, sinon catalogue, sinon 0
+                COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price, 0) AS UnitPrice,
+                -- Discount : on force à 0 si NULL pour éviter de casser le calcul du NET
+                IFNULL(COALESCE(NULLIF(c.discount, 0), ap.discount), 0) AS discount,
+
+                -- 3. PRIX NET UNITAIRE ARRONDI À L'ENTIER SUPÉRIEUR
+                CEIL(
+                    COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price, 0) * (1 - (IFNULL(COALESCE(NULLIF(c.discount, 0), ap.discount), 0) / 100))
+                ) AS UnitPriceNet,
+
+                -- 4. TOTAL NET ARRONDI À L'ENTIER SUPÉRIEUR
+                CEIL(
+                    (COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price, 0) * (1 - (IFNULL(COALESCE(NULLIF(c.discount, 0), ap.discount), 0) / 100))) * c.Qty
+                ) AS TotalPriceNet,
+
+                ap.purchase_price AS UnitPriceSupplier, 
+                ap.discount AS discountSupplier
             FROM {$this->table} c
             LEFT JOIN {$this->wpdb->prefix}achats_commande_liste_fournisseurs cf ON cf.Id = c.IdCommande
             LEFT JOIN {$this->table_projet} dp ON dp.Id = c.IdCommandeClient
@@ -91,7 +103,8 @@ class ISPAG_Achat_Article_Repository {
             }
 
 
-            $article->total_price = floatval($article->UnitPrice) * intval($article->Qty);
+            // Le total doit être basé sur le NET
+            $article->total_price = floatval($article->UnitPriceNet) * intval($article->Qty);
             $article->date_livraison = date('d/m/Y', $article->TimestampDateLivraison);
             $article->date_livraison_conf = date('d/m/Y', $article->TimestampDateLivraisonConfirme);
             
@@ -108,6 +121,26 @@ class ISPAG_Achat_Article_Repository {
     }
     public function get_article_by_id($html, $id) {
         // $sql = $this->wpdb->prepare("SELECT * FROM {$this->table} WHERE Id = %d", $id);
+        // $sql = $this->wpdb->prepare(
+        //     "SELECT 
+        //         c.*, 
+        //         dp.Type, 
+        //         tp.image,
+        //         ap.supplier_reference AS RefSurMesureSupplier, 
+        //         ap.supplier_description AS DescSurMesureSupplier, 
+        //         ap.purchase_price AS UnitPriceSupplier, 
+        //         ap.currency, 
+        //         ap.discount, 
+        //         ap.delivery_days
+        //     FROM {$this->table} c
+        //     LEFT JOIN {$this->wpdb->prefix}achats_commande_liste_fournisseurs cf ON cf.Id = c.IdCommande
+        //     LEFT JOIN {$this->table_projet} dp ON dp.Id = c.IdCommandeClient
+        //     LEFT JOIN {$this->wpdb->prefix}achats_articles_purchase ap ON ap.article_id = c.IdArticleStandard AND ap.supplier_id = cf.IdFournisseur
+        //     LEFT JOIN {$this->wpdb->prefix}achats_type_prestations tp ON tp.Id = dp.Type
+        //     WHERE c.Id = %d
+        //     ORDER BY tri ASC",
+        //     $id
+        // );
         $sql = $this->wpdb->prepare(
             "SELECT 
                 c.*, 
@@ -115,10 +148,24 @@ class ISPAG_Achat_Article_Repository {
                 tp.image,
                 ap.supplier_reference AS RefSurMesureSupplier, 
                 ap.supplier_description AS DescSurMesureSupplier, 
-                ap.purchase_price AS UnitPriceSupplier, 
                 ap.currency, 
-                ap.discount, 
-                ap.delivery_days
+                ap.delivery_days,
+                -- Prix Brut initial
+                COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price) AS UnitPrice,
+                -- Discount initial
+                COALESCE(NULLIF(c.discount, 0), ap.discount) AS discount,
+
+                -- 3. PRIX NET UNITAIRE ARRONDI À L'ENTIER SUPÉRIEUR
+                CEIL(
+                    COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price) * (1 - (COALESCE(NULLIF(c.discount, 0), ap.discount) / 100))
+                ) AS UnitPriceNet,
+
+                -- 4. TOTAL NET (UNITAIRE ARRONDI * QTY) ARRONDI À L'ENTIER SUPÉRIEUR
+                CEIL(
+                    (COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price) * (1 - (COALESCE(NULLIF(c.discount, 0), ap.discount) / 100))) * c.Qty
+                ) AS TotalPriceNet,
+
+                ap.discount AS discountSupplier 
             FROM {$this->table} c
             LEFT JOIN {$this->wpdb->prefix}achats_commande_liste_fournisseurs cf ON cf.Id = c.IdCommande
             LEFT JOIN {$this->table_projet} dp ON dp.Id = c.IdCommandeClient
@@ -133,11 +180,11 @@ class ISPAG_Achat_Article_Repository {
 
         // $row->Type = 1;
         if (empty($row->image)) {
-                $row->image = plugin_dir_url(__FILE__) . "../../../assets/img/placeholder.webp";
-            }
-            else {
-                $row->image = wp_get_attachment_url($row->image);
-            }
+            $row->image = plugin_dir_url(__FILE__) . "../../../assets/img/placeholder.webp";
+        }
+        else {
+            $row->image = wp_get_attachment_url($row->image);
+        }
 
         $row->Groupe = apply_filters('ispag_get_groupe_by_article_id', null, $row->IdCommandeClient);
             // Si article de type cuve
@@ -154,13 +201,16 @@ class ISPAG_Achat_Article_Repository {
         else{
             $row->RefSurMesure = !empty($row->RefSurMesureSupplier) ? $row->RefSurMesureSupplier : $row->RefSurMesure;
             $row->DescSurMesure = !empty($row->DescSurMesureSupplier) ? $row->DescSurMesureSupplier : $row->DescSurMesure;
-            $row->UnitPrice = !empty($row->UnitPriceSupplier) ? $row->UnitPriceSupplier : $row->UnitPrice;
+            // $row->UnitPrice = !empty($row->UnitPriceSupplier) ? $row->UnitPriceSupplier : $row->UnitPrice;
         }
 
 
+        
         $row->total_price = floatval($row->UnitPrice) * intval($row->Qty);
         $row->date_livraison = date('d/m/Y', $row->TimestampDateLivraison);
         $row->date_livraison_conf = date('d/m/Y', $row->TimestampDateLivraisonConfirme);
+
+        
 
         return $row;
     }
@@ -186,4 +236,6 @@ class ISPAG_Achat_Article_Repository {
         $sql = $this->wpdb->prepare("SELECT * FROM {$this->table} WHERE IdCommande = %d AND Qty > Recu", $order_id);
         return $this->wpdb->get_results($sql);
     }
+
+
 }
