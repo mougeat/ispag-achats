@@ -82,11 +82,20 @@ class ISPAG_Achat_Manager {
         $can_view_supplier_orders = current_user_can('view_supplier_order');
 
         $search_query = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
+        
 
-        $html = '<form method="get" style="margin-bottom: 20px;">
-            <input type="text" name="search" placeholder="' . __('Search', 'creation-reservoir') . ' ..." value="' . esc_attr($search_query) . '" />
-            <button type="submit">' . __('Search', 'creation-reservoir') . '</button>
-        </form>';
+        $html = '
+        <div class="ispag-toolbar" style="background: #f6f7f7; padding: 15px; border: 1px solid #ccd0d4; margin-bottom: 20px; margin-top: 20px;">
+            <form method="get">
+                <input type="text" name="search" placeholder="' . __('Search', 'creation-reservoir') . ' ..." value="' . esc_attr($search_query) . '" />
+                <button type="submit" class="ispag-btn">' . __( 'Filter / Search', 'creation-reservoir' ) . '</button>
+                ';
+                if ( ! empty( $search_query ) OR isset($_GET['select_state'])) :
+                    $html .= '<a href="' . esc_url( remove_query_arg( array( 'orderby', 'order', 'search', 'filter_owner', 'paged', 'select_state' ) ) ) . '" class="ispag-btn ispag-btn-grey">' . __( 'Reset filters', 'creation-reservoir' ) . '</a>';
+                endif;
+        $html .= '        
+            </form>
+        </div>';
 
         if($can_view_supplier_orders){
             $status_checker = new ISPAG_Achat_status_render();
