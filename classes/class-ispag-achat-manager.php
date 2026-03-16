@@ -51,17 +51,18 @@ class ISPAG_Achat_Manager {
             wp_enqueue_style('ispag-main-style');
         });
 
-        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', [], false, true);
-        wp_enqueue_script('ispag-state-achats', plugin_dir_url(__FILE__) . '../assets/js/state.js', [], false, true);
-        wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', [], false, true);
-        wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', [], false, true);
+        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', ['jquery'], false, true);
+        wp_enqueue_script('ispag-state-achats', plugin_dir_url(__FILE__) . '../assets/js/state.js', ['jquery'], false, true);
+        wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', ['jquery'], false, true);
+        wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', ['jquery'], false, true);
 
         wp_localize_script('ispag-scroll-achats', 'ajaxurl', admin_url('admin-ajax.php'));
 
         wp_localize_script('ispag-scroll-achats', 'ispagVars', [
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'loading_text' => __('Loading', 'creation-reservoir'),
-            'all_loaded_text' => __('All projects are loaded', 'creation-reservoir'),
+            'ajaxurl'           => admin_url('admin-ajax.php'),
+            'nonce'             => wp_create_nonce('ispag_achat_nonce'),
+            'loading_text'      => __('Loading', 'creation-reservoir'),
+            'all_loaded_text'   => __('All projects are loaded', 'creation-reservoir'),
         ]);
 
         // Récupérer les fournisseurs pour l’inline-edit
@@ -69,12 +70,18 @@ class ISPAG_Achat_Manager {
             "SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC"
         );
 
+        $formatted_fournisseurs = array_map(function($f) {
+            return ['Id' => $f->Id, 'Fournisseur' => $f->Fournisseur];
+        }, $fournisseurs);
+
         wp_localize_script(
             'ispag-header-achats',
             'ispag_fournisseurs',
-            array_map(function($f) {
-                return ['Id' => $f->Id, 'Fournisseur' => $f->Fournisseur];
-            }, $fournisseurs)
+            [
+                'ajaxurl'      => admin_url('admin-ajax.php'),
+                'nonce'        => wp_create_nonce('ispag_achat_nonce'),
+                'fournisseurs' => $formatted_fournisseurs // On met les fournisseurs ici aussi
+            ]
         );
     }
 
@@ -183,7 +190,7 @@ class ISPAG_Achat_Manager {
         
         return ob_get_clean();
     }
- 
+  
     public static function bulk_selected_article($html, $achat_id){
         $can_manage_order = current_user_can('manage_order'); 
         if(!$can_manage_order){

@@ -117,7 +117,7 @@ class ISPAG_Achat_Repository {
         }
 
         $query = "
-            SELECT a.*, f.Fournisseur, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color
+            SELECT a.*, f.Fournisseur, f.Monnaie AS Devise, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color
             FROM {$this->table_achats} a
             LEFT JOIN {$this->table_articles} ar ON ar.IdCommande = a.Id
             LEFT JOIN {$this->table_fournisseurs} f ON f.Id = a.IdFournisseur
@@ -170,32 +170,32 @@ class ISPAG_Achat_Repository {
      * @return float|null Le montant total de la commande, ou null en cas d'erreur ou si l'ID est invalide.
      */
     public function get_purchase_total($html, $purchase_id) {
-        
         $purchase_id = intval($purchase_id);
-        
-        if (!$purchase_id) {
-            return 0.0; // Retourne 0.0 si l'ID est invalide
+        if (!$purchase_id) return 0.0;
+
+        // 1. Récupérer tous les IDs d'articles liés à cette commande
+        $article_ids = $this->wpdb->get_col($this->wpdb->prepare(
+            "SELECT Id FROM {$this->table_articles} WHERE IdCommande = %d",
+            $purchase_id
+        ));
+
+        if (empty($article_ids)) return 0.0;
+
+        $total_achat = 0.0;
+        $repo_article = new ISPAG_Achat_Article_Repository();
+
+        // 2. Boucler sur chaque article et utiliser la méthode existante
+        foreach ($article_ids as $id) {
+            $article_data = $repo_article->get_article_by_id(null, $id);
+            error_log('MONTANT COMMANDE (' . $purchase_id . '): ' . print_r($article_data, true));
+            
+            if ($article_data && isset($article_data->TotalPriceNet)) {
+                // On cumule le TotalPriceNet qui est déjà calculé, remisé et arrondi
+                $total_achat += floatval($article_data->TotalPriceNet);
+            }
         }
 
-        // Requête SQL pour calculer le montant total : 
-        // SUM( (Quantité * Prix unitaire) * (1 - (Rabais en % / 100)) )
-        $query = $this->wpdb->prepare("
-            SELECT
-                SUM(
-                    (Qty * UnitPrice) * (1 - (discount / 100))
-                )
-            FROM
-                {$this->table_articles}
-            WHERE
-                IdCommande = %d
-        ", $purchase_id);
-
-        // get_var() récupère le premier champ du premier enregistrement trouvé.
-        $total = $this->wpdb->get_var($query);
-
-        // Si $total est NULL (ex: commande sans article ou erreur), on retourne 0.0.
-        // Sinon, on retourne la valeur castée en float.
-        return $total !== null ? (float) $total : 0.0;
+        return $total_achat;
     }
 
 }

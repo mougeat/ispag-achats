@@ -80,7 +80,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             // Récupérer projet + articles depuis la base (à adapter selon ta structure)
             $titre_project = __('Project', 'creation-reservoir');
             $titre_ref = __('Order number', 'creation-reservoir');
-            $titre_delivery_date = __('Delivery date', 'creation-reservoir');
+            $titre_delivery_date = __('Order date', 'creation-reservoir');
 
             $articles = [];
             $table_header = [

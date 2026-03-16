@@ -85,7 +85,9 @@ class ISPAG_Achat_Article_Repository {
             $article->Groupe = apply_filters('ispag_get_groupe_by_article_id', null, $article->IdCommandeClient);
             // Si article de type cuve
             if ($article->Type == 1) {
-                
+                $tank_repo = new ISPAG_Tank_Repository();
+                $tank_data = $tank_repo->get_tank_details($article->IdCommandeClient);
+
                 $article->RefSurMesure = apply_filters('ispag_get_tank_title', $article->RefSurMesure, $article->IdCommandeClient);
                 $article->DescSurMesure = apply_filters('ispag_get_tank_description', $article->DescSurMesure, $article->IdCommandeClient, true);
                 $article->last_drawing_url = apply_filters('ispag_get_last_drawing_url', '', $article->IdCommandeClient);
@@ -94,6 +96,13 @@ class ISPAG_Achat_Article_Repository {
                 $article->welding_text_informations = apply_filters('ispag_get_welding_text', null, $article->Article ?? null, $article->IdCommandeClient);
                 $article->tank_on_site_welded = apply_filters('ispag_get_tank_on_site_welded', $article->Article ?? null, $article->IdCommandeClient);
                 $article->image = apply_filters('ispag_get_tank_svg', null, $article->IdCommandeClient, false);
+                if ($tank_data) {
+                    // On stocke l'objet complet pour usage futur
+                    $article->tank_details = $tank_data;
+                    
+                    // On extrait le volume proprement pour faciliter le calcul plus tard
+                    $article->technical_volume = floatval($tank_data['dimensions_principales']['Volume_L'] ?? 0);
+                }
             }
             else{
                 $article->RefSurMesure = !empty($article->RefSurMesureSupplier) ? $article->RefSurMesureSupplier : $article->RefSurMesure;
@@ -152,20 +161,21 @@ class ISPAG_Achat_Article_Repository {
                 ap.delivery_days,
                 -- Prix Brut initial
                 COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price) AS UnitPrice,
-                -- Discount initial
-                COALESCE(NULLIF(c.discount, 0), ap.discount) AS discount,
+                -- Discount : Si 0 ou NULL, on prend le discount fournisseur, sinon 0
+                COALESCE(NULLIF(c.discount, 0), ap.discount, 0) AS discount,
 
-                -- 3. PRIX NET UNITAIRE ARRONDI À L'ENTIER SUPÉRIEUR
+                -- 3. PRIX NET UNITAIRE ARRONDI
+                -- Note : On ajoute un COALESCE(... , 0) à l'intérieur pour sécuriser le calcul
                 CEIL(
-                    COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price) * (1 - (COALESCE(NULLIF(c.discount, 0), ap.discount) / 100))
+                    COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price, 0) * (1 - (COALESCE(NULLIF(c.discount, 0), ap.discount, 0) / 100))
                 ) AS UnitPriceNet,
 
-                -- 4. TOTAL NET (UNITAIRE ARRONDI * QTY) ARRONDI À L'ENTIER SUPÉRIEUR
+                -- 4. TOTAL NET (UNITAIRE ARRONDI * QTY)
                 CEIL(
-                    (COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price) * (1 - (COALESCE(NULLIF(c.discount, 0), ap.discount) / 100))) * c.Qty
+                    (COALESCE(NULLIF(c.UnitPrice, 0), ap.purchase_price, 0) * (1 - (COALESCE(NULLIF(c.discount, 0), ap.discount, 0) / 100))) * c.Qty
                 ) AS TotalPriceNet,
 
-                ap.discount AS discountSupplier 
+                ap.discount AS discountSupplier
             FROM {$this->table} c
             LEFT JOIN {$this->wpdb->prefix}achats_commande_liste_fournisseurs cf ON cf.Id = c.IdCommande
             LEFT JOIN {$this->table_projet} dp ON dp.Id = c.IdCommandeClient

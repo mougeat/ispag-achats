@@ -10,6 +10,7 @@ class ISPAG_Achat_Renderer {
         add_filter('ispag_render_purchase_article_modal', [self::class, 'render_article_modal'], 10, 2);
         add_filter('ispag_render_purchase_article_modal_form', [self::class, 'render_article_modal_form'], 10, 3);
         add_filter('ispag_render_article_block', [self::class, 'reload_article_row'], 10, 2);
+        add_action('wp_ajax_ispag_apply_purchase_adjustment', [self::class, 'ajax_apply_adjustment']);
     }
     
     public static function render_articles_tab($achat_id) {
@@ -21,10 +22,12 @@ class ISPAG_Achat_Renderer {
         $repo = new ISPAG_Achat_Article_Repository();
         $articles = $repo->get_articles_by_order(null, $achat_id);
 
+        self::display_purchase_adjustments($achat_id, $articles);
+
         if (empty($articles)) {
             echo '<div class="ispag-empty-state">';
                 echo '<span class="dashicons dashicons-cart"></span>';
-                echo '<p>' . __('Aucun article pour cette commande fournisseur.', 'creation-reservoir') . '</p>';
+                echo '<div class="ispag-notice warning"><p>' . __('Aucun article pour cette commande fournisseur.', 'creation-reservoir') . '</p></div>';
                 echo '<div class="ispag-actions-group">';
                     echo self::get_add_article_btn($achat_id);
                     echo self::get_delete_purchase_btn($achat_id);
@@ -203,5 +206,159 @@ class ISPAG_Achat_Renderer {
         //     return;
         // }
         return '<button id="ispag-add-article" data-poid="' . esc_attr($achat_id) .'" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir'). '</button>';
+    }
+
+    private static function display_purchase_adjustments($achat_id, $articles) {
+        global $wpdb;
+        
+        $repo_achat = new ISPAG_Achat_Repository();
+        $achat = $repo_achat->get_achat_by_id(null, $achat_id);
+        
+        if (!$achat) return;
+
+        $supplier_id = intval($achat->IdFournisseur);
+        $currency = strtoupper($achat->Devise ?? 'CHF');
+        $target_suppliers = [1, 3, 395]; 
+        
+        $transport_found = false;
+        $dedouanement_found = false;
+        $total_volume = 0;
+        $total_amount_net_taxable = 0; // On va cumuler le TotalPriceNet ici
+        $current_transport_price = 0;
+        $current_dedouanement_price = 0;
+
+        foreach ($articles as $art) {
+            $ref = isset($art->RefSurMesure) ? strtoupper(trim($art->RefSurMesure)) : '';
+            
+            // On récupère les valeurs calculées par ton repo (TotalPriceNet)
+            $total_price_net = floatval($art->TotalPriceNet ?? 0);
+            $unit_price = floatval($art->UnitPrice ?? 0);
+            $qty = intval($art->Qty ?? 0);
+            $type = intval($art->Type ?? 0);
+
+            if ($ref === 'TRANS') {
+                $transport_found = true;
+                $current_transport_price = $unit_price;
+            } elseif ($ref === 'DED') {
+                $dedouanement_found = true;
+                $current_dedouanement_price = $unit_price;
+            } else {
+                // 1. Logique de Volume
+                if ($type === 1) {
+                    if (!empty($art->technical_volume)) {
+                        $total_volume += ($art->technical_volume * $qty);
+                    } 
+                    elseif (preg_match('/(\d+)\s*litres/i', $art->RefSurMesure, $matches)) {
+                        $total_volume += floatval($matches[1]) * $qty;
+                    }
+                }
+
+                // 2. Calcul du montant taxable (EUR -> DED)
+                // On utilise TotalPriceNet qui contient déjà : (Prix Brut * (1 - Rabais/100)) * Qty
+                // Si TotalPriceNet n'est pas setté (cas imprévu), on fait un fallback sur le brut
+                if ($total_price_net > 0) {
+                    $total_amount_net_taxable += $total_price_net;
+                } else {
+                    $total_amount_net_taxable += ($unit_price * $qty);
+                }
+            }
+        }
+
+        // --- CALCUL TRANSPORT ---
+        if (in_array($supplier_id, $target_suppliers) && $total_volume > 0) {
+            $theoretical_trans = ceil($total_volume / 1000) * 250;
+            if (!$transport_found || abs($current_transport_price - $theoretical_trans) > 1.00) {
+                $msg = "Transport : " . number_format($total_volume, 0, '.', "'") . " L calculés.";
+                self::render_adjustment_notice($msg, "Appliquer Transport ($theoretical_trans CHF)", 'TRANS', $theoretical_trans, $achat_id);
+            }
+        }
+
+        // --- CALCUL DÉDOUANEMENT (Basé sur le NET) ---
+        if ($currency === 'EUR' && $total_amount_net_taxable > 0) {
+            // Calcul des 10% sur le montant net total
+            $theoretical_ded = round($total_amount_net_taxable * 0.10, 2);
+            
+            if (!$dedouanement_found || abs($current_dedouanement_price - $theoretical_ded) > 1.00) {
+                $msg = "Dédouanement (10%) sur un total net de " . number_format($total_amount_net_taxable, 2) . " EUR.";
+                self::render_adjustment_notice($msg, "Appliquer Dédouanement ($theoretical_ded EUR)", 'DED', $theoretical_ded, $achat_id);
+            }
+        }
+    }
+
+    private static function render_adjustment_notice($message, $btn_label, $type, $amount, $achat_id) {
+        ?>
+        <div class="ispag-notice info" style="display: flex; justify-content: space-between; align-items: center; background: #e7f3ff; border-left: 4px solid #2196F3; padding: 10px 15px; margin-bottom: 15px;">
+            <span><span class="dashicons dashicons-warning" style="color:#2196F3;"></span> <?php echo esc_html($message); ?></span>
+            <button class="ispag-btn ispag-btn-primary apply-auto-adjustment" 
+                    data-type="<?php echo $type; ?>" 
+                    data-amount="<?php echo $amount; ?>" 
+                    data-achat="<?php echo $achat_id; ?>">
+                <?php echo esc_html($btn_label); ?>
+            </button>
+        </div>
+        <?php
+    }
+    public static function ajax_apply_adjustment() {
+        check_ajax_referer('ispag_achat_nonce', 'security');
+
+        if (!current_user_can('edit_supplier_order')) {
+            wp_send_json_error('Permissions insuffisantes.');
+        }
+
+        global $wpdb;
+        $type     = sanitize_text_field($_POST['type']); // 'TRANS' ou 'DED'
+        $amount   = floatval($_POST['amount']);
+        $achat_id = intval($_POST['achat_id']);
+        $table    = $wpdb->prefix . 'achats_articles_cmd_fournisseurs'; // À vérifier selon votre table réelle
+
+        if (!$achat_id || !$amount) {
+            wp_send_json_error('Données invalides.');
+        }
+
+        // 1. Vérifier si l'article existe déjà dans cette commande
+        $existing_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT Id FROM $table WHERE IdCommande = %d AND RefSurMesure = %s",
+            $achat_id,
+            $type
+        ));
+
+        if ($existing_id) {
+            // MISE À JOUR
+            $updated = $wpdb->update(
+                $table,
+                [
+                    'UnitPrice' => $amount,
+                    'Qty'       => 1,
+                ],
+                ['Id' => $existing_id],
+                ['%f', '%d', '%d'],
+                ['%d']
+            );
+            
+            if ($updated !== false) {
+                wp_send_json_success('Article mis à jour.');
+            }
+        } else {
+            // CRÉATION
+            $description = ($type === 'TRANS') ? 'Frais de transport selon volume' : 'Frais de dédouanement (10%)';
+            
+            $inserted = $wpdb->insert(
+                $table,
+                [
+                    'IdCommande'    => $achat_id,
+                    'RefSurMesure'  => $type,
+                    'DescSurMesure' => $description,
+                    'Qty'           => 1,
+                    'UnitPrice'     => $amount
+                ],
+                ['%d', '%s', '%s', '%d', '%f', '%d', '%s']
+            );
+
+            if ($inserted) {
+                wp_send_json_success('Article ajouté.');
+            }
+        }
+
+        wp_send_json_error('Erreur lors de l\'enregistrement en base de données.');
     }
 }
