@@ -17,7 +17,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
 
 
         return '<button id="generate-purchase-order-pdf" class="ispag-btn ispag-btn-secondary-outlined" style="margin-top: 1rem;">
-                📄 ' .  __('Print purchase order', 'creation-reservoir') . '
+                <span class="dashicons dashicons-media-text"></span> ' .  __('Print purchase order', 'creation-reservoir') . '
             </button>
             <script>
             document.getElementById( \'generate-purchase-order-pdf\').addEventListener(\'click\', function () {

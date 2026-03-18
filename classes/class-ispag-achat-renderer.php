@@ -44,7 +44,8 @@ class ISPAG_Achat_Renderer {
             echo '<div class="ispag-achat-header-actions">';
                 echo apply_filters('ispag_bulk_selected_article', '', $achat_id);
                 echo '<div class="ispag-buttons-right">';
-                    echo apply_filters('ispag_print_purchase_order_btn', null, $achat_id);
+                    echo apply_filters('ispag_print_purchase_order_btn', null, $achat_id); 
+                    echo ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
                 echo '</div>';
             echo '</div>';
 
@@ -69,7 +70,7 @@ class ISPAG_Achat_Renderer {
 
             // Barre d'actions flottante ou fixe en bas
             echo '<div class="ispag-achat-footer-actions">';
-                ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
+                
                 echo '<div class="ispag-action-buttons-secondary">';
                     echo self::get_add_article_btn($achat_id);
                     echo self::get_delivery_btn($achat_id);
@@ -196,7 +197,7 @@ class ISPAG_Achat_Renderer {
         }
 
         return '<button class="ispag-btn ispag-btn-danger ispag-delete-achat" data-achat-id="' . esc_attr($achat_id) .'">
-            ' .  __('Delete', 'creation-reservoir') . '
+            <span class="dashicons dashicons-trash"></span> ' .  __('Delete', 'creation-reservoir') . '
         </button>';
     }
 
@@ -213,6 +214,8 @@ class ISPAG_Achat_Renderer {
         
         $repo_achat = new ISPAG_Achat_Repository();
         $achat = $repo_achat->get_achat_by_id(null, $achat_id);
+        error_log('[DEBUG] ARTICLE ACHATS');
+        error_log(print_r($articles, true));
         
         if (!$achat) return;
 
@@ -235,6 +238,10 @@ class ISPAG_Achat_Renderer {
             $unit_price = floatval($art->UnitPrice ?? 0);
             $qty = intval($art->Qty ?? 0);
             $type = intval($art->Type ?? 0);
+            $types_cuves = [1, 6, 7, 9, 10, 12]; // Liste des types à inclure
+            error_log(print_r($type, true));
+            error_log(print_r($types_cuves, true));
+            error_log(in_array($type, $types_cuves));
 
             if ($ref === 'TRANS') {
                 $transport_found = true;
@@ -244,7 +251,8 @@ class ISPAG_Achat_Renderer {
                 $current_dedouanement_price = $unit_price;
             } else {
                 // 1. Logique de Volume
-                if ($type === 1) {
+                if (in_array($type, $types_cuves)) {
+                    error_log(in_array($type, $types_cuves));
                     if (!empty($art->technical_volume)) {
                         $total_volume += ($art->technical_volume * $qty);
                     } 
@@ -293,7 +301,7 @@ class ISPAG_Achat_Renderer {
                     data-type="<?php echo $type; ?>" 
                     data-amount="<?php echo $amount; ?>" 
                     data-achat="<?php echo $achat_id; ?>">
-                <?php echo esc_html($btn_label); ?>
+                <?php echo esc_html($btn_label); ?> 
             </button>
         </div>
         <?php
