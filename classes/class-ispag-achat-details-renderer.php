@@ -78,7 +78,7 @@ class ISPAG_Achat_Details_Renderer {
             echo '</p>';
 
             // Logique de copie mise à jour
-            if (in_array($champ, ['AdresseDeLivraison', 'DeliveryAdresse2', 'DeliveryAdresse3', 'Postal code', 'City'])) {
+            if (in_array($champ, ['AdresseDeLivraison', 'DeliveryAdresse2', 'DeliveryAdresse3', 'NIP', 'City'])) {
                 if(!empty($val)) $copie_ligne1[] = $val;
             } elseif ($champ === 'PersonneContact') {
                 $copie_ligne2 = $val;
@@ -91,7 +91,8 @@ class ISPAG_Achat_Details_Renderer {
         // Zone invisible avec texte à copier
         echo '<pre id="delivery-info-copy" style="display:none;">' .
             esc_html(implode("\n", array_filter([
-                implode(", ", array_filter($copie_ligne1)),
+                // On remplace la virgule par un retour à la ligne ici aussi
+                implode("\n", array_filter($copie_ligne1)), 
                 $copie_ligne2
             ]))) .
         '</pre>';
@@ -148,6 +149,9 @@ class ISPAG_Achat_Details_Renderer {
             $data_delivery['purchase_order'] = $achat_id;
             $wpdb->insert($table, $data_delivery);
         }
+
+        $manager = new ISPAG_CarryBox_Manager($deal_id);
+        $manager->generate_carrybox_process();
 
         // 4. RÉGÉNÉRATION DU HTML POUR LE FRONT-END
         ob_start();
