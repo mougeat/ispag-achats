@@ -60,6 +60,9 @@ class ISPAG_Achat_Details_Renderer {
         $copie_ligne2 = '';
 
         echo '<div id="delivery-info-text">';
+        $adresse_principale = [];
+        $nip_city = "";
+
         foreach ($champs as $champ => $label) {
             $val = $infos->$champ ?? '';
             echo '<p><strong>' . esc_html($label) . ' :</strong> ';
@@ -70,29 +73,45 @@ class ISPAG_Achat_Details_Renderer {
                             data-value="' . esc_attr($val) . '" 
                             data-deal="' . esc_attr($infos->purchase_order) . '"
                             data-source="delivery">';
-                echo esc_html($val) ?: '---'; // Affiche --- si vide
+                echo esc_html($val) ?: '---'; 
                 echo ' <span class="edit-icon">✏️</span></span>';
             } else {
                 echo esc_html($val);
             }
             echo '</p>';
 
-            // Logique de copie mise à jour
-            if (in_array($champ, ['AdresseDeLivraison', 'DeliveryAdresse2', 'DeliveryAdresse3', 'NIP', 'City'])) {
-                if(!empty($val)) $copie_ligne1[] = $val;
-            } elseif ($champ === 'PersonneContact') {
-                $copie_ligne2 = $val;
-            } elseif ($champ === 'num_tel_contact') {
-                $copie_ligne2 .= ($copie_ligne2 ? ' : ' : '') . $val;
+            // LOGIQUE DE COPIE MISE À JOUR
+            if (!empty($val)) {
+                // 1. Les adresses vont chacune sur une ligne
+                if (in_array($champ, ['AdresseDeLivraison', 'DeliveryAdresse2', 'DeliveryAdresse3'])) {
+                    $adresse_principale[] = $val;
+                } 
+                // 2. NIP et City sont combinés sur la même ligne (NIP + Espace + City)
+                elseif ($champ === 'NIP') {
+                    $nip_city = $val . ($nip_city ? ' ' . $nip_city : '');
+                } elseif ($champ === 'City') {
+                    $nip_city = ($nip_city ? $nip_city . ' ' : '') . $val;
+                } 
+                // 3. Contact et téléphone
+                elseif ($champ === 'PersonneContact') {
+                    $copie_ligne2 = $val;
+                } elseif ($champ === 'num_tel_contact') {
+                    $copie_ligne2 .= ($copie_ligne2 ? ' : ' : '') . $val;
+                }
             }
         }
         echo '</div>';
 
+        // Construction finale du bloc adresse
+        // On fusionne les lignes d'adresses et on ajoute la ligne NIP City à la fin
+        if (!empty($nip_city)) {
+            $adresse_principale[] = $nip_city;
+        }
+
         // Zone invisible avec texte à copier
         echo '<pre id="delivery-info-copy" style="display:none;">' .
             esc_html(implode("\n", array_filter([
-                // On remplace la virgule par un retour à la ligne ici aussi
-                implode("\n", array_filter($copie_ligne1)), 
+                implode("\n", array_filter($adresse_principale)), 
                 $copie_ligne2
             ]))) .
         '</pre>';
