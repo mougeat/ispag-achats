@@ -22,12 +22,14 @@ class ISPAG_Achat_Renderer {
         $repo = new ISPAG_Achat_Article_Repository();
         $articles = $repo->get_articles_by_order(null, $achat_id);
 
-        self::display_purchase_adjustments($achat_id, $articles);
+        $grouped_articles = self::group_articles_by_group_name($articles);
 
-        if (empty($articles)) {
+        self::display_purchase_adjustments($achat_id, $grouped_articles);
+
+        if (empty($grouped_articles)) {
             echo '<div class="ispag-empty-state">';
                 echo '<span class="dashicons dashicons-cart"></span>';
-                echo '<div class="ispag-notice warning"><p>' . __('Aucun article pour cette commande fournisseur.', 'creation-reservoir') . '</p></div>';
+                echo '<div class="ispag-notice warning"><p>' . __('No items were found for this supplier order.', 'creation-reservoir') . '</p></div>';
                 echo '<div class="ispag-actions-group">';
                     echo self::get_add_article_btn($achat_id);
                     echo self::get_delete_purchase_btn($achat_id);
@@ -42,7 +44,11 @@ class ISPAG_Achat_Renderer {
             
             // En-tête avec les actions globales (Print, Bulk, etc.)
             echo '<div class="ispag-achat-header-actions">';
-                echo apply_filters('ispag_bulk_selected_article', '', $achat_id);
+                echo '<div class="ispag-article-header-global" style="margin-bottom: 1rem;">
+                        <input type="checkbox" id="select-all-articles" class="ispag-article-checkbox">
+                        <label for="select-all-articles">' .  __('Select all', 'creation-reservoir') . '</label>
+                    </div>';
+                
                 echo '<div class="ispag-buttons-right">';
                     echo apply_filters('ispag_print_purchase_order_btn', null, $achat_id); 
                     echo ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
@@ -50,22 +56,28 @@ class ISPAG_Achat_Renderer {
             echo '</div>';
 
             echo '<div class="ispag-achat-articles-list">';
-            foreach ($articles as $article) {
-                $escaped_group = esc_html(stripslashes($article->Groupe ?? ''));
-                $group_id = 'group-title-' . md5($article->Groupe ?? '');
+            foreach ($grouped_articles as $group_name => $items) {
+                $escaped_group = esc_html(stripslashes($group_name));
+                $group_id = 'group-title-' . md5($group_name);
                 
-                echo '<div class="ispag-article-group-wrapper">';
+                echo '<div class="ispag-article-group-wrapper" style="margin-bottom: 30px;">';
                     echo '<div class="ispag-article-group-header">';
                         echo '<h3 id="' . esc_attr($group_id) . '"><span class="dashicons dashicons-category"></span> ' . $escaped_group . '</h3>';
                         echo '<button class="ispag-btn-copy-group" data-target="' . esc_attr($group_id) . '" title="Copier le titre">📋</button>';
                     echo '</div>';
 
-                    // Chaque bloc d'article sera rendu avec le nouveau design via cette méthode
+                    // Conteneur pour tous les articles de ce groupe
                     echo '<div class="ispag-article-card-container">';
-                        self::render_article_block($article);
-                    echo '</div>';
-                echo '</div>';
+                        
+                        // --- BOUCLE SUR LES ARTICLES DU GROUPE ---
+                        foreach ($items as $article) {
+                            self::render_article_block($article);
+                        }
+                        
+                    echo '</div>'; // .ispag-article-card-container
+                echo '</div>'; // .ispag-article-group-wrapper
             }
+            echo apply_filters('ispag_bulk_selected_article', '', $achat_id);
             echo '</div>';
 
             // Barre d'actions flottante ou fixe en bas
@@ -82,6 +94,26 @@ class ISPAG_Achat_Renderer {
         
         // echo self::display_modal();
         echo ISPAG_Detail_Page::display_modal();
+    }
+
+    /**
+     * Regroupe les articles par leur propriété 'Groupe'
+     */
+    private static function group_articles_by_group_name($articles) {
+        $grouped = [];
+        
+        foreach ($articles as $article) {
+            // On définit un nom par défaut si le groupe est vide
+            $group_name = !empty($article->Groupe) ? $article->Groupe : __('Sans groupe', 'ispag-crm');
+            
+            if (!isset($grouped[$group_name])) {
+                $grouped[$group_name] = [];
+            }
+            
+            $grouped[$group_name][] = $article;
+        }
+        
+        return $grouped;
     }
 
     public static function reload_article_row($html, $article_id){
@@ -209,15 +241,19 @@ class ISPAG_Achat_Renderer {
         return '<button id="ispag-add-article" data-poid="' . esc_attr($achat_id) .'" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir'). '</button>';
     }
 
-    private static function display_purchase_adjustments($achat_id, $articles) {
+    private static function display_purchase_adjustments($achat_id, $grouped_articles) {
         global $wpdb;
         
         $repo_achat = new ISPAG_Achat_Repository();
         $achat = $repo_achat->get_achat_by_id(null, $achat_id);
-        error_log('[DEBUG] ARTICLE ACHATS');
-        error_log(print_r($articles, true));
+        // error_log('[DEBUG] ARTICLE ACHATS');
+        // error_log(print_r($grouped_articles, true));
         
         if (!$achat) return;
+
+        if ($achat->allow_price_recalculation == 0) {
+            return;
+        }
 
         $supplier_id = intval($achat->IdFournisseur);
         $currency = strtoupper($achat->Devise ?? 'CHF');
@@ -230,44 +266,40 @@ class ISPAG_Achat_Renderer {
         $current_transport_price = 0;
         $current_dedouanement_price = 0;
 
-        foreach ($articles as $art) {
-            $ref = isset($art->RefSurMesure) ? strtoupper(trim($art->RefSurMesure)) : '';
-            
-            // On récupère les valeurs calculées par ton repo (TotalPriceNet)
-            $total_price_net = floatval($art->TotalPriceNet ?? 0);
-            $unit_price = floatval($art->UnitPrice ?? 0);
-            $qty = intval($art->Qty ?? 0);
-            $type = intval($art->Type ?? 0);
-            $types_cuves = [1, 6, 7, 9, 10, 12]; // Liste des types à inclure
-            error_log(print_r($type, true));
-            error_log(print_r($types_cuves, true));
-            error_log(in_array($type, $types_cuves));
+        foreach ($grouped_articles as $group_name => $items) {
+            foreach ($items as $art) { // On boucle sur les articles du groupe
+                $ref = isset($art->RefSurMesure) ? strtoupper(trim($art->RefSurMesure)) : '';
+                
+                $total_price_net = floatval($art->TotalPriceNet ?? 0);
+                $unit_price = floatval($art->UnitPrice ?? 0);
+                $qty = intval($art->Qty ?? 0);
+                $type = intval($art->Type ?? 0);
+                $types_cuves = [1, 6, 7, 9, 10, 12];
 
-            if ($ref === 'TRANS') {
-                $transport_found = true;
-                $current_transport_price = $unit_price;
-            } elseif ($ref === 'DED') {
-                $dedouanement_found = true;
-                $current_dedouanement_price = $unit_price;
-            } else {
-                // 1. Logique de Volume
-                if (in_array($type, $types_cuves)) {
-                    error_log(in_array($type, $types_cuves));
-                    if (!empty($art->technical_volume)) {
-                        $total_volume += ($art->technical_volume * $qty);
-                    } 
-                    elseif (preg_match('/(\d+)\s*litres/i', $art->RefSurMesure, $matches)) {
-                        $total_volume += floatval($matches[1]) * $qty;
-                    }
-                }
-
-                // 2. Calcul du montant taxable (EUR -> DED)
-                // On utilise TotalPriceNet qui contient déjà : (Prix Brut * (1 - Rabais/100)) * Qty
-                // Si TotalPriceNet n'est pas setté (cas imprévu), on fait un fallback sur le brut
-                if ($total_price_net > 0) {
-                    $total_amount_net_taxable += $total_price_net;
+                if ($ref === 'TRANS') {
+                    $transport_found = true;
+                    $current_transport_price = $unit_price;
+                } elseif ($ref === 'DED') {
+                    $dedouanement_found = true;
+                    $current_dedouanement_price = $unit_price;
                 } else {
-                    $total_amount_net_taxable += ($unit_price * $qty);
+                    // Logique de Volume
+                    if (in_array($type, $types_cuves)) {
+                        // Vérifiez bien si technical_volume existe dans l'objet $art
+                        if (!empty($art->technical_volume)) {
+                            $total_volume += (floatval($art->technical_volume) * $qty);
+                        } 
+                        elseif (preg_match('/(\d+)\s*litres/i', $art->RefSurMesure, $matches)) {
+                            $total_volume += floatval($matches[1]) * $qty;
+                        }
+                    }
+                    
+                    // Calcul montant taxable
+                    if ($total_price_net > 0) {
+                        $total_amount_net_taxable += $total_price_net;
+                    } else {
+                        $total_amount_net_taxable += ($unit_price * $qty);
+                    }
                 }
             }
         }

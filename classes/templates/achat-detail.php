@@ -3,28 +3,23 @@
 // echo '<pre>';
 // var_dump($achat);
 // echo '</pre>';
-?>
-<?php if(current_user_can('view_supplier_order')): ?>
-    <a href="<?= esc_url($achat->project_url) ?>" class="ispag-btn ispag-btn-secondary-outlined"><?= esc_html(__('To project', 'creation-reservoir')) ?></a>
-<?php endif; 
+
 $can_edit = current_user_can('edit_supplier_order');
 ?>
- 
+
+  
 <div class="ispag-achat-header">
-    <h2 style="margin-top:0; font-size:1.8rem;" class="ispag-inline-edit"
+    <h2 id="editable-purchase-title"
+        class="ispag-editable-title" 
+        contenteditable="true" 
+        spellcheck="false"
         data-source="purchase"
         data-name="RefCommande"
         data-value="<?php echo esc_attr(stripslashes($achat->RefCommande)); ?>"
         data-deal="<?php echo esc_attr($achat->Id); ?>"
         <?php echo $can_edit ? '' : 'data-readonly="true"'; ?> >
         🧾 <?php echo esc_html(stripslashes($achat->RefCommande)); ?>
-        <?php if ($can_edit): ?>
-            <span class="edit-icon" style="cursor:pointer; margin-left:4px;">
-                <img draggable="false" role="img" class="emoji" alt="✏️"
-                    src="https://s.w.org/images/core/emoji/15.1.0/svg/270f.svg"
-                    width="14" height="14">
-            </span>
-        <?php endif; ?>
+        
     </h2>
 
 
@@ -89,8 +84,37 @@ $can_edit = current_user_can('edit_supplier_order');
             <ul id="achat-status-dropdown" class="ispag_status_dropdown" style="display:none; position:absolute; z-index:999; background:#fff; padding:0.5rem; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.1); list-style:none;">
             </ul>
         </div>
+    
+        <div id="achat-status-wrapper" data-achat-id="<?php echo esc_attr($achat->Id); ?>">
+            <?php
+            $created_by_user = $achat->created_by ? get_userdata((int)$achat->created_by) : null;
+            $created_by_name = $created_by_user ? $created_by_user->display_name : '—';
+            ?>
+            <strong>👨‍🦰 <?php echo __('Managed by', 'creation-reservoir'); ?></strong><br>
+            <span 
+                data-source="purchase"
+                data-name="created_by"
+                data-value="<?php echo esc_attr($achat->created_by); ?>"
+                data-deal="<?php echo esc_attr($achat->Id); ?>"
+                data-field-type="text"
+                data-readonly="true"
+                >
+                
+                <?php echo esc_html($created_by_name); ?>
+            </span>
+        </div>
     </div>
 </div>
+
+<?php if(current_user_can('view_supplier_order')): 
+    $liste_url = trailingslashit(get_site_url()) . 'liste-des-achats/';
+    ?>
+
+    <a href="<?= esc_url($achat->project_url) ?>" class="ispag-btn ispag-btn-secondary-outlined"><?= esc_html(__('To project', 'creation-reservoir')) ?></a>
+    <a href="<?= esc_url(add_query_arg('search', $achat->hubspot_deal_id, $liste_url)) ?>" class="ispag-btn ispag-btn-secondary-outlined"><?= esc_html(__('To purchase list', 'creation-reservoir')) ?></a>
+<?php endif; 
+
+?>
 
 <select id="ispag-fournisseurs-source" style="display:none;">
     <?php foreach ($fournisseurs as $f): ?>
@@ -100,27 +124,60 @@ $can_edit = current_user_can('edit_supplier_order');
 
 <!-- message information -->
 <div id="ispag-bulk-message" class="bulk_message"></div>
-<div class="ispag-article-header-global" style="margin-bottom: 1rem;">
+<!-- <div class="ispag-article-header-global" style="margin-bottom: 1rem;">
     <input type="checkbox" id="select-all-articles" class="ispag-article-checkbox">
     <label for="select-all-articles"><?php echo __('Select all', 'creation-reservoir'); ?></label>
-</div>
+</div> -->
 <script>
+// document.addEventListener('DOMContentLoaded', function () {
+//     const selectAll = document.getElementById('select-all-articles');
+//     const checkboxes = document.querySelectorAll('.ispag-article-checkbox');
+
+//     if (selectAll) {
+//         selectAll.addEventListener('change', function () {
+//             checkboxes.forEach(cb => cb.checked = selectAll.checked);
+//         });
+
+//         checkboxes.forEach(cb => {
+//             cb.addEventListener('change', function () {
+//                 const allChecked = [...checkboxes].every(c => c.checked);
+//                 selectAll.checked = allChecked;
+//             });
+//         });
+//     }
+// });
 document.addEventListener('DOMContentLoaded', function () {
     const selectAll = document.getElementById('select-all-articles');
     const checkboxes = document.querySelectorAll('.ispag-article-checkbox');
+    const bulkActionsDiv = document.querySelector('.ispag-bulk-actions');
 
+    // Fonction pour mettre à jour l'état de "Select all" et afficher/masquer les bulk actions
+    function updateBulkActions() {
+        const allChecked = [...checkboxes].every(cb => cb.checked);
+        const anyChecked = [...checkboxes].some(cb => cb.checked);
+
+        if (selectAll) {
+            selectAll.checked = allChecked;
+        }
+
+        // Affiche ou masque les bulk actions selon si au moins une case est cochée
+        if (bulkActionsDiv) {
+            bulkActionsDiv.style.display = anyChecked ? 'block' : 'none';
+        }
+    }
+
+    // Écouteur pour la case "Select all"
     if (selectAll) {
         selectAll.addEventListener('change', function () {
             checkboxes.forEach(cb => cb.checked = selectAll.checked);
-        });
-
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', function () {
-                const allChecked = [...checkboxes].every(c => c.checked);
-                selectAll.checked = allChecked;
-            });
+            updateBulkActions();
         });
     }
+
+    // Écouteur pour chaque case individuelle
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateBulkActions);
+    });
 });
 </script>
 

@@ -36,8 +36,15 @@ function handleAddressUpdate(btn, actionName) {
     });
 }
 
-jQuery(document).on('click', '.ispag-delete-achat', function () {
-    if (!confirm("Supprimer cet achat ?")) return;
+jQuery(document).on('click', '.ispag-delete-achat', async function () {
+    // if (!confirm("Supprimer cet achat ?")) return;
+
+     const confirmed = await ispagConfirm(ispag_texts.confirm_delete_purchase + ' ?', {
+        labelOk:     ispag_texts.delete,
+        labelCancel: ispag_texts.cancel,
+        danger:      true,
+    });
+    if (!confirmed) return;
 
     const btn = jQuery(this);
     const achatId = btn.data('achat-id');
@@ -47,7 +54,7 @@ jQuery(document).on('click', '.ispag-delete-achat', function () {
         achat_id: achatId
     }, function (response) {
         if (response.success) {
-            alert('Achat supprimé');
+            // alert('Achat supprimé');
             window.close();
         } else {
             alert('Erreur: ' + response.data);

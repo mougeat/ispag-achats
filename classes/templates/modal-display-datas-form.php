@@ -54,6 +54,10 @@ $can_view_prices = $user_can_view_order;
                     <div id="ispag-tank-form-container">
                         <?php do_action('ispag_render_tank_form', $article->IdCommandeClient); ?>
                     </div>
+                <?php elseif ($article->Type == 5): ?>
+                    <div class="ispag-exchanger-form-container">
+                        <?php echo apply_filters('ispag_render_plate_heat_exchanger_form', $article->IdCommandeClient); ?>
+                    </div>
                 <?php else: 
                     $description = str_ireplace(['<br>', '<br />', '<br/>'], "\n", $article->DescSurMesure);
                     $description = stripslashes($description);
@@ -78,6 +82,10 @@ $can_view_prices = $user_can_view_order;
         <?php if ($article->Type == 1): ?>
             <div class="ispag-modal-grid">
                 <?php do_action('ispag_render_tank_dimensions_form', $article->IdCommandeClient, 'purchase'); ?>
+            </div>
+        <?php elseif ($article->Type == 5): ?>
+            <div class="ispag-modal-grid">
+                <?php do_action('ispag_render_plate_heat_exchanger_form', $article->IdCommandeClient, 'purchase');  ?>
             </div>
         <?php endif; ?>
 
@@ -115,7 +123,7 @@ $can_view_prices = $user_can_view_order;
 
       <?php if ($user_can_edit): ?>
       <div class="ispag-modal-grid" style="margin-top: 20px;">
-          <div class="ispag-modal-full">
+            <div class="ispag-modal-left">
               <div class="ispag-status-box-gray" style="background: #f9f9f9; border: 1px solid #e5e5e5; border-radius: 8px; padding: 15px;">
                   <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; text-transform: uppercase; color: #666; letter-spacing: 0.5px;">
                       <span class="dashicons dashicons-yes" style="font-size: 18px; width: 18px; height: 18px; color: #d63638;"></span> 
@@ -141,7 +149,17 @@ $can_view_prices = $user_can_view_order;
 
                   </div>
               </div>
-          </div>
+            </div>
+
+            <div class="ispag-modal-right detail-block">
+                <h3><span class="dashicons dashicons-admin-settings"></span> <?= __('Classification', 'creation-reservoir') ?></h3>
+                
+                    <div class="ispag-field">
+                        <label><?= __('Serial No', 'creation-reservoir') ?></label>
+                        <input type="text" name="serial_no" value="<?= esc_attr($article->serial_no) ?>" style="width:100%;">
+                    </div>
+
+            </div>
       </div>
       <?php endif; ?>
 
@@ -149,7 +167,7 @@ $can_view_prices = $user_can_view_order;
             <button type="submit" class="ispag-btn ispag-btn-red-outlined">
                 <span class="dashicons dashicons-media-archive"></span> <?= __('Save', 'creation-reservoir') ?>
             </button>
-            <button type="button" class="ispag-btn ispag-btn-secondary-outlined" onclick="closeIspagModal()">
+            <button type="button" class="ispag-btn ispag-btn-secondary-outlined ispag-btn-cancel" >
                 <?= __('Cancel', 'creation-reservoir') ?>
             </button>
         </div>

@@ -23,7 +23,8 @@ class ISPAG_Achat_Manager {
             self::$instance = new self();
         }
 
-        add_shortcode('ispag_achats', [self::class, 'shortcode_achats']);
+        // add_shortcode('ispag_achats', [self::class, 'shortcode_achats']);
+        add_shortcode('ispag_achats', [self::class, 'ispag_achats_shortcode']);
         add_shortcode('ispag_achat_detail', [self::class, 'ispag_achat_detail_shortcode']);
 
 
@@ -63,6 +64,7 @@ class ISPAG_Achat_Manager {
             'nonce'             => wp_create_nonce('ispag_achat_nonce'),
             'loading_text'      => __('Loading', 'creation-reservoir'),
             'all_loaded_text'   => __('All projects are loaded', 'creation-reservoir'),
+            'security'          => wp_create_nonce('ispag_achat_nonce'), // Ajout de la sécurité pour les filtres
         ]);
 
         // Récupérer les fournisseurs pour l’inline-edit
@@ -78,14 +80,69 @@ class ISPAG_Achat_Manager {
             'ispag-header-achats',
             'ispag_fournisseurs',
             [
-                'ajaxurl'      => admin_url('admin-ajax.php'),
-                'nonce'        => wp_create_nonce('ispag_achat_nonce'),
-                'fournisseurs' => $formatted_fournisseurs // On met les fournisseurs ici aussi
+                'ajaxurl'       => admin_url('admin-ajax.php'),
+                'nonce'         => wp_create_nonce('ispag_achat_nonce'),
+                'security'      => wp_create_nonce('ispag_fournisseurs'),
+                'fournisseurs'  => $formatted_fournisseurs // On met les fournisseurs ici aussi
             ]
         );
     }
 
+    public static function ispag_achats_shortcode($atts) {
+        if (!current_user_can('view_supplier_order')) {
+            ob_start();
+            echo '<div class="ispag-alert ispag-alert-danger">
+                        <i class="dashicons dashicons-lock"></i>
+                        <strong>' . esc_html__('Restricted access', 'ispag-crm') . ' :</strong> ' .
+                        esc_html__('You do not have the necessary rights to view this order.', 'ispag-crm') . '<br/>
+                        <a href="' . home_url('/wp-login.php') . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
+                    </div>';
+            return ob_get_clean();
+        }
+
+        // Récupère les filtres depuis $_GET si nécessaire
+        $filters = [
+            'search' => isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '',
+            'status' => isset($_GET['status']) ? sanitize_text_field($_GET['status']) : 'all',
+            'fournisseur' => isset($_GET['fournisseur']) ? sanitize_text_field($_GET['fournisseur']) : 'all',
+            'responsable' => isset($_GET['responsable']) ? sanitize_text_field($_GET['responsable']) : 'all',
+        ];
+
+        // Inclut le template des filtres
+        ob_start();
+        include plugin_dir_path(__FILE__) . 'templates/achats-filters.php';
+
+        // Structure du tableau
+        echo '<div class="ispag-table-wrapper">';
+        echo '<table class="ispag-project-table">';
+        echo '<thead><tr>
+                <th>#</th>
+                <th>' . __('Reference', 'creation-reservoir') . '</th>
+                <th>' . __('Order date', 'creation-reservoir') . '</th>
+                <th>' . __('Delivery date', 'creation-reservoir') . '</th>
+                <th>' . __('Supplier', 'creation-reservoir') . '</th>
+                <th>' . __('Order amount', 'creation-reservoir') . '</th>
+                <th>' . __('Confirmation de commande', 'creation-reservoir') . '</th>
+                <th>' . __('State', 'creation-reservoir') . '</th>
+            </tr></thead>';
+        echo '<tbody id="ispag-achats-list"></tbody>'; // ✅ ICI les résultats seront insérés
+        echo '</table></div>';
+        echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Chargement...</div>';
+
+        return ob_get_clean();
+    }
+
     public static function shortcode_achats($atts) {
+
+        if ( ! current_user_can( 'view_supplier_order' ) ) {
+            return '<div class="ispag-alert ispag-alert-danger">
+                        <i class="dashicons dashicons-lock"></i> 
+                        <strong>' . esc_html__( 'Restricted access', 'ispag-crm' ) . ' :</strong> ' . 
+                         esc_html__( 'You do not have the necessary rights to view this order.', 'ispag-crm' ) . '<br/>
+                        <a href ="'. home_url( '/wp-login.php' ) . '">' . esc_html__( 'To login page', 'ispag-crm' ) . '</a>
+                    </div>';
+        }
+        
         $can_view_supplier_orders = current_user_can('view_supplier_order');
 
         $search_query = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
@@ -129,23 +186,80 @@ class ISPAG_Achat_Manager {
         return $html;
     }
 
+    /**
+     * Récupère les états des commandes depuis la table `wor9711_achats_etat_commandes_fournisseur`
+     * et les adapte au multilingue.
+     */
+    public static function get_achat_etats() {
+        global $wpdb;
+        $table_etats = $wpdb->prefix . 'achats_etat_commandes_fournisseur';
+
+        // Récupère tous les états
+        $etats = $wpdb->get_results("SELECT Id, Etat, ClassCss, color FROM {$table_etats} ORDER BY ordre ASC");
+
+        // Traduit les états en français (ou autre langue)
+        $translated_etats = [];
+        foreach ($etats as $etat) {
+            $translated_etat = [
+                'Id' => $etat->Id,
+                'Etat' => $etat->Etat,
+                'ClassCss' => $etat->ClassCss,
+                'color' => $etat->color,
+                'translated' => __($etat->Etat, 'creation-reservoir') // Traduit l'état
+            ];
+            $translated_etats[] = $translated_etat;
+        }
+
+        return $translated_etats;
+    }
+
     public static function render_achat_row($achat, $index = 0) {
-        $date = date('d.m.Y', $achat->TimestampDateCreation);
-        $reception = $achat->TimestampDateLivraisonConfirme ? date('d.m.Y', $achat->TimestampDateLivraisonConfirme) : '-';
-        $bgcolor = !empty($achat->color) ? esc_attr($achat->color) : '#ccc';
+        global $wpdb;
+
+        $date_creation = date('d.m.Y', $achat->TimestampDateCreation);
+        $date_reception = $achat->TimestampDateReceptionConfirmee ? date('d.m.Y', $achat->TimestampDateReceptionConfirmee) : '-';
+
+        // Récupérer le nom du fournisseur
+        $fournisseur_nom = isset($achat->fournisseur_nom) ? $achat->fournisseur_nom : '';
+        if (empty($fournisseur_nom) && isset($achat->IdFournisseur)) {
+            $fournisseur_nom = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d",
+                    $achat->IdFournisseur
+                )
+            );
+        }
+
+        // Récupérer le nom du responsable
+        $responsable_nom = isset($achat->responsable_nom) ? $achat->responsable_nom : '';
+        if (empty($responsable_nom) && isset($achat->created_by)) {
+            $user_info = get_userdata($achat->created_by);
+            $responsable_nom = $user_info ? $user_info->display_name : __('Unknown User', 'ispag-crm');
+        }
+
+        // Récupérer l'état traduit depuis la table `wor9711_achats_etat_commandes_fournisseur`
+        $etat_id = isset($achat->EtatCommande) ? $achat->EtatCommande : 0;
+        $etat_info = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT Etat, ClassCss, color FROM {$wpdb->prefix}achats_etat_commandes_fournisseur WHERE Id = %d",
+                $etat_id
+            )
+        );
+
+        $etat_text = $etat_info ? __($etat_info->Etat, 'creation-reservoir') : __('Unknown', 'creation-reservoir');
+        $bgcolor = $etat_info ? $etat_info->color : '#ccc';
+        $class_css = $etat_info ? $etat_info->ClassCss : '';
 
         return '
-            <tr> 
+            <tr>
                 <td style="background-color:#D1E7DD;">' . ($index + 1) . '</td>
-                <td><a href="' . esc_url($achat->purchase_url) . '" target="_blank" class="ispag_achat_link">' . esc_html(stripslashes($achat->RefCommande)) . '</a></td>
-                
-                <td>' . esc_html($date) . '</td>
-                <td>' . esc_html($reception) . '</td>
-                <td>' . esc_html(stripslashes($achat->Fournisseur)) . '</td>
-                <td>' . number_format_i18n($achat->purchase_total, 2) . '</td>
+                <td><a href="' . esc_url(home_url('/details-achats/?poid=' . $achat->Id)) . '" target="_blank" class="ispag_achat_link"><strong>' . esc_html(stripslashes($achat->RefCommande)) . '</strong></a></td>
+                <td>' . esc_html($date_creation) . '</td>
+                <td>' . esc_html($date_reception) . '</td>
+                <td><strong>' . esc_html($fournisseur_nom) . '</strong><br><small class="creator-name">' . __('by', 'creation-reservoir') . ' : ' . esc_html($responsable_nom) . '</small></td>
+                <td>' . number_format_i18n($achat->prix_net_total, 2) . '</td> 
                 <td>' . esc_html($achat->ConfCmdFournisseur) . '</td>
-                <td><span class="ispag-state-badge" style="background-color:' . $bgcolor . '; opacity: 0.8;">' . esc_html__($achat->Etat, 'creation-reservoir') . '</span></td>
-                
+                <td><span class="ispag-state-badge ' . esc_attr($class_css) . '" style="background-color:' . esc_attr($bgcolor) . '; opacity: 0.8;">' . esc_html($etat_text) . '</span></td>
             </tr>
         ';
     }
@@ -168,9 +282,31 @@ class ISPAG_Achat_Manager {
         ob_start();
         global $wpdb;
         
-        if(!current_user_can('view_supplier_order')) return '';
+        if ( ! current_user_can( 'view_supplier_order' ) ) {
+            return '<div class="ispag-alert ispag-alert-danger">
+                        <i class="dashicons dashicons-lock"></i> 
+                        <strong>' . esc_html__( 'Restricted access', 'ispag-crm' ) . ' :</strong> ' . 
+                         esc_html__( 'You do not have the necessary rights to view this order.', 'ispag-crm' ) . '<br/>
+                        <a href ="'. home_url( '/wp-login.php' ) . '">' . esc_html__( 'To login page', 'ispag-crm' ) . '</a>
+                    </div>';
+        }
         
-        $achat_id = isset($_GET['poid']) ? intval($_GET['poid']) : 0;
+        // On récupère la variable via le moteur WP (prioritaire pour les jolies URLs)
+        $achat_id = get_query_var('poid');
+        // Si c'est vide (cas où on arrive via une URL classique ?poid=123), on check le $_GET
+        if ( empty( $achat_id ) && isset( $_GET['poid'] ) ) {
+            $achat_id = sanitize_text_field( $_GET['poid'] );
+        }
+
+        // Sécurité supplémentaire : s'assurer que c'est un nombre (puisque c'est un ID)
+        $achat_id = absint( $achat_id );
+
+        if ( ! $achat_id ) {
+            // Gérer l'erreur ou rediriger si l'ID est manquant
+            echo '<div class="ispag-error-message">ID d\'achat manquant.</div>' ;
+            return;
+        }
+        
         if (!$achat_id) return 'Achat introuvable.';
 
         do_action('ispag_check_auto_status_for_achat', $achat_id);
@@ -462,24 +598,26 @@ class ISPAG_Achat_Manager {
 
     public static function handle_saved_article($html, $article_id, $post_data) {
         global $wpdb;
-// \1('Data received for article ' .$article_id . ' in handle_saved_article ' . print_r($post_data, true));
 
+        $table_purchase = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
+        $table_project  = 'wor9711_achats_details_commande';
 
         $data = [
-            'RefSurMesure' => sanitize_text_field($post_data['article_title'] ?? ''),
-            'DescSurMesure' => wp_kses_post($post_data['description'] ?? ''),
-            'UnitPrice' => floatval($post_data['sales_price'] ?? 0),
-            'discount' => floatval($post_data['discount'] ?? 0),
-            'Qty' => intval($post_data['qty'] ?? 1),
-            'IdArticleStandard' => intval($post_data['IdArticleStandard'] ?? 0),
+            'RefSurMesure'                   => sanitize_text_field($post_data['article_title'] ?? ''),
+            'DescSurMesure'                  => wp_kses_post($post_data['description'] ?? ''),
+            'UnitPrice'                      => floatval($post_data['sales_price'] ?? 0),
+            'discount'                       => floatval($post_data['discount'] ?? 0),
+            'Qty'                            => intval($post_data['qty'] ?? 1),
+            'IdArticleStandard'              => intval($post_data['IdArticleStandard'] ?? 0),
             'TimestampDateLivraisonConfirme' => !empty($post_data['date_depart']) ? strtotime($post_data['date_depart']) : 0,
-            // 'Livre' => isset($post_data['Livre']) ? 1 : null,
-            // 'Facture' => isset($post_data['invoiced']) ? time() : null,
         ];
 
+        $project_data = [
+            'serial_no' => sanitize_text_field($post_data['serial_no'] ?? ''),
+        ];
 
         if (!$article_id) {
-            // Création
+            // ── Création ──────────────────────────────────────────────────────
             $poid = intval($post_data['poid'] ?? 0);
 
             if (!$poid) {
@@ -488,20 +626,35 @@ class ISPAG_Achat_Manager {
 
             $data['IdCommande'] = $poid;
 
-            $inserted = $wpdb->insert($wpdb->prefix . 'achats_articles_cmd_fournisseurs', $data);
+            $inserted = $wpdb->insert($table_purchase, $data);
 
             if ($inserted === false) {
-                return ['success' => false, 'message' => 'Erreur lors de l’insertion'];
+                return ['success' => false, 'message' => 'Erreur lors de l\'insertion'];
             }
 
             return ['success' => true, 'message' => 'Création OK'];
         }
 
-        // Mise à jour
-        $updated = $wpdb->update($wpdb->prefix . 'achats_articles_cmd_fournisseurs', $data, ['Id' => $article_id]);
+        // ── Mise à jour de la table achat ─────────────────────────────────────
+        $updated = $wpdb->update($table_purchase, $data, ['Id' => $article_id]);
 
         if ($updated === false) {
             return ['success' => false, 'message' => 'Erreur à la mise à jour'];
+        }
+
+        // ── Récupération de IdCommandeClient ──────────────────────────────────
+        $id_commande_client = $wpdb->get_var($wpdb->prepare(
+            "SELECT IdCommandeClient FROM {$table_purchase} WHERE Id = %d",
+            $article_id
+        ));
+
+        // ── Mise à jour de la table projet si IdCommandeClient trouvé ─────────
+        if (!empty($id_commande_client) && !empty(array_filter($project_data))) {
+            $wpdb->update(
+                $table_project,
+                $project_data,
+                ['Id' => $id_commande_client]
+            );
         }
 
         return ['success' => true, 'message' => 'Mise à jour OK'];
@@ -509,21 +662,24 @@ class ISPAG_Achat_Manager {
 
     public function set_article_as_delivered($html, $ids, $date) {
         foreach ($ids as $article_id) {
-            // Récupérer la valeur actuelle de Qty pour cet article
             $qty = $this->wpdb->get_var(
                 $this->wpdb->prepare(
-                    "SELECT Qty FROM {$this->table_articles} WHERE IdCommandeClient = %d",
+                    "SELECT Qty FROM {$this->table_articles} WHERE Id = %d",
                     $article_id
                 )
             );
 
             if ($qty !== null) {
-                // Mettre à jour Recu avec la valeur de Qty
                 $this->wpdb->update(
                     $this->table_articles,
-                    ['Recu' => $qty],
-                    ['IdCommandeClient' => $article_id]
+                    [
+                        'Recu' => $qty,
+                        'TimestampDateLivraisonConfirme' => $date
+                    ],
+                    ['Id' => $article_id]
                 );
+                // Log pour vérifier
+                error_log("Mise à jour de l'article $article_id : Recu=$qty, Date=$date");
             }
         }
     }
@@ -584,4 +740,112 @@ function ispag_load_more_achats() {
     }
 
     wp_send_json_success(['html' => $html, 'has_more' => count($achats) === $limit]);
+}
+
+
+
+add_action('wp_ajax_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
+add_action('wp_ajax_nopriv_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
+
+function ajax_filter_achats_custom_tables() {
+    // check_ajax_referer('ispag_achat_nonce', 'security');
+
+    global $wpdb;
+
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $per_page = 10; // Nombre d'éléments par page
+    $offset = ($page - 1) * $per_page;
+    $filters = isset($_POST['filters']) ? $_POST['filters'] : [];
+
+    // 1. Initialisation de la requête SQL (sans le GROUP BY ici)
+    $sql = "
+        SELECT clf.*,
+               f.Fournisseur AS fournisseur_nom,
+               u.display_name AS responsable_nom,
+               SUM(IFNULL((af.UnitPrice - af.discount) * af.Qty, 0)) AS prix_net_total
+        FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
+        LEFT JOIN {$wpdb->prefix}achats_articles_cmd_fournisseurs af ON clf.Id = af.IdCommande 
+        LEFT JOIN {$wpdb->prefix}achats_fournisseurs f ON clf.IdFournisseur = f.Id
+        LEFT JOIN {$wpdb->users} u ON clf.created_by = u.ID
+        WHERE 1=1
+    ";
+
+    // Filtre par recherche (RefCommande, NrCommande, hubspot_deal_id)
+    if (!empty($filters['search'])) {
+        $search_term = '%' . $wpdb->esc_like(sanitize_text_field($filters['search'])) . '%';
+        $sql .= $wpdb->prepare(
+            " AND (clf.RefCommande LIKE %s OR clf.NrCommande LIKE %s OR clf.hubspot_deal_id LIKE %s)",
+            $search_term, $search_term, $search_term
+        );
+    }
+
+    // Filtre par statut (EtatCommande)
+    if (!empty($filters['status']) && $filters['status'] !== 'all') {
+        $sql .= $wpdb->prepare(" AND clf.EtatCommande = %d", $filters['status']);
+    }
+
+    // Filtre par fournisseur (IdFournisseur)
+    if (!empty($filters['fournisseur']) && $filters['fournisseur'] !== 'all') {
+        $sql .= $wpdb->prepare(" AND clf.IdFournisseur = %d", $filters['fournisseur']);
+    }
+
+    // Filtre par responsable (created_by)
+    if (!empty($filters['responsable']) && $filters['responsable'] !== 'all') {
+        $sql .= $wpdb->prepare(" AND clf.created_by = %d", $filters['responsable']);
+    }
+
+    // 2. placement correct du GROUP BY après tous les filtres WHERE
+    $sql .= " GROUP BY clf.Id";
+
+    // 3. Ajout du tri par défaut
+    $sql .= " ORDER BY clf.TimestampDateCreation DESC";
+
+    // 4. Ajout de la pagination
+    $sql .= $wpdb->prepare(" LIMIT %d OFFSET %d", $per_page, $offset);
+
+    // Exécute la requête
+    $results = $wpdb->get_results($sql);
+
+    // Compte le nombre total de résultats (pour la pagination)
+    $count_sql = "
+        SELECT COUNT(*)
+        FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
+        LEFT JOIN {$wpdb->prefix}achats_fournisseurs f ON clf.IdFournisseur = f.Id
+        LEFT JOIN {$wpdb->users} u ON clf.created_by = u.ID
+        WHERE 1=1
+    ";
+
+    // Applique les mêmes filtres pour le compte
+    if (!empty($filters['search'])) {
+        $search_term = '%' . $wpdb->esc_like(sanitize_text_field($filters['search'])) . '%';
+        $count_sql .= $wpdb->prepare(
+            " AND (clf.RefCommande LIKE %s OR clf.NrCommande LIKE %s OR clf.hubspot_deal_id LIKE %s)",
+            $search_term, $search_term, $search_term
+        );
+    }
+    if (!empty($filters['status']) && $filters['status'] !== 'all') {
+        $count_sql .= $wpdb->prepare(" AND clf.EtatCommande = %d", $filters['status']);
+    }
+    if (!empty($filters['fournisseur']) && $filters['fournisseur'] !== 'all') {
+        $count_sql .= $wpdb->prepare(" AND clf.IdFournisseur = %d", $filters['fournisseur']);
+    }
+    if (!empty($filters['responsable']) && $filters['responsable'] !== 'all') {
+        $count_sql .= $wpdb->prepare(" AND clf.created_by = %d", $filters['responsable']);
+    }
+
+    $total_results = $wpdb->get_var($count_sql);
+    $has_more = ($offset + $per_page) < $total_results;
+
+    // Génère le HTML pour chaque résultat sous forme de lignes de tableau
+    $html = '';
+    foreach ($results as $index => $row) {
+        $html .= ISPAG_Achat_Manager::render_achat_row($row, $offset + $index);
+    }
+
+    wp_send_json_success([
+        'html' => $html,
+        'has_more' => $has_more,
+    ]);
+
+    wp_die();
 }

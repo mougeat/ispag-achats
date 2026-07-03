@@ -53,7 +53,7 @@ class ISPAG_Achat_Details_Renderer {
             'NIP'                => __('Postal code', 'creation-reservoir'),
             'City'               => __('City', 'creation-reservoir'),
             'PersonneContact'    => __('Contact', 'creation-reservoir'),
-            'num_tel_contact'    => __('Phone', 'creation-reservoir'),
+            'num_tel_contact'    => __('Phone number', 'creation-reservoir'),
         ];
 
         $copie_ligne1 = [];

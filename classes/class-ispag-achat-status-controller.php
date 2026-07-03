@@ -135,31 +135,24 @@ class ISPAG_Achat_Status_Controller {
     }
 
     public static function prepare_mail_from_action() {
-        $achat_id = intval($_POST['achat_id'] ?? 0);
-        $action_type = sanitize_text_field($_POST['type'] ?? '');
+        try {
+            $achat_id = intval($_POST['achat_id'] ?? 0);
+            $action_type = sanitize_text_field($_POST['type'] ?? '');
 
-        if (!$achat_id || !$action_type) {
-            // error_log('message : Paramètres manquants.');
-            wp_send_json_error(['message' => 'Paramètres manquants.']);
+            if (!$achat_id || !$action_type) {
+                wp_send_json_error(['message' => 'Paramètres manquants (ID ou Type).']);
+            }
+
+            self::prepare_mail($achat_id, $action_type);
+
+        } catch (Throwable $e) {
+            // Renvoie l'erreur PHP réelle au format JSON pour que ton JS ne crash pas
+            wp_send_json_error([
+                'message' => 'Erreur PHP Fatale : ' . $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
         }
-
-        // Liste des types valides (pour éviter les appels indésirables)
-        // $valid_types = [
-        //     'send_proposal_request',
-        //     'send_purchase_order',
-        //     'drawing_validated',
-        //     'drawing_modified',
-
-        // ];
-
-        // if (!$action_type) {
-        //     wp_send_json_error(['message' => 'Type de mail non autorisé.']);
-        // }
-
-        self::prepare_mail($achat_id, $action_type);
-
-        
-
     }
     
     /**
@@ -174,7 +167,6 @@ class ISPAG_Achat_Status_Controller {
 
         // $achat_id = intval($_POST['achat_id']);
         if (!$achat_id) {
-// \1('❌ message : ID de commande manquant.');
             wp_send_json_error(['message' => 'ID de commande manquant.']);
         }
 
@@ -183,7 +175,6 @@ class ISPAG_Achat_Status_Controller {
             SELECT IdFournisseur, hubspot_deal_id FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d
         ", $achat_id));
         if (!$achat){
-// \1('❌ message : Commande non trouvée.');
             wp_send_json_error(['message' => 'Commande non trouvée.']);
         }
 
@@ -193,7 +184,6 @@ class ISPAG_Achat_Status_Controller {
         ", $achat->IdFournisseur));
 
         if (!$fournisseur) {
-// \1('❌ message : Fournisseur introuvable.');
             wp_send_json_error(['message' => 'Fournisseur introuvable.']);
         }
 
@@ -216,7 +206,6 @@ class ISPAG_Achat_Status_Controller {
         // 3. Récupérer contact user
         $user = get_user_by('ID', $contact_id);
         if (!$user) {
-// \1('❌ message : Contact utilisateur introuvable.');
             wp_send_json_error(['message' => 'Contact utilisateur introuvable.']);
         }
         $email_contact = $user->user_email;
@@ -229,7 +218,6 @@ class ISPAG_Achat_Status_Controller {
         ", $lang, $message_type));
 
         if (!$template) {
-// \1('❌ message : Template non trouvé pour la langue : ' . $lang);
             wp_send_json_error(['message' => 'Template non trouvé pour la langue : ' . $lang]);
         }
 
@@ -245,9 +233,6 @@ class ISPAG_Achat_Status_Controller {
         $instance = new self();
         $current_status = $instance->get_current_status($achat_id);
         $next_status = $instance->get_next_status($current_status->Id);
-        // if ($current_status AND $next_status) {
-        //     $instance->update_status($achat_id, $next_status);
-        // }
 
         // 6. Réponse avec mailto
         wp_send_json_success([
@@ -263,43 +248,46 @@ class ISPAG_Achat_Status_Controller {
 
     
     public static function replace_text($text, $achat_id, $contact_id) {
-        // 1. Récupérer contact
+        // 1. Récupérer contact et langue
         $user = get_user_by('ID', $contact_id);
         if (!$user) wp_send_json_error(['message' => 'Contact utilisateur introuvable.']);
-        
-        // 1bis. Forcer la langue si disponible (Polylang)
+
         $lang = get_user_meta($contact_id, 'locale', true) ?: get_user_meta($contact_id, 'pll_language', true);
+        error_log('[SEND MAIL DEBUG] Lang du destinataire ID' . $contact_id . ' --> ' . $lang);
+
+        // 2. Définir la langue AVANT toute récupération de données
         if ($lang) {
-            // @intelephense-ignore-next-line
             if (function_exists('pll_set_language')) pll_set_language($lang);
-            switch_to_locale($lang); // utile si tu veux charger gettext dans la bonne langue
+            switch_to_locale($lang);
         }
 
+        error_log('[SEND MAIL DEBUG] Langue active avant récup articles: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
 
-        // 2. Récupérer données de l'achat
-        // $achat = (new ISPAG_Achat_Repository())->get_achats(null, true, $achat_id, 0, 1)[0];
+        // 3. Récupérer données de l'achat et articles (maintenant en bonne langue)
         $repo = new ISPAG_Achat_Repository();
         $achat = $repo->get_achats(null, true, $achat_id, '', 0, 1)[0];
-        
+        $articles = (new ISPAG_Achat_Article_Repository())->get_articles_by_order(null, $achat_id, $lang);
 
-        // 3. Récupérer articles
-        $articles = (new ISPAG_Achat_Article_Repository())->get_articles_by_order(null, $achat_id);
-
+        // 4. Construire la liste des produits avec traduction explicite
         $product_list = "\n";
         $last_group = null;
 
-        foreach ($articles as $index => $article) {
+        foreach ($articles as $article) {
             $group = trim($article->Groupe ?? '');
+            $desc = trim($article->DescSurMesure ?? '');
 
-            // Si nouveau groupe, on l'affiche
+            // Traduire explicitement les champs si nécessaire (exemple pour ACF ou métadonnées)
+            if (function_exists('pll_translate_string')) {
+                $group = pll_translate_string($group, $lang);
+                $desc = pll_translate_string($desc, $lang);
+            }
+
             if ($group !== $last_group) {
-                if ($last_group !== null) $product_list .= "\n--------------\n\n"; // sépare les groupes
+                if ($last_group !== null) $product_list .= "\n--------------\n\n";
                 $product_list .= "🟢 $group\n\n";
                 $last_group = $group;
             }
-
-            // Ajouter description
-            $product_list .= trim($article->DescSurMesure) . "\n";
+            $product_list .= $desc . "\n";
         }
 
         // Supprimer le dernier '-------' s'il n'y a pas de groupe après

@@ -42,9 +42,25 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             wp_die('Non autorisé');
         }
         global $wpdb;
+
+        // On récupère la variable via le moteur WP (prioritaire pour les jolies URLs)
+        $achat_id = get_query_var('poid');
+        // Si c'est vide (cas où on arrive via une URL classique ?poid=123), on check le $_GET
+        if ( empty( $achat_id ) && isset( $_GET['poid'] ) ) {
+            $achat_id = sanitize_text_field( $_GET['poid'] );
+        }
+
+        // Sécurité supplémentaire : s'assurer que c'est un nombre (puisque c'est un ID)
+        $achat_id = absint( $achat_id );
+
+        if ( ! $achat_id ) {
+            // Gérer l'erreur ou rediriger si l'ID est manquant
+            echo "ID d'achat manquant.";
+            return;
+        }
     
         $deal_id = isset($_GET['deal_id']) ? sanitize_text_field($_GET['deal_id']) : '';
-        $achat_id = isset($_GET['poid']) ? sanitize_text_field($_GET['poid']) : '';
+
 
         if(!empty($achat_id)){
             // $article_repo = new ISPAG_Achat_Article_Repository();
@@ -150,20 +166,32 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             // Id of attachment if needed
             $attach_id = wp_insert_attachment( $attachment, $uploadedfile);
             $userId = get_current_user_id();
-            $wpdb-> insert(
-                
-                $wpdb->prefix.'achats_historique',
+            $wpdb->insert(
+                $wpdb->prefix . 'achats_historique',
                 [
-                    'Id' => '',
+                    // 'Id' est retiré, MySQL s'en occupe tout seul (Auto-increment)
                     'hubspot_deal_id' => 0,
-                    'purchase_order' => $achat_id,
-                    'Date' => time(),
-                    'dateReadable' => date('Y-m-d H:i:s'),
-                    'IdUser' => $userId,
-                    'Historique' => '',
-                    'IdMedia' => $attach_id,
-                    'ClassCss' => 'customer_order'
-                    
+                    'purchase_order'  => $achat_id,
+                    'Date'            => time(), // Parfait pour le BIGINT
+                    'dateReadable'    => current_time('mysql'), // Synchro avec le fuseau horaire WP
+                    'IdUser'          => $userId,
+                    'Historique'      => 'Ajout d\'une pièce jointe', // Évite de laisser vide si c'est un log, ou met une chaîne explicite
+                    'IdMedia'         => $attach_id,
+                    'is_task'         => 0, // Ajouté car NOT NULL en BDD
+                    'is_done'         => 0, // Ajouté car NOT NULL en BDD
+                    'ClassCss'        => 'customer_order'
+                ],
+                [
+                    '%d', // hubspot_deal_id
+                    '%d', // purchase_order
+                    '%d', // Date
+                    '%s', // dateReadable
+                    '%d', // IdUser
+                    '%s', // Historique
+                    '%d', // IdMedia
+                    '%d', // is_task
+                    '%d', // is_done
+                    '%s'  // ClassCss
                 ]
             );
             $pdf->Output('I', $file_name . '.pdf');

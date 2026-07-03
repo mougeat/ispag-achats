@@ -134,9 +134,10 @@ async function ispag_send_generic_ajax({
     successCallback = null,
     type, 
 }) {
+    console.group('🚀 ISPAG : Action ' + type);
     const originalText = btn.innerText;
     btn.disabled = true;
-    btn.innerText = sendingText;
+    btn.innerHTML = '<span class="dashicons dashicons-update spin"></span> ' + sendingText;
 
     try {
         const response = await fetch(ajaxurl, {
@@ -151,21 +152,23 @@ async function ispag_send_generic_ajax({
 
         const result = await response.json();
         if (!result.success) {
-            alert("Erreur : " + result.message);
+            console.error('❌ Erreur PHP:', result.data.message);
+            alert("Erreur : " + result.data.message);
             return;
         }
 
-        // Appel de ta logique personnalisée (ex: ouvrir mailto)
+        console.info('✅ Données reçues :', result.data);
+        
         if (typeof successCallback === 'function') {
             successCallback(result.data);
         }
 
     } catch (e) {
-        console.error(e);
-        alert("Une erreur est survenue.");
+        console.error('🔥 Erreur Critique:', e);
     } finally {
         btn.disabled = false;
-        btn.innerText = originalText;
+        btn.innerHTML = originalText;
+        console.groupEnd();
     }
 }
 
@@ -229,7 +232,7 @@ function ispag_send_drawing_validation(achatId, btn) {
         }
     });
 }
-
+ 
 
 
  

@@ -117,7 +117,7 @@ class ISPAG_Achat_Repository {
         }
 
         $query = "
-            SELECT a.*, f.Fournisseur, f.Monnaie AS Devise, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color
+            SELECT a.*, f.Fournisseur, f.Monnaie AS Devise, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color, e.allow_price_recalculation
             FROM {$this->table_achats} a
             LEFT JOIN {$this->table_articles} ar ON ar.IdCommande = a.Id
             LEFT JOIN {$this->table_fournisseurs} f ON f.Id = a.IdFournisseur
@@ -187,7 +187,7 @@ class ISPAG_Achat_Repository {
         // 2. Boucler sur chaque article et utiliser la méthode existante
         foreach ($article_ids as $id) {
             $article_data = $repo_article->get_article_by_id(null, $id);
-            error_log('MONTANT COMMANDE (' . $purchase_id . '): ' . print_r($article_data, true));
+            // error_log('MONTANT COMMANDE (' . $purchase_id . '): ' . print_r($article_data, true));
             
             if ($article_data && isset($article_data->TotalPriceNet)) {
                 // On cumule le TotalPriceNet qui est déjà calculé, remisé et arrondi

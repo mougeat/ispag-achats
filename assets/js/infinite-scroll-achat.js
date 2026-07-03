@@ -1,92 +1,101 @@
-document.addEventListener('DOMContentLoaded', function () {
-    let offset = 0;
-    const limit = 20;
-    let loading = false;
+jQuery(document).ready(function($) {
+    let currentPage = 1;
+    let isLoading = false;
     let hasMore = true;
+    let currentFilters = {
+        search: '',
+        status: 'all',
+        fournisseur: 'all',
+        responsable: 'all'
+    };
 
-    const loader = document.getElementById('scroll-loader');
-    const listContainer = document.getElementById('achats-list');
+    // Fonction pour charger les achats
+    function loadAchats(reset = false) {
+        if (isLoading) return;
 
-     // On ne lance rien si les éléments ne sont pas là
-    if (!loader || !listContainer) return;
-    
-    loader.innerHTML = '<div class="loading-spinner" style="text-align:center;">' + ispagVars.loading_text + '...</div>';
+        if (reset) {
+            currentPage = 1;
+            hasMore = true;
+            $('#ispag-achats-list').empty();
+        }
 
+        if (!hasMore) return;
 
-    // Déclenchement au scroll
-    window.addEventListener('scroll', handleScroll);
+        isLoading = true;
+        $('#ispag-achats-loading').show();
+
+        // Récupère les filtres actuels
+        currentFilters = {
+            search: $('#ispag-achats-search').val(),
+            status: $('#ispag-achats-status-filter').val(),
+            fournisseur: $('#ispag-achats-fournisseur-filter').val(),
+            responsable: $('#ispag-achats-responsable-filter').val()
+        };
+
+        // Appel AJAX
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'filter_achats_custom_tables',
+                page: currentPage,
+                filters: currentFilters,
+                // security: ispagVars.security // ✅ Utilisation de `ispagVars.security`
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (reset) {
+                        $('#ispag-achats-list').html(response.data.html);
+                    } else {
+                        $('#ispag-achats-list').append(response.data.html);
+                    }
+                    currentPage++;
+                    hasMore = response.data.has_more;
+                } else {
+                    console.error('Erreur :', response.data);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Erreur AJAX :', error);
+            },
+            complete: function() {
+                isLoading = false;
+                $('#ispag-achats-loading').hide();
+            }
+        });
+    }
+
+    // Écouteurs d'événements
+    $('#ispag-achats-search').on('input', function() {
+        debounceLoadAchats();
+    });
+
+    $('#ispag-achats-status-filter, #ispag-achats-fournisseur-filter, #ispag-achats-responsable-filter').on('change', function() {
+        loadAchats(true);
+    });
+
+    $('#ispag-achats-clear-filters').on('click', function() {
+        $('#ispag-achats-search').val('');
+        $('#ispag-achats-status-filter, #ispag-achats-fournisseur-filter, #ispag-achats-responsable-filter').val('all');
+        loadAchats(true);
+    });
+
+    // Debounce
+    let debounceTimer;
+    function debounceLoadAchats() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            loadAchats(true);
+        }, 500);
+    }
+
+    // Infinite scroll
+    $(window).scroll(function() {
+        if ($(window).scrollTop() + $(window).height() > $(document).height() - 200) {
+            loadAchats();
+        }
+    });
 
     // Chargement initial
-    loadPurchases();
-
-    // Pré-chargement si page trop courte
-    window.addEventListener('load', () => {
-        if (loader.getBoundingClientRect().top < window.innerHeight) {
-            loadPurchases();
-        }
-    });    
-    
-    function updateLinkTargets() {
-        const links = listContainer.querySelectorAll('.ispag_achat_link');
-        if (links.length === 1) {
-            links[0].removeAttribute('target');
-        } else {
-            links.forEach(link => {
-                if (!link.hasAttribute('target')) {
-                    link.setAttribute('target', '_blank');
-                }
-            });
-        }
-    }
-    
-    function loadPurchases() {
-        if (loading || !hasMore) return;
-        loading = true;
-
-        const search = new URLSearchParams(window.location.search).get('search') || '';
-        const select_state = new URLSearchParams(window.location.search).get('select_state') || '';
-        // const qotation = new URLSearchParams(window.location.search).get('qotation') === '1' ? '1' : '0';
-
-
-        // const meta = document.getElementById('projets-meta');
-        // const qotation = meta ? meta.dataset.qotation : '0';
-        // const search = meta ? meta.dataset.search : '';
-        
-        const formData = new FormData();
-        formData.append('action', 'ispag_load_more_achats');
-        formData.append('offset', offset);
-        formData.append('search', search);
-        formData.append('select_state', select_state);
-
-        fetch(ajaxurl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                listContainer.insertAdjacentHTML('beforeend', data.data.html);
-                offset += limit;
-                hasMore = data.data.has_more;
-                updateLinkTargets();
-                if (!hasMore) {
-                    loader.innerHTML = '<p style="text-align:center; color:#777;">' + ispagVars.all_loaded_text + '.</p>';
-                }
-            }
-        })
-        .finally(() => loading = false);
-    }
-
-
-
-    function handleScroll() {
-        const loaderTop = loader.getBoundingClientRect().top;
-        const windowBottom = window.innerHeight;
-
-        if (loaderTop - windowBottom < 100) {
-            loadPurchases();
-        }
-    }
+    loadAchats(true);
 });
-
