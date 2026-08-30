@@ -122,8 +122,8 @@ class ISPAG_Achat_Article_Repository {
                 // error_log('[DEBUG] Locale avant data tank: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
 
 
-                $tank_repo = new ISPAG_Tank_Repository();
-                $tank_data = $tank_repo->get_tank_details($article->IdCommandeClient);
+                // $tank_repo = new ISPAG_Tank_Repository();
+                $tank_data = ISPAG_Tank_Repository::get_tank_details($article->IdCommandeClient);
 
                 $article->RefSurMesure              = apply_filters('ispag_get_tank_title',               $article->RefSurMesure, $article->IdCommandeClient);
                 $article->DescSurMesure             = apply_filters('ispag_get_tank_description',         $article->DescSurMesure, $article->IdCommandeClient, true, $lang);

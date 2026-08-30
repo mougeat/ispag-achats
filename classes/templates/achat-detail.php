@@ -123,7 +123,7 @@ $can_edit = current_user_can('edit_supplier_order');
 </select>
 
 <!-- message information -->
-<div id="ispag-bulk-message" class="bulk_message"></div>
+<!-- <div id="ispag-bulk-message" class="bulk_message"></div> -->
 <!-- <div class="ispag-article-header-global" style="margin-bottom: 1rem;">
     <input type="checkbox" id="select-all-articles" class="ispag-article-checkbox">
     <label for="select-all-articles"><?php echo __('Select all', 'creation-reservoir'); ?></label>
@@ -201,9 +201,9 @@ document.addEventListener('DOMContentLoaded', function () {
         <?php do_action('ispag_display_achat_suivi', $achat->Id); ?>
     </div>
     <div class="tab-content" id="documents">
-        <?php apply_filters('ispag_display_doc_manager', $achat->Id, true);  ?>
+        <?php echo ISPAG_Document_Manager::display_ispag_doc_manger($achat->Id, true); ?>
     </div>
-</div>
+</div> 
 
 <script>
 document.querySelectorAll('.ispag-achat-tabs li').forEach(tab => {

@@ -46,30 +46,33 @@ class ISPAG_Achat_Status_Controller {
     public function ajax_update_status() {
         $achat_id = isset($_POST['achat_id']) ? intval($_POST['achat_id']) : 0;
         $etat_id = isset($_POST['etat_id']) ? intval($_POST['etat_id']) : 0;
-        $this->update_status(null, $achat_id, $etat_id);
+        $this->update_status(null, $achat_id, $etat_id, 'is_manual');
     }
-    public function update_status($html, $achat_id = null, $etat_id = null) {
-        // $achat_id = isset($_POST['achat_id']) ? intval($_POST['achat_id']) : 0;
-        // $etat_id = isset($_POST['etat_id']) ? intval($_POST['etat_id']) : 0;
-
+    public function update_status($html, $achat_id = null, $etat_id = null, $is_manual = null) {
         if (!$achat_id || !$etat_id) {
             wp_send_json_error(['message' => 'Invalid input']);
         }
 
-        $updated = $this->wpdb->update(
-            $this->table_achats,
-            ['EtatCommande' => $etat_id],
-            ['Id' => $achat_id]
-        );
-
-        // // Récupère la valeur de ClassCss
+        // Récupère le slug du statut
         $slug = $this->wpdb->get_var(
             $this->wpdb->prepare(
                 "SELECT ClassCss FROM {$this->table_etats} WHERE Id = %d",
                 $etat_id
             )
         );
-        
+
+        // Met à jour le statut ET marque comme manuel
+        $updated = $this->wpdb->update(
+            $this->table_achats,
+            [
+                'EtatCommande' => $etat_id,
+                'is_manual'    => $is_manual, // <-- AJOUT : Marque comme changement manuel
+            ],
+            ['Id' => $achat_id],
+            ['%d', '%d'],
+            ['%d']
+        );
+
         do_action('ispag_save_status_changes', $achat_id, $slug, $etat_id);
 
         wp_send_json_success(['updated' => $updated]);
@@ -253,7 +256,7 @@ class ISPAG_Achat_Status_Controller {
         if (!$user) wp_send_json_error(['message' => 'Contact utilisateur introuvable.']);
 
         $lang = get_user_meta($contact_id, 'locale', true) ?: get_user_meta($contact_id, 'pll_language', true);
-        error_log('[SEND MAIL DEBUG] Lang du destinataire ID' . $contact_id . ' --> ' . $lang);
+        // error_log('[SEND MAIL DEBUG] Lang du destinataire ID' . $contact_id . ' --> ' . $lang);
 
         // 2. Définir la langue AVANT toute récupération de données
         if ($lang) {
@@ -261,7 +264,7 @@ class ISPAG_Achat_Status_Controller {
             switch_to_locale($lang);
         }
 
-        error_log('[SEND MAIL DEBUG] Langue active avant récup articles: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
+        // error_log('[SEND MAIL DEBUG] Langue active avant récup articles: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
 
         // 3. Récupérer données de l'achat et articles (maintenant en bonne langue)
         $repo = new ISPAG_Achat_Repository();

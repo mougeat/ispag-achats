@@ -18,6 +18,10 @@ spl_autoload_register(function ($class) {
     }
 });
 
+add_action('init', 'ispag_load_textdomain');
+
+new ISPAG_Purchase_URL_Rewrite();
+
 add_action('init', function () {
     ISPAG_Achat_Repository::init();
     ISPAG_Achat_Manager::init();
@@ -27,7 +31,7 @@ add_action('init', function () {
     ISPAG_Achat_Details_Renderer::init();
     ISPAG_Achat_Status_Checker::init();
     ISPAG_Achat_status_render::init();
-    new ISPAG_Document_Manager();
+    // new ISPAG_Document_Manager();
     ISPAG_Achat_Article_Repository::init();
     ISPAG_Achat_Generate_Purchase_Order_PDF::init();
     ISPAG_Achat_Supplier_Repository::init();

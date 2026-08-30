@@ -70,7 +70,7 @@ jQuery(document).ready(function($) {
 
                     // Redirection après 1 seconde (1000 millisecondes)
                     setTimeout(function() {
-                        var redirectUrl = 'https://app.ispag-asp.ch/details-achats/?poid=' + newOrderId;
+                        var redirectUrl = 'https://app.ispag-asp.ch/purchase/' + newOrderId;
                         window.location.href = redirectUrl;
                     }, 1000);
 

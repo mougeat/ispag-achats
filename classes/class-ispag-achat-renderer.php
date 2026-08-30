@@ -36,7 +36,7 @@ class ISPAG_Achat_Renderer {
                 echo '</div>';
             echo '</div>';
             // echo self::display_modal();
-            echo ISPAG_Detail_Page::display_modal();
+            // echo ISPAG_Detail_Page::display_modal();
             return;
         }
 
@@ -93,7 +93,7 @@ class ISPAG_Achat_Renderer {
         echo '</div>'; // .ispag-achat-modern-container
         
         // echo self::display_modal();
-        echo ISPAG_Detail_Page::display_modal();
+        // echo ISPAG_Detail_Page::display_modal();
     }
 
     /**
@@ -158,7 +158,7 @@ class ISPAG_Achat_Renderer {
         $user_can_view_order = current_user_can('view_supplier_order');
 
         if (!$article) {
-            echo '<p>Article introuvable.</p>';
+            echo '<p>' . __('Article not found', 'creation-reservoir')  . '</p>';
             wp_die();
         }
         include plugin_dir_path(__FILE__) . 'templates/modal-display-datas.php';
@@ -170,12 +170,12 @@ class ISPAG_Achat_Renderer {
         $is_new = false;
         if($article_id){
             $article = $repo->get_article_by_id(null, $article_id);
-        }
+        } 
         elseif($article){
 
         }
         else{
-            echo '<p>Article introuvable.</p>';
+            echo '<p>' . __('Article not found', 'creation-reservoir')  . '</p>';
             wp_die();
         }
 
@@ -184,11 +184,11 @@ class ISPAG_Achat_Renderer {
         $user_can_view_order = current_user_can('view_supplier_order');
         $id_attr = $is_new ? '' : ' data-article-id="' . intval($article_id) . '"';
         if (!$article) {
-            echo '<p>Article introuvable.</p>';
+            echo '<p>' . __('Article not found', 'creation-reservoir')  . '</p>';
             wp_die();
         }
         include plugin_dir_path(__FILE__) . 'templates/modal-display-datas-form.php';
-        return;
+        return; 
     }
  
 
@@ -238,7 +238,7 @@ class ISPAG_Achat_Renderer {
         // if (!in_array($achat->EtatCommande, [1, 2, 6, 10])) {
         //     return;
         // }
-        return '<button id="ispag-add-article" data-poid="' . esc_attr($achat_id) .'" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir'). '</button>';
+        return '<button id="ispag-add-article" data-poid="' . esc_attr($achat_id) .'"  source="purchase" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir'). '</button>';
     }
 
     private static function display_purchase_adjustments($achat_id, $grouped_articles) {

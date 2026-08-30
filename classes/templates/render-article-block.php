@@ -61,6 +61,20 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
             <?php if(!empty($article->documents)): foreach ($article->documents as $doc): ?>
                 <a href="<?php echo esc_url($doc['url']); ?>" target="_blank" class="ispag-btn ispag-btn-grey-outlined"><?php echo esc_html__($doc['label'], 'creation-reservoir'); ?></a>
             <?php endforeach; endif; ?>
+
+            <?php
+            // Récupérer l'URL du dossier uploads
+            $upload_dir = wp_upload_dir();
+            $file_url = $upload_dir['baseurl'] . '/ispag_pricing/article_' . $article->IdCommandeClient . '_purchase.txt';
+
+            // Vérifier si le fichier existe
+            $file_path = $upload_dir['basedir'] . '/ispag_pricing/article_' . $article->IdCommandeClient . '_purchase.txt';
+
+            if (file_exists($file_path)) {
+                // Afficher le lien vers le fichier
+                echo '<a href="' . esc_url($file_url) . '" class="button" target="_blank">' . esc_html__('Display price calculation', 'creation-reservoir') . '</a>';
+            }
+            ?>
         </div>
 
         <div class="ispag-article-dates">
@@ -77,20 +91,28 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
         <div class="ispag-article-qty"><b><?php echo $qty; ?></b> pcs</div>
         <?php if ($user_can_view_order): ?>
 
-            <!-- AFFICHAGE DU DETAILS DE PRIX D'UNE CUVE -->
-            <input type="hidden" name="tank-bare-price" id="tank-bare-price-<?php echo $id; ?>">
-            <input type="hidden" name="tank-accessories-price" id="tank-acc-price-<?php echo $id; ?>">
-
-            <div class="ispag-article-prix-net" style="color:#00a32a; font-weight:bold;"><?php echo number_format($article->UnitPriceNet, 2); ?> €</div>
-            <div class="ispag-article-rabais" style="font-size:0.8em; color:#888;">-<?php echo $article->discount; ?>%</div>
+            <div class="ispag-article-prix-net" id="ispag_article_net_price_<?php echo $id; ?>" style="color:#00a32a; font-weight:bold;"><?php echo number_format($article->UnitPriceNet, 2); ?> €</div>
+            <div class="ispag-article-rabais" id="ispag_article_discount_<?php echo $id; ?>" style="font-size:0.8em; color:#888;">-<?php echo $article->discount; ?>%</div>
         <?php endif; ?>
     </div>
 
     <div class="ispag-article-actions">
-        <button class="ispag-btn ispag-btn-secondary-outlined ispag-btn-view" data-article-id="<?php echo $id; ?>" title="<?php echo __('See product', 'creation-reservoir'); ?>"><i class="fas fa-search"></i></button>
+        <button
+            class="ispag-btn ispag-btn-secondary-outlined ispag-btn-view"
+            data-article-id="<?php echo $id; ?>"
+            data-source="purchase"
+            title="<?php echo __('See product', 'creation-reservoir'); ?>">
+                <i class="fas fa-search"></i>
+            </button>
         
         <?php if (($user_can_generate_tank && empty($article->DrawingApproved)) || current_user_can('manage_order')): ?>
-            <button class="ispag-btn ispag-btn-warning-outlined ispag-btn-edit" data-article-id="<?php echo $id; ?>" title="<?php echo __('Edit product', 'creation-reservoir'); ?>"><i class="fas fa-edit"></i></button>
+            <button
+                class="ispag-btn ispag-btn-warning-outlined ispag-btn-edit"
+                data-article-id="<?php echo $id; ?>"
+                data-source="purchase"
+                title="<?php echo __('Edit product', 'creation-reservoir'); ?>">
+                    <i class="fas fa-edit"></i>
+                </button>
         <?php endif; ?>
 
         <?php 
@@ -101,7 +123,7 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
         ?>  
 
         <?php if (current_user_can('manage_order')): ?>
-            <button class="ispag-btn ispag-btn-delete" data-article-id="<?php echo $id; ?>" title="<?php echo __('Delete', 'creation-reservoir'); ?>"><i class="fas fa-trash"></i></button>
+            <button class="ispag-btn ispag-btn-delete" data-article-id="<?php echo $id; ?>" data-source="purchase" title="<?php echo __('Delete', 'creation-reservoir'); ?>"><i class="fas fa-trash"></i></button>
         <?php endif; ?>
     </div>
 

@@ -6,6 +6,7 @@ class ISPAG_Achat_Repository {
     private $table_articles;
     private $table_fournisseurs;
     private $table_etat;
+    protected $table_detail_projet;
     protected static $instance = null;
 
     public function __construct() {
@@ -15,6 +16,7 @@ class ISPAG_Achat_Repository {
         $this->table_articles = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
         $this->table_fournisseurs = $wpdb->prefix . 'achats_fournisseurs';
         $this->table_etat = $wpdb->prefix . 'achats_etat_commandes_fournisseur';
+        $this->table_detail_projet = $wpdb->prefix . 'achats_details_commande';
     }
     public static function init() {
         if (self::$instance === null) {
@@ -45,7 +47,8 @@ class ISPAG_Achat_Repository {
             LEFT JOIN {$this->table_articles} ar ON ar.IdCommande = a.Id
             LEFT JOIN {$this->table_fournisseurs} f ON f.Id = a.IdFournisseur
             LEFT JOIN {$this->table_etat} e ON e.Id = a.EtatCommande
-            WHERE 1 = 1
+            
+            WHERE (archive IS NULL || archive = 0)
         ";
 
         $query_params = [];
@@ -88,12 +91,12 @@ class ISPAG_Achat_Repository {
         }
 
         // 3. Compléter les projets
-        $base_url = trailingslashit(get_site_url()) . 'details-achats/';
-        $project_base_url = trailingslashit(get_site_url()) . 'details-du-projet/';
+        $base_url = trailingslashit(get_site_url()) . 'purchase/';
+        $project_base_url = trailingslashit(get_site_url()) . 'project-detail/';
         foreach ($results as $p) {
             $project = apply_filters('ispag_get_project_by_deal_id', null, $p->hubspot_deal_id);
             // error_log(print_r($project, true));
-            $p->purchase_url = esc_url(add_query_arg('poid', $p->Id, $base_url));
+            $p->purchase_url = esc_url($base_url . $p->Id);
             // Initialisation de la variable de base
             $args = array('deal_id' => $p->hubspot_deal_id);
 
@@ -103,7 +106,7 @@ class ISPAG_Achat_Repository {
             }
 
             // Construit l'URL avec les arguments
-            $p->project_url = esc_url(add_query_arg($args, $project_base_url));
+            $p->project_url = esc_url($project_base_url .  $p->hubspot_deal_id); 
             $p->purchase_total = $this->get_purchase_total(null, $p->Id);
         }
         return $results;
@@ -137,15 +140,15 @@ class ISPAG_Achat_Repository {
             return null;
         }
 
-        $base_url = trailingslashit(get_site_url()) . 'details-achats/';
-        $project_base_url = trailingslashit(get_site_url()) . 'details-du-projet/';
+        $base_url = trailingslashit(get_site_url()) . 'purchase/';
+        $project_base_url = trailingslashit(get_site_url()) . 'project-detail/';
 
         // $result->purchase_url = esc_url(add_query_arg('poid', $result->Id, $base_url));
         // $result->project_url = esc_url(add_query_arg('deal_id', $result->hubspot_deal_id, $project_base_url));
 
         $project = apply_filters('ispag_get_project_by_deal_id', null, $result->hubspot_deal_id);
         // error_log(print_r($project, true));
-        $result->purchase_url = esc_url(add_query_arg('poid', $result->Id, $base_url));
+        $result->purchase_url = esc_url($base_url . $result->Id);
         // Initialisation de la variable de base
         $args = array('deal_id' => $result->hubspot_deal_id);
 
@@ -155,7 +158,7 @@ class ISPAG_Achat_Repository {
         }
 
         // Construit l'URL avec les arguments
-        $result->project_url = esc_url(add_query_arg($args, $project_base_url));
+        $result->project_url = esc_url($project_base_url . $result->hubspot_deal_id);
         $result->purchase_total = $this->get_purchase_total(null, $id);
 
         return $result;
