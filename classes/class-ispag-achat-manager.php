@@ -189,7 +189,7 @@ class ISPAG_Achat_Manager
         $logger->log_user_action('achat_manager', 'search_query_applied', ['query' => $search_query], $user_id);
 
         $html = '
-        <div class="ispag-toolbar" style="background: #f6f7f7; padding: 15px; border: 1px solid #ccd0d4; margin-bottom: 20px; margin-top: 20px;">
+        <div class="ispag-toolbar">
             <form method="get">
                 <input type="text" name="search" placeholder="' . __('Search', 'creation-reservoir') . ' ..." value="' . esc_attr($search_query) . '" />
                 <button type="submit" class="ispag-btn">' . __('Filter / Search', 'creation-reservoir') . '</button>
