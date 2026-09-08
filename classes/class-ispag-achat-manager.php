@@ -944,7 +944,6 @@ function ispag_load_more_achats()
 
     wp_send_json_success(['html' => $html, 'has_more' => $has_more]);
 }
-
 add_action('wp_ajax_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
 add_action('wp_ajax_nopriv_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
 
@@ -963,81 +962,86 @@ function ajax_filter_achats_custom_tables()
 
     $logger->log_user_action('achat_manager', 'filter_params_received', ['page' => $page, 'per_page' => $per_page, 'filters' => $filters], $user_id);
 
-    $sql = "
-        SELECT clf.*, f.Fournisseur AS fournisseur_nom, u.display_name AS responsable_nom,
-               SUM(IFNULL((af.UnitPrice - af.discount) * af.Qty, 0)) AS prix_net_total
-        FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
-        LEFT JOIN {$wpdb->prefix}achats_articles_cmd_fournisseurs af ON clf.Id = af.IdCommande
-        LEFT JOIN {$wpdb->prefix}achats_fournisseurs f ON clf.IdFournisseur = f.Id
-        LEFT JOIN {$wpdb->users} u ON clf.created_by = u.ID
-        WHERE 1=1
-    ";
+    // 1. Construction de la clause WHERE commune (sans jointures inutiles)
+    $where = " WHERE 1=1";
+    $prepare_args = [];
 
     if (!empty($filters['search']))
     {
         $search_term = '%' . $wpdb->esc_like(sanitize_text_field($filters['search'])) . '%';
-        $sql .= $wpdb->prepare(
-            " AND (clf.RefCommande LIKE %s OR clf.NrCommande LIKE %s OR clf.hubspot_deal_id LIKE %s)",
-            $search_term, $search_term, $search_term
-        );
+        $where .= " AND (clf.RefCommande LIKE %s OR clf.NrCommande LIKE %s OR clf.hubspot_deal_id LIKE %s)";
+        $prepare_args[] = $search_term;
+        $prepare_args[] = $search_term;
+        $prepare_args[] = $search_term;
         $logger->log_user_action('achat_manager', 'search_filter_applied', ['search_term' => $filters['search']], $user_id);
     }
 
     if (!empty($filters['status']) && $filters['status'] !== 'all')
     {
-        $sql .= $wpdb->prepare(" AND clf.EtatCommande = %d", $filters['status']);
+        $where .= " AND clf.EtatCommande = %d";
+        $prepare_args[] = $filters['status'];
         $logger->log_user_action('achat_manager', 'status_filter_applied', ['status' => $filters['status']], $user_id);
     }
 
     if (!empty($filters['fournisseur']) && $filters['fournisseur'] !== 'all')
     {
-        $sql .= $wpdb->prepare(" AND clf.IdFournisseur = %d", $filters['fournisseur']);
+        $where .= " AND clf.IdFournisseur = %d";
+        $prepare_args[] = $filters['fournisseur'];
         $logger->log_user_action('achat_manager', 'fournisseur_filter_applied', ['fournisseur' => $filters['fournisseur']], $user_id);
     }
 
     if (!empty($filters['responsable']) && $filters['responsable'] !== 'all')
     {
-        $sql .= $wpdb->prepare(" AND clf.created_by = %d", $filters['responsable']);
+        $where .= " AND clf.created_by = %d";
+        $prepare_args[] = $filters['responsable'];
         $logger->log_user_action('achat_manager', 'responsable_filter_applied', ['responsable' => $filters['responsable']], $user_id);
     }
 
-    $sql .= " GROUP BY clf.Id";
-    $sql .= " ORDER BY clf.TimestampDateCreation DESC";
-    $sql .= $wpdb->prepare(" LIMIT %d OFFSET %d", $per_page, $offset);
+    // 2. Récupérer d'abord uniquement les IDs de la page courante (ultra rapide)
+    $ids_sql = "
+        SELECT clf.Id 
+        FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
+        {$where}
+        ORDER BY clf.TimestampDateCreation DESC
+    ";
+    
+    // Ajout de la pagination sur la requête des IDs
+    $ids_sql .= " LIMIT %d OFFSET %d";
+    $prepare_args_ids = array_merge($prepare_args, [$per_page, $offset]);
 
-    $results = $wpdb->get_results($sql);
+    $paginated_ids = $wpdb->get_col($wpdb->prepare($ids_sql, $prepare_args_ids));
+
+    if (empty($paginated_ids)) {
+        $results = [];
+    } else {
+        // 3. Récupérer les données complètes UNIQUEMENT pour ces 10 IDs avec les jointures nécessaires
+        $ids_placeholder = implode(',', array_fill(0, count($paginated_ids), '%d'));
+        
+        $sql = "
+            SELECT clf.*, f.Fournisseur AS fournisseur_nom, u.display_name AS responsable_nom,
+                   SUM(IFNULL((af.UnitPrice - af.discount) * af.Qty, 0)) AS prix_net_total
+            FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
+            LEFT JOIN {$wpdb->prefix}achats_articles_cmd_fournisseurs af ON clf.Id = af.IdCommande
+            LEFT JOIN {$wpdb->prefix}achats_fournisseurs f ON clf.IdFournisseur = f.Id
+            LEFT JOIN {$wpdb->users} u ON clf.created_by = u.ID
+            WHERE clf.Id IN ($ids_placeholder)
+            GROUP BY clf.Id
+            ORDER BY FIELD(clf.Id, " . implode(',', $paginated_ids) . ")
+        ";
+
+        $results = $wpdb->get_results($wpdb->prepare($sql, $paginated_ids));
+    }
+
     $logger->log_db_change('achat_manager', 'achats_commande_liste_fournisseurs', 'FILTERED_SELECT', ['count' => count($results)], $user_id);
 
+    // 4. Requête de comptage optimisée (sans jointures superflues)
     $count_sql = "
         SELECT COUNT(*)
         FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
-        LEFT JOIN {$wpdb->prefix}achats_fournisseurs f ON clf.IdFournisseur = f.Id
-        LEFT JOIN {$wpdb->users} u ON clf.created_by = u.ID
-        WHERE 1=1
+        {$where}
     ";
 
-    if (!empty($filters['search']))
-    {
-        $search_term = '%' . $wpdb->esc_like(sanitize_text_field($filters['search'])) . '%';
-        $count_sql .= $wpdb->prepare(
-            " AND (clf.RefCommande LIKE %s OR clf.NrCommande LIKE %s OR clf.hubspot_deal_id LIKE %s)",
-            $search_term, $search_term, $search_term
-        );
-    }
-    if (!empty($filters['status']) && $filters['status'] !== 'all')
-    {
-        $count_sql .= $wpdb->prepare(" AND clf.EtatCommande = %d", $filters['status']);
-    }
-    if (!empty($filters['fournisseur']) && $filters['fournisseur'] !== 'all')
-    {
-        $count_sql .= $wpdb->prepare(" AND clf.IdFournisseur = %d", $filters['fournisseur']);
-    }
-    if (!empty($filters['responsable']) && $filters['responsable'] !== 'all')
-    {
-        $count_sql .= $wpdb->prepare(" AND clf.created_by = %d", $filters['responsable']);
-    }
-
-    $total_results = $wpdb->get_var($count_sql);
+    $total_results = empty($prepare_args) ? $wpdb->get_var($count_sql) : $wpdb->get_var($wpdb->prepare($count_sql, $prepare_args));
     $has_more = ($offset + $per_page) < $total_results;
 
     $logger->log_user_action('achat_manager', 'filter_results_processed', ['total_results' => $total_results, 'has_more' => $has_more], $user_id);

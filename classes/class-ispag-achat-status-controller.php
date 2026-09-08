@@ -225,13 +225,13 @@ class ISPAG_Achat_Status_Controller {
         }
 
         // 5. Remplacer les tags
-        $subject = self::replace_text($template->subject, $achat_id, $contact_id);
-        $message = self::replace_text($template->message, $achat_id, $contact_id);
+        $subject = self::replace_text($template->subject, $achat_id, $contact_id, $lang);
+        $message = self::replace_text($template->message, $achat_id, $contact_id, $lang);
 
         $subject = html_entity_decode($subject, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $message = html_entity_decode($message, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-        $lang = get_user_meta($contact_id, 'locale', true) ?: get_user_meta($contact_id, 'pll_language', true);
+        // $lang = get_user_meta($contact_id, 'locale', true) ?: get_user_meta($contact_id, 'pll_language', true);
 
         $instance = new self();
         $current_status = $instance->get_current_status($achat_id);
@@ -250,12 +250,12 @@ class ISPAG_Achat_Status_Controller {
     }
 
     
-    public static function replace_text($text, $achat_id, $contact_id) {
+    public static function replace_text($text, $achat_id, $contact_id, $lang) {
         // 1. Récupérer contact et langue
         $user = get_user_by('ID', $contact_id);
         if (!$user) wp_send_json_error(['message' => 'Contact utilisateur introuvable.']);
 
-        $lang = get_user_meta($contact_id, 'locale', true) ?: get_user_meta($contact_id, 'pll_language', true);
+        // $lang = get_user_meta($contact_id, 'locale', true) ?: get_user_meta($contact_id, 'pll_language', true);
         // error_log('[SEND MAIL DEBUG] Lang du destinataire ID' . $contact_id . ' --> ' . $lang);
 
         // 2. Définir la langue AVANT toute récupération de données

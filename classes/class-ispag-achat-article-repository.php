@@ -101,61 +101,68 @@ class ISPAG_Achat_Article_Repository {
     // ─────────────────────────────────────────────────────────────────────────
 
     private function enrich_article(object &$article, $lang = null): void {
+        $switched = false;
         if ($lang) {
             if (function_exists('pll_set_language')) pll_set_language($lang);
             switch_to_locale($lang);
+            $switched = true;
         }
 
+        try {
+            if (empty($article->image)) {
+                $article->image = plugin_dir_url(__FILE__) . '../../../assets/img/placeholder.webp';
+            } else {
+                $article->image = wp_get_attachment_url($article->image);
+            }
 
-        if (empty($article->image)) {
-            $article->image = plugin_dir_url(__FILE__) . '../../../assets/img/placeholder.webp';
-        } else {
-            $article->image = wp_get_attachment_url($article->image);
+            $article->Groupe = apply_filters('ispag_get_groupe_by_article_id', null, $article->IdCommandeClient);
+
+            switch ((int)$article->Type) {
+
+                case 1: // Cuve sur mesure — prix hors historique catalogue
+
+                    // error_log('[DEBUG] Locale avant data tank: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
+
+
+                    // $tank_repo = new ISPAG_Tank_Repository();
+                    $tank_data = ISPAG_Tank_Repository::get_tank_details($article->IdCommandeClient);
+
+                    $article->RefSurMesure              = apply_filters('ispag_get_tank_title',               $article->RefSurMesure, $article->IdCommandeClient);
+                    $article->DescSurMesure             = apply_filters('ispag_get_tank_description',         $article->DescSurMesure, $article->IdCommandeClient, true, $lang);
+                    $article->last_drawing_url          = apply_filters('ispag_get_last_drawing_url',         '', $article->IdCommandeClient);
+                    $article->DrawingApproved           = apply_filters('ispag_get_drawing_approval',         '', $article->IdCommandeClient);
+                    $article->last_doc_type             = apply_filters('ispag_get_if_last_drawing_or_modif', '', $article->IdCommandeClient);
+                    $article->welding_text_informations = apply_filters('ispag_get_welding_text',             null, $article->Article ?? null, $article->IdCommandeClient);
+                    $article->tank_on_site_welded       = apply_filters('ispag_get_tank_on_site_welded',      $article->Article ?? null, $article->IdCommandeClient);
+                    $article->image                     = apply_filters('ispag_get_tank_svg',                 null, $article->IdCommandeClient, false);
+
+                    if ($tank_data) {
+                        $article->tank_details     = $tank_data;
+                        $article->technical_volume = floatval($tank_data['dimensions_principales']['Volume_L'] ?? 0);
+                    }
+                    break;
+
+                case 5: // Échangeur à plaques sur mesure — prix hors historique catalogue
+                    $article->RefSurMesure  = apply_filters('ispag_get_plate_exchanger_title',       $article->RefSurMesure,  $article->IdCommandeClient);
+                    $article->DescSurMesure = apply_filters('ispag_get_plate_exchanger_description', $article->DescSurMesure, $article->IdCommandeClient, true);
+                    $article->image         = wp_get_attachment_url(12289);
+                    break;
+
+                default: // Article standard catalogue — prix issu de l'historique (ph)
+                    $article->RefSurMesure  = !empty($article->RefSurMesureSupplier)  ? $article->RefSurMesureSupplier  : $article->RefSurMesure;
+                    $article->DescSurMesure = !empty($article->DescSurMesureSupplier) ? $article->DescSurMesureSupplier : $article->DescSurMesure;
+                    $article->UnitPrice     = !empty($article->UnitPriceSupplier)     ? $article->UnitPriceSupplier     : $article->UnitPrice;
+                    break;
+            }
+
+            $article->total_price         = floatval($article->UnitPriceNet) * intval($article->Qty);
+            $article->date_livraison      = !empty($article->TimestampDateLivraison)         ? date('d/m/Y', $article->TimestampDateLivraison)         : '';
+            $article->date_livraison_conf = !empty($article->TimestampDateLivraisonConfirme) ? date('d/m/Y', $article->TimestampDateLivraisonConfirme) : '';
+        } finally {
+            if ($switched) {
+                restore_previous_locale();
+            }
         }
-
-        $article->Groupe = apply_filters('ispag_get_groupe_by_article_id', null, $article->IdCommandeClient);
-
-        switch ((int)$article->Type) {
-
-            case 1: // Cuve sur mesure — prix hors historique catalogue
-
-                // error_log('[DEBUG] Locale avant data tank: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
-
-
-                // $tank_repo = new ISPAG_Tank_Repository();
-                $tank_data = ISPAG_Tank_Repository::get_tank_details($article->IdCommandeClient);
-
-                $article->RefSurMesure              = apply_filters('ispag_get_tank_title',               $article->RefSurMesure, $article->IdCommandeClient);
-                $article->DescSurMesure             = apply_filters('ispag_get_tank_description',         $article->DescSurMesure, $article->IdCommandeClient, true, $lang);
-                $article->last_drawing_url          = apply_filters('ispag_get_last_drawing_url',         '', $article->IdCommandeClient);
-                $article->DrawingApproved           = apply_filters('ispag_get_drawing_approval',         '', $article->IdCommandeClient);
-                $article->last_doc_type             = apply_filters('ispag_get_if_last_drawing_or_modif', '', $article->IdCommandeClient);
-                $article->welding_text_informations = apply_filters('ispag_get_welding_text',             null, $article->Article ?? null, $article->IdCommandeClient);
-                $article->tank_on_site_welded       = apply_filters('ispag_get_tank_on_site_welded',      $article->Article ?? null, $article->IdCommandeClient);
-                $article->image                     = apply_filters('ispag_get_tank_svg',                 null, $article->IdCommandeClient, false);
-
-                if ($tank_data) {
-                    $article->tank_details     = $tank_data;
-                    $article->technical_volume = floatval($tank_data['dimensions_principales']['Volume_L'] ?? 0);
-                }
-                break;
-
-            case 5: // Échangeur à plaques sur mesure — prix hors historique catalogue
-                $article->RefSurMesure  = apply_filters('ispag_get_plate_exchanger_title',       $article->RefSurMesure,  $article->IdCommandeClient);
-                $article->DescSurMesure = apply_filters('ispag_get_plate_exchanger_description', $article->DescSurMesure, $article->IdCommandeClient, true);
-                $article->image         = wp_get_attachment_url(12289);
-                break;
-
-            default: // Article standard catalogue — prix issu de l'historique (ph)
-                $article->RefSurMesure  = !empty($article->RefSurMesureSupplier)  ? $article->RefSurMesureSupplier  : $article->RefSurMesure;
-                $article->DescSurMesure = !empty($article->DescSurMesureSupplier) ? $article->DescSurMesureSupplier : $article->DescSurMesure;
-                $article->UnitPrice     = !empty($article->UnitPriceSupplier)     ? $article->UnitPriceSupplier     : $article->UnitPrice;
-                break;
-        }
-
-        $article->total_price         = floatval($article->UnitPriceNet) * intval($article->Qty);
-        $article->date_livraison      = !empty($article->TimestampDateLivraison)         ? date('d/m/Y', $article->TimestampDateLivraison)         : '';
-        $article->date_livraison_conf = !empty($article->TimestampDateLivraisonConfirme) ? date('d/m/Y', $article->TimestampDateLivraisonConfirme) : '';
     }
 
     // ─────────────────────────────────────────────────────────────────────────

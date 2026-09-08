@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 $(document).on('click', '.achat-action-btn', function () {
     const hook = $(this).data('hook');
-    const achatId = $(this).data('achat-id');
+    const achatId = $(this).data('achat-id'); 
 
     if (typeof window[hook] === 'function') {
         window[hook](achatId, this);

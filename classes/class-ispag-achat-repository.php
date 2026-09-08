@@ -92,7 +92,23 @@ class ISPAG_Achat_Repository {
 
         // 3. Compléter les projets
         $base_url = trailingslashit(get_site_url()) . 'purchase/';
-        $project_base_url = trailingslashit(get_site_url()) . 'project-detail/';
+        
+        
+        $current_lang = function_exists('pll_current_language') 
+        ? pll_current_language() 
+        : (defined('ICL_LANGUAGE_CODE') ? ICL_LANGUAGE_CODE : 'fr');
+
+        // 2. Adapter le slug selon la langue
+        if (current_user_can('navigate_new_project_details_presentation')) {
+            $slug = ($current_lang === 'de') ? 'de/project-detail' : 'projectdetail';
+        }
+        else{
+            $slug = ($current_lang === 'de') ? 'de/project-detail' : 'project-detail';
+        }
+
+        $project_base_url = trailingslashit(get_site_url()) . $slug; 
+
+
         foreach ($results as $p) {
             $project = apply_filters('ispag_get_project_by_deal_id', null, $p->hubspot_deal_id);
             // error_log(print_r($project, true));
@@ -141,7 +157,20 @@ class ISPAG_Achat_Repository {
         }
 
         $base_url = trailingslashit(get_site_url()) . 'purchase/';
-        $project_base_url = trailingslashit(get_site_url()) . 'project-detail/';
+        
+        $current_lang = function_exists('pll_current_language') 
+        ? pll_current_language() 
+        : (defined('ICL_LANGUAGE_CODE') ? ICL_LANGUAGE_CODE : 'fr');
+
+        // 2. Adapter le slug selon la langue
+        if (current_user_can('navigate_new_project_details_presentation')) {
+            $slug = ($current_lang === 'de') ? 'de/project-detail' : 'projectdetail';
+        }
+        else{
+            $slug = ($current_lang === 'de') ? 'de/project-detail' : 'project-detail';
+        }
+
+        $project_base_url = trailingslashit(get_site_url()) . $slug.'/'; 
 
         // $result->purchase_url = esc_url(add_query_arg('poid', $result->Id, $base_url));
         // $result->project_url = esc_url(add_query_arg('deal_id', $result->hubspot_deal_id, $project_base_url));
