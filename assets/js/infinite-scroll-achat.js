@@ -16,13 +16,13 @@ jQuery(document).ready(function($) {
         if (reset) {
             currentPage = 1;
             hasMore = true;
-            $('#ispag-achats-list').empty();
+            // $('#ispag-achats-list').empty();
         }
 
         if (!hasMore) return;
 
         isLoading = true;
-        $('#ispag-achats-loading').show();
+        // $('#ispag-achats-loading').show();
 
         // Récupère les filtres actuels
         currentFilters = {
@@ -45,7 +45,7 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     if (reset) {
-                        $('#ispag-achats-list').html(response.data.html);
+                        $('#ispag-achats-list').replaceWith(response.data.html);
                     } else {
                         $('#ispag-achats-list').append(response.data.html);
                     }

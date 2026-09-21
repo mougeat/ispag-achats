@@ -158,9 +158,23 @@ class ISPAG_Achat_Manager
                 <th>' . __('Confirmation de commande', 'creation-reservoir') . '</th>
                 <th>' . __('State', 'creation-reservoir') . '</th>
             </tr></thead>';
-        echo '<tbody id="ispag-achats-list"></tbody>';
+        echo '<tbody id="ispag-achats-list">'; 
+        for ($i=0; $i < 10 ; $i++) { 
+            echo '
+            <tr class="ispag-skeleton-wrapper">
+                <td>#</td>
+                <td><span class="ispag-skeleton-line ispag-w-60"></span></td>
+                <td><span class="ispag-skeleton-line ispag-w-30"></span></td>
+                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
+                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
+                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
+                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
+                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
+            </tr>';
+        }
+        echo '</tbody>';
         echo '</table></div>';
-        echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Chargement...</div>';
+        // echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Chargement...</div>';
 
         $logger->log_user_action('achat_manager', 'ispag_achats_shortcode_complete', [], $user_id);
         return ob_get_clean();
@@ -286,7 +300,7 @@ class ISPAG_Achat_Manager
         if (empty($responsable_nom) && isset($achat->created_by))
         {
             $user_info = get_userdata($achat->created_by);
-            $responsable_nom = $user_info ? $user_info->display_name : __('Unknown User', 'ispag-crm');
+            $responsable_nom = $user_info ? $user_info->display_name : __('Unknown user', 'ispag-crm');
             $logger->log_db_change('achat_manager', 'users', 'FETCH_RESPONSABLE', ['achat_id' => $achat->Id, 'user_id' => $achat->created_by, 'responsable_nom' => $responsable_nom], $user_id);
         }
 

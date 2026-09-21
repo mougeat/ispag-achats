@@ -7,6 +7,7 @@ class ISPAG_Achat_Repository {
     private $table_fournisseurs;
     private $table_etat;
     protected $table_detail_projet;
+    protected $logger; // Déclaration de la propriété logger
     protected static $instance = null;
 
     public function __construct() {
@@ -17,7 +18,15 @@ class ISPAG_Achat_Repository {
         $this->table_fournisseurs = $wpdb->prefix . 'achats_fournisseurs';
         $this->table_etat = $wpdb->prefix . 'achats_etat_commandes_fournisseur';
         $this->table_detail_projet = $wpdb->prefix . 'achats_details_commande';
+
+        // Initialisation du logger si la classe ISPAG_Logger existe
+        if (class_exists('ISPAG_Logger')) {
+            $this->logger = ISPAG_Logger::get_instance(); 
+            // Modifiez la ligne ci-dessus selon la manière dont votre instance de logger est récupérée 
+            // (ex: new ISPAG_Logger() ou via un filtre/hook)
+        }
     }
+
     public static function init() {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -36,10 +45,11 @@ class ISPAG_Achat_Repository {
         $result = $this->wpdb->get_var($query);
         return $result ?: null;
     }
-    public function ispag_get_achats($html, $user_id = null, $all = false, $search = '', $select_state = '', $offset = 0, $limit = 20){
-        return $this->get_achats($user_id,$all, $search, $select_state, $offset, $limit);
 
+    public function ispag_get_achats($html, $user_id = null, $all = false, $search = '', $select_state = '', $offset = 0, $limit = 20){
+        return $this->get_achats($user_id, $all, $search, $select_state, $offset, $limit);
     }
+
     public function get_achats($user_id = null, $all = false, $search = '', $select_state = '', $offset = 0, $limit = 20) {
         $query = "
             SELECT a.*, f.Fournisseur, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color
@@ -47,7 +57,6 @@ class ISPAG_Achat_Repository {
             LEFT JOIN {$this->table_articles} ar ON ar.IdCommande = a.Id
             LEFT JOIN {$this->table_fournisseurs} f ON f.Id = a.IdFournisseur
             LEFT JOIN {$this->table_etat} e ON e.Id = a.EtatCommande
-            
             WHERE (archive IS NULL || archive = 0)
         ";
 
@@ -71,11 +80,9 @@ class ISPAG_Achat_Repository {
             $query_params[] = $equal;
             $query_params[] = $equal;
         }
-        // else {
-        //     $query .= " AND a.TimestampDateCreation > UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 6 MONTH))";
-        // }
-        if(!empty($select_state)){
-            $query .= "AND a.EtatCommande = %d";
+
+        if (!empty($select_state)) {
+            $query .= " AND a.EtatCommande = %d";
             $query_params[] = $select_state;
         }
 
@@ -90,46 +97,37 @@ class ISPAG_Achat_Repository {
             return [];
         }
 
-        // 3. Compléter les projets
         $base_url = trailingslashit(get_site_url()) . 'purchase/';
-        
-        
-        $current_lang = function_exists('pll_current_language') 
-        ? pll_current_language() 
-        : (defined('ICL_LANGUAGE_CODE') ? ICL_LANGUAGE_CODE : 'fr');
 
-        // 2. Adapter le slug selon la langue
+        $current_lang = function_exists('pll_current_language') 
+            ? pll_current_language() 
+            : (defined('ICL_LANGUAGE_CODE') ? ICL_LANGUAGE_CODE : 'fr');
+
         if (current_user_can('navigate_new_project_details_presentation')) {
             $slug = ($current_lang === 'de') ? 'de/project-detail' : 'projectdetail';
-        }
-        else{
+        } else {
             $slug = ($current_lang === 'de') ? 'de/project-detail' : 'project-detail';
         }
 
         $project_base_url = trailingslashit(get_site_url()) . $slug; 
 
-
         foreach ($results as $p) {
             $project = apply_filters('ispag_get_project_by_deal_id', null, $p->hubspot_deal_id);
-            // error_log(print_r($project, true));
             $p->purchase_url = esc_url($base_url . $p->Id);
-            // Initialisation de la variable de base
             $args = array('deal_id' => $p->hubspot_deal_id);
 
-            // Vérifie la condition pour ajouter l'argument 'quotation'
-            if ($project->isQotation) {
+            if ($project && isset($project->isQotation) && $project->isQotation) {
                 $args['quotation'] = 1;
             }
 
-            // Construit l'URL avec les arguments
-            $p->project_url = esc_url($project_base_url .  $p->hubspot_deal_id); 
+            $p->project_url = esc_url($project_base_url . $p->hubspot_deal_id); 
             $p->purchase_total = $this->get_purchase_total(null, $p->Id);
         }
+
         return $results;
     }
 
     public function get_achat_by_id($html, $id) {
-        
         $id = intval($id);
         if (!$id) {
             return null;
@@ -142,14 +140,10 @@ class ISPAG_Achat_Repository {
             LEFT JOIN {$this->table_fournisseurs} f ON f.Id = a.IdFournisseur
             LEFT JOIN {$this->table_etat} e ON e.Id = a.EtatCommande
             WHERE a.Id = %d
+            GROUP BY a.Id LIMIT 1
         ";
 
-        $query_params = [$id];
-
-
-        $query .= " GROUP BY a.Id LIMIT 1";
-
-        $prepared = $this->wpdb->prepare($query, ...$query_params);
+        $prepared = $this->wpdb->prepare($query, $id);
         $result = $this->wpdb->get_row($prepared);
 
         if (!$result) {
@@ -159,53 +153,35 @@ class ISPAG_Achat_Repository {
         $base_url = trailingslashit(get_site_url()) . 'purchase/';
         
         $current_lang = function_exists('pll_current_language') 
-        ? pll_current_language() 
-        : (defined('ICL_LANGUAGE_CODE') ? ICL_LANGUAGE_CODE : 'fr');
+            ? pll_current_language() 
+            : (defined('ICL_LANGUAGE_CODE') ? ICL_LANGUAGE_CODE : 'fr');
 
-        // 2. Adapter le slug selon la langue
         if (current_user_can('navigate_new_project_details_presentation')) {
             $slug = ($current_lang === 'de') ? 'de/project-detail' : 'projectdetail';
-        }
-        else{
+        } else {
             $slug = ($current_lang === 'de') ? 'de/project-detail' : 'project-detail';
         }
 
-        $project_base_url = trailingslashit(get_site_url()) . $slug.'/'; 
-
-        // $result->purchase_url = esc_url(add_query_arg('poid', $result->Id, $base_url));
-        // $result->project_url = esc_url(add_query_arg('deal_id', $result->hubspot_deal_id, $project_base_url));
+        $project_base_url = trailingslashit(get_site_url()) . $slug . '/'; 
 
         $project = apply_filters('ispag_get_project_by_deal_id', null, $result->hubspot_deal_id);
-        // error_log(print_r($project, true));
         $result->purchase_url = esc_url($base_url . $result->Id);
-        // Initialisation de la variable de base
         $args = array('deal_id' => $result->hubspot_deal_id);
 
-        // Vérifie la condition pour ajouter l'argument 'quotation'
-        if ($project->isQotation) {
+        if ($project && isset($project->isQotation) && $project->isQotation) {
             $args['qotation'] = 1;
         }
 
-        // Construit l'URL avec les arguments
         $result->project_url = esc_url($project_base_url . $result->hubspot_deal_id);
         $result->purchase_total = $this->get_purchase_total(null, $id);
 
         return $result;
     }
 
-    /**
-     * Calcule le montant total d'une commande d'achat spécifique
-     * en tenant compte de la quantité, du prix unitaire et du rabais (supposé en pourcentage).
-     *
-     * @param mixed $html Non utilisé, paramètre hérité du hook d'application.
-     * @param int $purchase_id L'ID de la commande d'achat (IdCommande).
-     * @return float|null Le montant total de la commande, ou null en cas d'erreur ou si l'ID est invalide.
-     */
     public function get_purchase_total($html, $purchase_id) {
         $purchase_id = intval($purchase_id);
         if (!$purchase_id) return 0.0;
 
-        // 1. Récupérer tous les IDs d'articles liés à cette commande
         $article_ids = $this->wpdb->get_col($this->wpdb->prepare(
             "SELECT Id FROM {$this->table_articles} WHERE IdCommande = %d",
             $purchase_id
@@ -216,13 +192,10 @@ class ISPAG_Achat_Repository {
         $total_achat = 0.0;
         $repo_article = new ISPAG_Achat_Article_Repository();
 
-        // 2. Boucler sur chaque article et utiliser la méthode existante
         foreach ($article_ids as $id) {
             $article_data = $repo_article->get_article_by_id(null, $id);
-            // error_log('MONTANT COMMANDE (' . $purchase_id . '): ' . print_r($article_data, true));
             
             if ($article_data && isset($article_data->TotalPriceNet)) {
-                // On cumule le TotalPriceNet qui est déjà calculé, remisé et arrondi
                 $total_achat += floatval($article_data->TotalPriceNet);
             }
         }
@@ -230,4 +203,86 @@ class ISPAG_Achat_Repository {
         return $total_achat;
     }
 
+    public function get_purchase_total_by_deal_id($html, $deal_id) {
+        $user_id = get_current_user_id();
+        $deal_id = intval($deal_id);
+
+        if (isset($this->logger)) {
+            $this->logger->log_user_action('achats', 'get_purchase_total_by_deal_id_start', ['deal_id' => $deal_id], $user_id);
+        }
+
+        if (!$deal_id) { 
+            return 0.0;
+        }
+
+        try {
+            // Fallback si $this->wpdb n'est pas initialisé dans l'instance
+            $wpdb = $this->wpdb ?? $GLOBALS['wpdb'];
+
+            if (!$wpdb) {
+                throw new Exception('Objet $wpdb non disponible.');
+            }
+
+            // Vérification des noms de tables
+            $table_articles = $this->table_articles ?? $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
+            $table_achats   = $this->table_achats ?? $wpdb->prefix . 'achats_commande_liste_fournisseurs';
+
+            // Construction du SQL
+            $sql = $wpdb->prepare(
+                "SELECT 
+                    SUM(tar.UnitPrice * (1 - COALESCE(tar.Discount, 0) / 100) * tar.Qty) AS total_net 
+                FROM {$this->table_articles} tar 
+                INNER JOIN {$this->table_achats} tac 
+                    ON tar.IdCommande = tac.Id 
+                WHERE tac.hubspot_deal_id = %d",
+                $deal_id
+            );
+
+            // Au lieu d'appeler log_db_change avec un tableau en 3ème position :
+            // On utilise log_user_action (ou on remet les arguments dans le bon ordre pour log_db_change)
+
+            if (isset($this->logger)) {
+                $this->logger->log_user_action('achats', 'PREPARED_QUERY_TOTAL_PURCHASE', [
+                    'deal_id' => $deal_id,
+                    'sql'     => $sql
+                ], $user_id);
+            }
+
+            // Exécution de la requête
+            $raw_result = $wpdb->get_var($sql);
+
+            // Log d'une éventuelle erreur d'exécution SQL
+            if (!empty($wpdb->last_error) && isset($this->logger)) {
+                $this->logger->log_user_action('achats', 'get_purchase_total_by_deal_id_sql_error', [
+                    'deal_id'   => $deal_id,
+                    'sql_error' => $wpdb->last_error,
+                    'sql'       => $sql
+                ], $user_id);
+            }
+
+            $total_achat = floatval($raw_result ?? 0.0);
+
+            if (isset($this->logger)) {
+                $this->logger->log_user_action('achats', 'get_purchase_total_by_deal_id_end', [
+                    'deal_id'     => $deal_id,
+                    'total_achat' => $total_achat
+                ], $user_id);
+            }
+
+            return $total_achat;
+
+        } catch (Throwable $e) {
+            // Capture toute erreur PHP 7+ / 8+ ou Exception
+            if (isset($this->logger)) {
+                $this->logger->log_user_action('achats', 'get_purchase_total_by_deal_id_CRASH', [
+                    'deal_id' => $deal_id,
+                    'error'   => $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine()
+                ], $user_id);
+            }
+
+            return 0.0;
+        }
+    }
 }
