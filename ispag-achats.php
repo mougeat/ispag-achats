@@ -26,6 +26,11 @@ ISPAG_GitHub_Updater::plugin(__FILE__, 'mougeat/ispag-achats');
 register_activation_hook(__FILE__, ['ISPAG_Achats_Installer', 'install']);
 ISPAG_Achats_Installer::init();
 
+// Pages nécessaires (créées à l'activation ou via Outils → Pages ISPAG ; jamais automatiquement)
+require_once __DIR__ . '/classes/class-ispag-page-installer.php';
+ISPAG_Page_Installer::register('ISPAG Achats', require __DIR__ . '/install/pages.php');
+register_activation_hook(__FILE__, function () { ISPAG_Page_Installer::on_activation('ISPAG Achats'); });
+
 add_action('init', 'ispag_load_textdomain');
 
 new ISPAG_Purchase_URL_Rewrite();
