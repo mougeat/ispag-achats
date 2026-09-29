@@ -26,6 +26,14 @@ ISPAG_GitHub_Updater::plugin(__FILE__, 'mougeat/ispag-achats');
 register_activation_hook(__FILE__, ['ISPAG_Achats_Installer', 'install']);
 ISPAG_Achats_Installer::init();
 
+// ISPAG_Logger est fourni par un autre plugin ISPAG ; classe de secours chargée seulement s'il est absent
+add_action('plugins_loaded', function () {
+    spl_autoload_register(function ($class) {
+        if ($class === 'ISPAG_Logger') require_once __DIR__ . '/' . 'install/fallback-logger.php';
+    });
+}, 1);
+
+
 // Pages nécessaires (créées à l'activation ou via Outils → Pages ISPAG ; jamais automatiquement)
 require_once __DIR__ . '/classes/class-ispag-page-installer.php';
 ISPAG_Page_Installer::register('ISPAG Achats', require __DIR__ . '/install/pages.php');
