@@ -18,6 +18,10 @@ spl_autoload_register(function ($class) {
     }
 });
 
+// Mise à jour depuis une branche GitHub : inactif sauf si wp-config.php définit ISPAG_GITHUB_TOKEN et ISPAG_UPDATE_BRANCH
+require_once __DIR__ . '/classes/class-ispag-github-updater.php';
+ISPAG_GitHub_Updater::plugin(__FILE__, 'mougeat/ispag-achats');
+
 // Schéma de base de données : créé à l'activation, et re-vérifié à chaque chargement si la version change
 register_activation_hook(__FILE__, ['ISPAG_Achats_Installer', 'install']);
 ISPAG_Achats_Installer::init();
