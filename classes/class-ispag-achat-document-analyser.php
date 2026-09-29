@@ -46,7 +46,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
             return null;
         }
 
-        require_once WP_PLUGIN_DIR . '/ispag-project-manager/libs/pdfparser/autoload.php';
+        require_once ispag_project_manager_dir() . 'libs/pdfparser/autoload.php';
 
         $keywords = [
             'Durchmesser', 'Gesamthöhe', 'Volumen', 'Betriebsdruck',
