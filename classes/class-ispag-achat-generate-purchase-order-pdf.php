@@ -42,7 +42,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         if (!in_array($achat->EtatCommande, [1])) {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'Bouton non affiché : état de la commande non valide (EtatCommande != 1)',
+                'Button not displayed: invalid order status (EtatCommande != 1)',
                 $user_id
             );
             return;
@@ -88,10 +88,10 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         if (!current_user_can('edit_supplier_order')) {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'ERROR: Utilisateur non autorisé (edit_supplier_order requis)',
+                'ERROR: User not authorized (edit_supplier_order required)',
                 $user_id
             );
-            wp_die('Non autorisé');
+            wp_die('Not authorized');
         }
 
         global $wpdb;
@@ -242,10 +242,10 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         } else {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'ERROR: Aucun projet ou achat défini',
+                'ERROR: No project or purchase defined',
                 $user_id
             );
-            wp_die('Aucun projet ou achat de défini');
+            wp_die('No project or purchase defined');
         }
 
         $title = __('Purchase order', 'creation-reservoir');
@@ -301,7 +301,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
                     'Date'            => time(),
                     'dateReadable'    => current_time('mysql'),
                     'IdUser'          => $userId,
-                    'Historique'      => 'Ajout d\'une pièce jointe',
+                    'Historique'      => 'Adding an attachment',
                     'IdMedia'         => $attach_id,
                     'is_task'         => 0,
                     'is_done'         => 0,
@@ -344,7 +344,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         } else {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'ERROR: Échec de la génération du PDF',
+                'ERROR: PDF generation failed',
                 $user_id
             );
         }

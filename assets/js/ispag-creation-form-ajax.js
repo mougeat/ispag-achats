@@ -58,7 +58,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     var newOrderId = response.data.id;
                     var message = '✅ ' + response.data.message + 
-                                  '<br>Redirection vers les détails de la commande dans 1 seconde...';
+                                  '<br>Redirecting to the order details in 1 second...';
 
                     messageArea.html(message).addClass('ispag-notice success');
                     

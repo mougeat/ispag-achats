@@ -122,7 +122,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
         if (empty($raw_response)) {
             self::$logger->log('achat_document_analyser', 'ERROR: Extraction des données échouée ou format invalide', $user_id);
-            wp_send_json_error('Extraction des données échouée ou format invalide.');
+            wp_send_json_error('Data extraction failed or invalid format.');
         }
 
         self::$logger->log_user_action(
@@ -185,7 +185,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
         if (empty($raw_response)) {
             self::$logger->log('achat_document_analyser', 'ERROR: Extraction des données de facture échouée', $user_id);
-            wp_send_json_error('Extraction des données échouée ou format invalide.');
+            wp_send_json_error('Data extraction failed or invalid format.');
         }
 
         $data_extracted = is_string($raw_response) ? json_decode($raw_response, true) : $raw_response;
@@ -303,7 +303,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
                 if ($updated === false) {
                     self::$logger->log('achat_document_analyser', 'ERROR: Échec de la mise à jour de la base de données - ' . $wpdb->last_error, $user_id);
-                    wp_send_json_error('Erreur lors de la mise à jour de la base de données.');
+                    wp_send_json_error('Error while updating the database.');
                 } else {
                     self::$logger->log_db_change(
                         'achat_document_analyser',
@@ -519,7 +519,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
                 $datas_to_confirm[] = [
                     'tank_id' => $existing_tank['Id'],
-                    'titre' => $new_tank['titre'] ?? "Réservoir {$best_match_idx}",
+                    'titre' => $new_tank['titre'] ?? "Tank {$best_match_idx}",
                     'fields' => $comparison,
                 ];
             }
@@ -532,13 +532,13 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
                 }
                 $datas_to_confirm[] = [
                     'tank_id' => 'new',
-                    'titre' => $new_tank['titre'] ?? 'Nouveau réservoir',
+                    'titre' => $new_tank['titre'] ?? 'New tank',
                     'fields' => $fields,
                 ];
                 self::$logger->log_user_action(
                     'achat_document_analyser',
                     'new_tank_detected',
-                    ['titre' => $new_tank['titre'] ?? 'Nouveau réservoir'],
+                    ['titre' => $new_tank['titre'] ?? 'New tank'],
                     $user_id
                 );
             }

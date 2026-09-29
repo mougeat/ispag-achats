@@ -23,7 +23,7 @@ class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
         
         if (!$deal_id || !current_user_can('manage_order')) {
             ob_end_clean();
-            wp_send_json_error(['message' => 'Accès refusé ou Deal ID manquant']);
+            wp_send_json_error(['message' => 'Access denied or missing Deal ID']);
         }
 
         try {
@@ -70,7 +70,7 @@ class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
         );
 
         $achat_id = $this->wpdb->insert_id;
-        if (!$achat_id) throw new Exception("Erreur création entête commande.");
+        if (!$achat_id) throw new Exception("Error while creating the order header.");
 
         // 4. AJOUT DE L'ARTICLE DE LIVRAISON (SANS PRIX)
         // On insère une ligne dans la table des détails articles fournisseurs

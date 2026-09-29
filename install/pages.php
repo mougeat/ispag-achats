@@ -8,7 +8,7 @@ defined('ABSPATH') || exit;
 return [
     ['key' => 'purchases_list', 'slug' => 'liste-des-achats', 'title' => 'Liste des achats', 'content' => '[ispag_achats]', 'group' => 'purchases_list'],
     ['key' => 'purchases_list_de', 'slug' => 'einkaufsliste', 'title' => 'Einkaufsliste', 'content' => '[ispag_achats]', 'lang' => 'de', 'group' => 'purchases_list'],
-    ['key' => 'purchase_detail', 'slug' => 'details-achats', 'title' => 'Détails achat', 'content' => '[ispag_achat_detail]', 'group' => 'purchase_detail'],
+    ['key' => 'purchase_detail', 'slug' => 'details-achats', 'title' => 'Purchase details', 'content' => '[ispag_achat_detail]', 'group' => 'purchase_detail'],
     ['key' => 'purchase_detail_de', 'slug' => 'einkaufsdetail', 'title' => 'Einkaufsdetail', 'content' => '[ispag_achat_detail]', 'lang' => 'de', 'group' => 'purchase_detail'],
     ['key' => 'purchase_new', 'slug' => 'nouvelle-demande-dachat', 'title' => 'Nouvelle demande d\'achat', 'content' => '[ispag_form_nouvelle_commande]', 'group' => 'purchase_new'],
     ['key' => 'purchase_new_de', 'slug' => 'neue-kaufanfrage', 'title' => 'Neue Kaufanfrage', 'content' => '[ispag_form_nouvelle_commande]', 'lang' => 'de', 'group' => 'purchase_new'],

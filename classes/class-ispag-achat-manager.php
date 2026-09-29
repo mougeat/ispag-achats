@@ -198,7 +198,7 @@ class ISPAG_Achat_Manager
                 <th>' . __('Delivery date', 'creation-reservoir') . '</th>
                 <th>' . __('Supplier', 'creation-reservoir') . '</th>
                 <th>' . __('Order amount', 'creation-reservoir') . '</th>
-                <th>' . __('Confirmation de commande', 'creation-reservoir') . '</th>
+                <th>' . __('Order confirmation', 'creation-reservoir') . '</th>
                 <th>' . __('State', 'creation-reservoir') . '</th>
             </tr></thead>';
         echo '<tbody id="ispag-achats-list">'; 
@@ -699,13 +699,13 @@ class ISPAG_Achat_Manager
         if (empty($article_id) || empty($purchase_id))
         {
             $logger->log('achat_manager', 'ERROR: Missing required data (article_id or purchase_id)', $user_id);
-            wp_send_json_error('Données obligatoires manquantes (ID article ou ID achat).');
+            wp_send_json_error('Required data missing (article ID or purchase ID).');
         }
 
         if (empty($post_datas))
         {
             $logger->log('achat_manager', 'ERROR: No data to save', $user_id);
-            wp_send_json_error('Aucune donnée à enregistrer.');
+            wp_send_json_error('No data to save.');
         }
 
         $logger->log_user_action('achat_manager', 'data_validation_passed', [], $user_id);
@@ -757,13 +757,13 @@ class ISPAG_Achat_Manager
         {
             $logger->log_user_action('achat_manager', 'save_confirmed_data_success', [], $user_id);
             wp_send_json_success([
-                'message' => 'Données mises à jour avec succès.',
+                'message' => 'Data updated successfully.',
                 'purchase_update' => $res_purchase
             ]);
         }
         else
         {
-            $error_msg = isset($res_tank['message']) ? $res_tank['message'] : 'Erreur lors de la mise à jour technique.';
+            $error_msg = isset($res_tank['message']) ? $res_tank['message'] : 'Error during the technical update.';
             $logger->log('achat_manager', 'ERROR: Save failed - ' . $error_msg, $user_id);
             wp_send_json_error($error_msg);
         }
@@ -805,14 +805,14 @@ class ISPAG_Achat_Manager
                 return ['success' => false, 'message' => 'Erreur lors de l\'insertion'];
             }
 
-            return ['success' => true, 'message' => 'Création OK'];
+            return ['success' => true, 'message' => 'Creation OK'];
         }
 
         // ── Mise à jour de la table achat ─────────────────────────────────────
         $updated = $wpdb->update($table_purchase, $data, ['Id' => $article_id]);
 
         if ($updated === false) {
-            return ['success' => false, 'message' => 'Erreur à la mise à jour'];
+            return ['success' => false, 'message' => 'Update error'];
         }
 
         // ── Récupération de IdCommandeClient ──────────────────────────────────
@@ -830,7 +830,7 @@ class ISPAG_Achat_Manager
             );
         }
 
-        return ['success' => true, 'message' => 'Mise à jour OK'];
+        return ['success' => true, 'message' => 'Update OK'];
     }
 
     public function set_article_as_delivered($html, $ids, $date)
@@ -898,7 +898,7 @@ class ISPAG_Achat_Manager
         if ($deleted === false)
         {
             $logger->log('achat_manager', 'ERROR: Failed to delete achat - ' . $wpdb->last_error, $user_id);
-            wp_send_json_error('Échec suppression');
+            wp_send_json_error('Deletion failed');
         }
 
         $logger->log_user_action('achat_manager', 'delete_achat_complete', ['achat_id' => $achat_id], $user_id);

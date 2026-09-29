@@ -326,7 +326,7 @@ class ISPAG_Achat_Commande_Manager {
 
         // 2. Vérification des permissions
         if (!current_user_can('view_supplier_order')) {
-            $this->logger->log('achat_commande_manager', 'ERROR: Permission refusée pour l\'utilisateur ' . $user_id, $user_id);
+            $this->logger->log('achat_commande_manager', 'ERROR: Permission denied pour l\'utilisateur ' . $user_id, $user_id);
             $this->send_json_error(esc_html__('Permission error. You do not have permission to perform this action.', $this->text_domain), 'permission');
         }
 

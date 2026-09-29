@@ -185,7 +185,7 @@ class ISPAG_Achat_Details_Renderer {
             // On passe l'objet aux deux paramètres de la méthode de rendu
             self::render_bloc_livraison($achat_data, $achat_data); 
         } else {
-            echo '<div class="error">Erreur de récupération des données.</div>';
+            echo '<div class="error">Error while retrieving data.</div>';
         }
         
         $html = ob_get_clean();

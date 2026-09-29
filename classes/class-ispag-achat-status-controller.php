@@ -143,7 +143,7 @@ class ISPAG_Achat_Status_Controller {
             $action_type = sanitize_text_field($_POST['type'] ?? '');
 
             if (!$achat_id || !$action_type) {
-                wp_send_json_error(['message' => 'Paramètres manquants (ID ou Type).']);
+                wp_send_json_error(['message' => 'Missing parameters (ID or Type).']);
             }
 
             self::prepare_mail($achat_id, $action_type);
@@ -178,7 +178,7 @@ class ISPAG_Achat_Status_Controller {
             SELECT IdFournisseur, hubspot_deal_id FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d
         ", $achat_id));
         if (!$achat){
-            wp_send_json_error(['message' => 'Commande non trouvée.']);
+            wp_send_json_error(['message' => 'Order not found.']);
         }
 
         // 2. Récupérer infos fournisseur
@@ -221,7 +221,7 @@ class ISPAG_Achat_Status_Controller {
         ", $lang, $message_type));
 
         if (!$template) {
-            wp_send_json_error(['message' => 'Template non trouvé pour la langue : ' . $lang]);
+            wp_send_json_error(['message' => 'Template not found for language: ' . $lang]);
         }
 
         // 5. Remplacer les tags

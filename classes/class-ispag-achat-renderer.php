@@ -15,7 +15,7 @@ class ISPAG_Achat_Renderer {
     
     public static function render_articles_tab($achat_id) {
         if (empty($achat_id) || !is_numeric($achat_id)) {
-            echo '<div class="ispag-notice warning"><p>Aucun article trouvé.</p></div>';
+            echo '<div class="ispag-notice warning"><p>No article found.</p></div>';
             return;
         }
 
@@ -104,7 +104,7 @@ class ISPAG_Achat_Renderer {
         
         foreach ($articles as $article) {
             // On définit un nom par défaut si le groupe est vide
-            $group_name = !empty($article->Groupe) ? $article->Groupe : __('Sans groupe', 'ispag-crm');
+            $group_name = !empty($article->Groupe) ? $article->Groupe : __('No group', 'ispag-crm');
             
             if (!isset($grouped[$group_name])) {
                 $grouped[$group_name] = [];
@@ -319,8 +319,8 @@ class ISPAG_Achat_Renderer {
             $theoretical_ded = round($total_amount_net_taxable * 0.10, 2);
             
             if (!$dedouanement_found || abs($current_dedouanement_price - $theoretical_ded) > 1.00) {
-                $msg = "Dédouanement (10%) sur un total net de " . number_format($total_amount_net_taxable, 2) . " EUR.";
-                self::render_adjustment_notice($msg, "Appliquer Dédouanement ($theoretical_ded EUR)", 'DED', $theoretical_ded, $achat_id);
+                $msg = "Customs clearance (10%) on a net total of " . number_format($total_amount_net_taxable, 2) . " EUR.";
+                self::render_adjustment_notice($msg, "Apply customs clearance ($theoretical_ded EUR)", 'DED', $theoretical_ded, $achat_id);
             }
         }
     }
@@ -352,7 +352,7 @@ class ISPAG_Achat_Renderer {
         $table    = $wpdb->prefix . 'achats_articles_cmd_fournisseurs'; // À vérifier selon votre table réelle
 
         if (!$achat_id || !$amount) {
-            wp_send_json_error('Données invalides.');
+            wp_send_json_error('Invalid data.');
         }
 
         // 1. Vérifier si l'article existe déjà dans cette commande
@@ -376,11 +376,11 @@ class ISPAG_Achat_Renderer {
             );
             
             if ($updated !== false) {
-                wp_send_json_success('Article mis à jour.');
+                wp_send_json_success('Article updated.');
             }
         } else {
             // CRÉATION
-            $description = ($type === 'TRANS') ? 'Frais de transport selon volume' : 'Frais de dédouanement (10%)';
+            $description = ($type === 'TRANS') ? 'Frais de transport selon volume' : 'Customs clearance fees (10%)';
             
             $inserted = $wpdb->insert(
                 $table,
@@ -395,10 +395,10 @@ class ISPAG_Achat_Renderer {
             );
 
             if ($inserted) {
-                wp_send_json_success('Article ajouté.');
+                wp_send_json_success('Article added.');
             }
         }
 
-        wp_send_json_error('Erreur lors de l\'enregistrement en base de données.');
+        wp_send_json_error('Error while saving to the database.');
     }
 }

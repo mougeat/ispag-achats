@@ -32,7 +32,7 @@ $responsables = array_filter($all_users, function($user) {
     <!-- Champ de recherche -->
     <input type="text"
            id="ispag-achats-search"
-           placeholder="Rechercher par référence, numéro de commande, ou deal HubSpot..."
+           placeholder="Search by reference, order number, or HubSpot deal..."
            class="ispag-search-field"
            value="<?php echo esc_attr($filters['search'] ?? ''); ?>">
 

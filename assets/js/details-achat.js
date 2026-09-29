@@ -31,7 +31,7 @@ function handleAddressUpdate(btn, actionName) {
             btn.prop('disabled', false).html(originalText);
         }
     }).fail(() => {
-        alert('Erreur réseau');
+        alert('Network error');
         btn.prop('disabled', false).html(originalText);
     });
 }
@@ -80,7 +80,7 @@ jQuery(function ($) {
 
         function fail() {
             $panel.data('lazyState', null); // permet de réessayer au prochain clic
-            $panel.html('<div class="ispag-notice warning"><p>Chargement impossible. Cliquez à nouveau sur l\'onglet pour réessayer.</p></div>');
+            $panel.html('<div class="ispag-notice warning"><p>Loading failed. Click the tab again to retry.</p></div>');
         }
 
         if (typeof window.ISPAGLoad === 'function') {
