@@ -70,7 +70,8 @@ jQuery(document).ready(function($) {
 
                     // Redirection après 1 seconde (1000 millisecondes)
                     setTimeout(function() {
-                        var redirectUrl = 'https://app.ispag-asp.ch/purchase/' + newOrderId;
+                        // adresse du site courant (et non celle de la production) : fournie par le serveur
+                        var redirectUrl = ((typeof ispagAjax !== 'undefined' && ispagAjax.purchase_url) ? ispagAjax.purchase_url : '/purchase/') + newOrderId;
                         window.location.href = redirectUrl;
                     }, 1000);
 

@@ -89,6 +89,7 @@ class ISPAG_Achat_Commande_Manager {
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('nouvelle_commande_action'),
             'action'  => $this->ajax_action,
+            'purchase_url' => trailingslashit(get_site_url()) . 'purchase/',
         ));
 
         $user_id = get_current_user_id();
