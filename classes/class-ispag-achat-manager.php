@@ -47,7 +47,8 @@ class ISPAG_Achat_Manager
         add_shortcode('ispag_achat_detail', [self::class, 'ispag_achat_detail_shortcode']);
         // $logger->log_user_action('achat_manager', 'shortcodes_registered', [], $user_id);
 
-        add_action('wp_enqueue_scripts', [self::class, 'enqueue_assets']);
+        // Les assets sont chargés à la demande par les shortcodes (voir enqueue_assets()),
+        // et non plus sur toutes les pages du site.
         add_filter('ispag_inline_edit_purchase', [self::class, 'handle_inline_edit'], 10, 2);
         // $logger->log_user_action('achat_manager', 'hooks_registered', [], $user_id);
 
@@ -59,20 +60,30 @@ class ISPAG_Achat_Manager
         add_action('wp_ajax_ispag_save_confirmed_data', [self::class, 'ispag_save_confirmed_data_handler']);
     }
 
+    /** Évite de relocaliser/recharger les assets si plusieurs shortcodes sont sur la même page. */
+    private static $assets_enqueued = false;
+
+    /**
+     * Charge CSS/JS des achats. Appelé depuis les shortcodes : les scripts partent en
+     * footer, donc l'enqueue pendant le rendu du contenu fonctionne et reste limité aux pages concernées.
+     */
     public static function enqueue_assets()
     {
-        $user_id = get_current_user_id();
-        $logger = ISPAG_Logger::get_instance();
-        // $logger->log_user_action('achat_manager', 'enqueue_assets_start', [], $user_id);
+        if (self::$assets_enqueued) return;
+        self::$assets_enqueued = true;
 
         global $wpdb;
 
-        add_action('wp_enqueue_scripts', function()
-        {
-            wp_enqueue_style('ispag-main-style');
-        });
+        wp_enqueue_style('ispag-main-style');
 
-        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', ['jquery'], false, true);
+        // Le socle skeleton vit dans le thème (generatepress-child). Dépendance seulement s'il est enregistré,
+        // sinon un handle manquant empêcherait le chargement du script.
+        $scroll_deps = ['jquery'];
+        if (wp_script_is('ispag-skeleton', 'registered')) {
+            $scroll_deps[] = 'ispag-skeleton';
+        }
+
+        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', $scroll_deps, false, true);
         wp_enqueue_script('ispag-state-achats', plugin_dir_url(__FILE__) . '../assets/js/state.js', ['jquery'], false, true);
         wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', ['jquery'], false, true);
         wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', ['jquery'], false, true);
@@ -87,17 +98,12 @@ class ISPAG_Achat_Manager
             'security' => wp_create_nonce('ispag_achat_nonce'),
         ]);
 
-        // $logger->log_user_action('achat_manager', 'scripts_enqueued', [], $user_id);
-
         $fournisseurs = $wpdb->get_results(
             "SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC"
         );
 
-        // $logger->log_db_change('achat_manager', 'achats_fournisseurs', 'SELECT', ['count' => count($fournisseurs)], $user_id);
-
-        $formatted_fournisseurs = array_map(function($f) use ($logger, $user_id)
+        $formatted_fournisseurs = array_map(function($f)
         {
-            // $logger->log_user_action('achat_manager', 'fournisseur_formatted', ['fournisseur_id' => $f->Id], $user_id);
             return ['Id' => $f->Id, 'Fournisseur' => $f->Fournisseur];
         }, $fournisseurs);
 
@@ -111,8 +117,6 @@ class ISPAG_Achat_Manager
                 'fournisseurs' => $formatted_fournisseurs
             ]
         );
-
-        // $logger->log_user_action('achat_manager', 'fournisseurs_localized', [], $user_id);
     }
 
     public static function ispag_achats_shortcode($atts)
@@ -133,6 +137,8 @@ class ISPAG_Achat_Manager
                     </div>';
             return ob_get_clean();
         }
+
+        self::enqueue_assets();
 
         $filters = [
             'search' => isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '',
@@ -159,19 +165,7 @@ class ISPAG_Achat_Manager
                 <th>' . __('State', 'creation-reservoir') . '</th>
             </tr></thead>';
         echo '<tbody id="ispag-achats-list">'; 
-        for ($i=0; $i < 10 ; $i++) { 
-            echo '
-            <tr class="ispag-skeleton-wrapper">
-                <td>#</td>
-                <td><span class="ispag-skeleton-line ispag-w-60"></span></td>
-                <td><span class="ispag-skeleton-line ispag-w-30"></span></td>
-                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
-                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
-                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
-                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
-                <td><span class="ispag-skeleton-line ispag-w-40"></span></td>
-            </tr>';
-        }
+        echo self::render_skeleton_rows(8, 10);
         echo '</tbody>';
         echo '</table></div>';
         // echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Chargement...</div>';
@@ -180,67 +174,19 @@ class ISPAG_Achat_Manager
         return ob_get_clean();
     }
 
-    public static function shortcode_achats($atts)
+    /**
+     * Lignes skeleton (même markup que ISPAGSkeleton.rows() côté JS du thème) :
+     * visibles dès le premier rendu, avant même que le JS ne s'exécute.
+     */
+    public static function render_skeleton_rows($cols, $rows)
     {
-        $user_id = get_current_user_id();
-        $logger = ISPAG_Logger::get_instance();
-        $logger->log_user_action('achat_manager', 'shortcode_achats_start', [], $user_id);
-
-        if (!current_user_can('view_supplier_order'))
+        $widths = ['ispag-w-20', 'ispag-w-60', 'ispag-w-40', 'ispag-w-80', 'ispag-w-50'];
+        $cells = '';
+        for ($c = 0; $c < $cols; $c++)
         {
-            $logger->log('achat_manager', 'ERROR: User cannot view supplier order', $user_id);
-            return '<div class="ispag-alert ispag-alert-danger">
-                        <i class="dashicons dashicons-lock"></i>
-                        <strong>' . esc_html__('Restricted access', 'ispag-crm') . ' :</strong> ' .
-                         esc_html__('You do not have the necessary rights to view this order.', 'ispag-crm') . '<br/>
-                        <a href ="'. home_url('/wp-login.php') . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
-                    </div>';
+            $cells .= '<td><span class="ispag-skeleton-line ' . $widths[$c % count($widths)] . '"></span></td>';
         }
-
-        $can_view_supplier_orders = current_user_can('view_supplier_order');
-        $search_query = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
-
-        $logger->log_user_action('achat_manager', 'search_query_applied', ['query' => $search_query], $user_id);
-
-        $html = '
-        <div class="ispag-toolbar">
-            <form method="get">
-                <input type="text" name="search" placeholder="' . __('Search', 'creation-reservoir') . ' ..." value="' . esc_attr($search_query) . '" />
-                <button type="submit" class="ispag-btn">' . __('Filter / Search', 'creation-reservoir') . '</button>
-                ';
-                if (!empty($search_query) OR isset($_GET['select_state']))
-                {
-                    $html .= '<a href="' . esc_url(remove_query_arg(array('orderby', 'order', 'search', 'filter_owner', 'paged', 'select_state'))) . '" class="ispag-btn ispag-btn-grey">' . __('Reset filters', 'creation-reservoir') . '</a>';
-                }
-        $html .= '
-            </form>
-        </div>';
-
-        if ($can_view_supplier_orders)
-        {
-            $status_checker = new ISPAG_Achat_status_render();
-            $html .= $status_checker->render_state_buttons();
-            $logger->log_user_action('achat_manager', 'status_buttons_rendered', [], $user_id);
-        }
-
-        $html .= '<div class="ispag-table-wrapper">';
-        $html .= '<table class="ispag-project-table">';
-        $html .= '<thead><tr>
-            <th>#</th>
-            <th>' . __('Reference', 'creation-reservoir') . '</th>
-            <th>' . __('Order date', 'creation-reservoir') . '</th>
-            <th>' . __('Delivery date', 'creation-reservoir') . '</th>
-            <th>' . __('Supplier', 'creation-reservoir') . '</th>
-            <th>' . __('Order amount', 'creation-reservoir') . '</th>
-            <th>' . __('Confirmation de commande', 'creation-reservoir') . '</th>
-            <th>' . __('State', 'creation-reservoir') . '</th>
-        </tr></thead>';
-        $html .= '<tbody id="achats-list"></tbody>';
-        $html .= '</table></div>';
-        $html .= '<div id="scroll-loader" style="height: 40px;"></div>';
-
-        $logger->log_user_action('achat_manager', 'shortcode_achats_complete', [], $user_id);
-        return $html;
+        return str_repeat('<tr class="ispag-skeleton-row ispag-skeleton-wrapper" aria-hidden="true">' . $cells . '</tr>', $rows);
     }
 
     public static function get_achat_etats()
@@ -271,6 +217,24 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'get_achat_etats_complete', ['count' => count($translated_etats)], $user_id);
         return $translated_etats;
+    }
+
+    /** @var array|null Cache par requête des états de commande (Id => objet), une seule requête SQL. */
+    private static $etat_map = null;
+
+    private static function get_etat_info($etat_id)
+    {
+        if (self::$etat_map === null)
+        {
+            global $wpdb;
+            self::$etat_map = [];
+            $rows = $wpdb->get_results("SELECT Id, Etat, ClassCss, color FROM {$wpdb->prefix}achats_etat_commandes_fournisseur");
+            foreach ($rows as $row)
+            {
+                self::$etat_map[(int) $row->Id] = $row;
+            }
+        }
+        return self::$etat_map[(int) $etat_id] ?? null;
     }
 
     public static function render_achat_row($achat, $index = 0)
@@ -305,14 +269,7 @@ class ISPAG_Achat_Manager
         }
 
         $etat_id = isset($achat->EtatCommande) ? $achat->EtatCommande : 0;
-        $etat_info = $wpdb->get_row(
-            $wpdb->prepare(
-                "SELECT Etat, ClassCss, color FROM {$wpdb->prefix}achats_etat_commandes_fournisseur WHERE Id = %d",
-                $etat_id
-            )
-        );
-
-        $logger->log_db_change('achat_manager', 'achats_etat_commandes_fournisseur', 'FETCH_ETAT', ['achat_id' => $achat->Id, 'etat_id' => $etat_id], $user_id);
+        $etat_info = self::get_etat_info($etat_id);
 
         $etat_text = $etat_info ? __($etat_info->Etat, 'creation-reservoir') : __('Unknown', 'creation-reservoir');
         $bgcolor = $etat_info ? $etat_info->color : '#ccc';
@@ -376,6 +333,8 @@ class ISPAG_Achat_Manager
                         <a href ="'. home_url('/wp-login.php') . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
                     </div>';
         }
+
+        self::enqueue_assets();
 
         $achat_id = get_query_var('poid');
         if (empty($achat_id) && isset($_GET['poid']))
@@ -1064,6 +1023,11 @@ function ajax_filter_achats_custom_tables()
     foreach ($results as $index => $row)
     {
         $html .= ISPAG_Achat_Manager::render_achat_row($row, $offset + $index);
+    }
+
+    if ($html === '' && $page === 1)
+    {
+        $html = '<tr class="ispag-empty-row"><td colspan="8" style="text-align:center;padding:24px;">' . esc_html__('No purchase found', 'creation-reservoir') . '</td></tr>';
     }
 
     $logger->log_user_action('achat_manager', 'ajax_filter_achats_custom_tables_complete', [], $user_id);
