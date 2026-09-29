@@ -773,7 +773,7 @@ class ISPAG_Achat_Manager
         global $wpdb;
 
         $table_purchase = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
-        $table_project  = 'wor9711_achats_details_commande';
+        $table_project  = $wpdb->prefix . 'achats_details_commande';
 
         $data = [
             'RefSurMesure'                   => sanitize_text_field($post_data['article_title'] ?? ''),

@@ -204,7 +204,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
         // --- MISE À JOUR DE LA BASE DE DONNÉES ---
         if (!empty($purchaseId)) {
-            $table_name = 'wor9711_achats_commande_liste_fournisseurs';
+            $table_name = $wpdb->prefix . 'achats_commande_liste_fournisseurs';
 
             $current_data = $wpdb->get_row($wpdb->prepare(
                 "SELECT delivery_number, invoice_number FROM $table_name WHERE id = %d",
