@@ -18,7 +18,7 @@ jQuery(document).ready(function($) {
                 location.reload(); 
             } else {
                 alert('Erreur : ' + response.data);
-                $btn.prop('disabled', false).text('Réessayer');
+                $btn.prop('disabled', false).text('Retry');
             }
         });
     });
