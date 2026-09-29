@@ -58,6 +58,43 @@ class ISPAG_Achat_Manager
         add_action('wp_ajax_ispag_bulk_achat_update_articles', [self::class, 'bulk_achat_update_articles']);
         add_action('wp_ajax_ispag_delete_achat', [self::class, 'delete_achat']);
         add_action('wp_ajax_ispag_save_confirmed_data', [self::class, 'ispag_save_confirmed_data_handler']);
+        add_action('wp_ajax_ispag_achat_load_tab', [self::class, 'ajax_load_tab']);
+    }
+
+    /**
+     * Rend le contenu d'un onglet secondaire de la page détail achat (chargé à la demande).
+     * Mêmes actions/fonctions qu'avant, seulement appelées à la demande au lieu du premier rendu.
+     */
+    public static function ajax_load_tab()
+    {
+        check_ajax_referer('ispag_achat_nonce', 'nonce');
+
+        if (!current_user_can('view_supplier_order'))
+        {
+            wp_send_json_error('forbidden', 403);
+        }
+
+        $achat_id = absint($_POST['achat_id'] ?? 0);
+        $tab = sanitize_key($_POST['tab'] ?? '');
+        if (!$achat_id || !in_array($tab, ['details', 'suivis', 'documents'], true))
+        {
+            wp_send_json_error('bad_request', 400);
+        }
+
+        ob_start();
+        switch ($tab)
+        {
+            case 'details':
+                do_action('ispag_achat_details_tab', $achat_id);
+                break;
+            case 'suivis':
+                do_action('ispag_display_achat_suivi', $achat_id);
+                break;
+            case 'documents':
+                echo ISPAG_Document_Manager::display_ispag_doc_manger($achat_id, true);
+                break;
+        }
+        wp_send_json_success(['html' => ob_get_clean()]);
     }
 
     /** Évite de relocaliser/recharger les assets si plusieurs shortcodes sont sur la même page. */

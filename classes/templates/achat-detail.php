@@ -194,15 +194,19 @@ document.addEventListener('DOMContentLoaded', function () {
         <?php do_action('ispag_achat_articles_tab', $achat->Id); ?>
     </div>
     
-    <div class="tab-content" id="details">
-        <?php do_action('ispag_achat_details_tab', $achat->Id); ?>
+    <?php
+    // Onglets secondaires : masqués au premier affichage, chargés à la demande (voir details-achat.js).
+    // Le skeleton est rendu ici pour être visible immédiatement au clic.
+    $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
+        . '<span class="ispag-skeleton-line ispag-w-40"></span>'
+        . '<span class="ispag-skeleton-line ispag-w-90"></span>'
+        . '<span class="ispag-skeleton-line ispag-w-80"></span>'
+        . '<span class="ispag-skeleton-line ispag-w-60"></span></div>';
+    foreach (['details', 'suivis', 'documents'] as $lazy_tab): ?>
+    <div class="tab-content" id="<?php echo esc_attr($lazy_tab); ?>" data-lazy-tab="<?php echo esc_attr($lazy_tab); ?>" data-achat-id="<?php echo esc_attr($achat->Id); ?>">
+        <?php echo $lazy_skeleton; ?>
     </div>
-    <div class="tab-content" id="suivis">
-        <?php do_action('ispag_display_achat_suivi', $achat->Id); ?>
-    </div>
-    <div class="tab-content" id="documents">
-        <?php echo ISPAG_Document_Manager::display_ispag_doc_manger($achat->Id, true); ?>
-    </div>
+    <?php endforeach; ?>
 </div> 
 
 <script>
