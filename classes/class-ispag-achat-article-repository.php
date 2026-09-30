@@ -9,6 +9,25 @@ class ISPAG_Achat_Article_Repository {
     protected $table_price_history;
     protected static $instance = null;
 
+    /**
+     * HTML de l'image d'un article : SVG en ligne, <img> ou, si l'image est absente, introuvable (404)
+     * ou égale au placeholder par défaut, l'icône neutre (identique à celle du plugin projets).
+     */
+    public static function image_html($content, $class = '', $icon_size = 40, $img_style = '') {
+        wp_enqueue_style('dashicons');
+        $content = str_replace('../../', '', trim((string) $content));
+        $icon = '<span class="dashicons dashicons-format-image ispag-image-fallback" style="font-size:' . (int) $icon_size . 'px;width:auto;height:auto;color:#ccc;"></span>';
+
+        if ($content === '' || preg_match('#/placeholder\.webp(\?.*)?$#i', $content)) {
+            return $icon;
+        }
+        if (strpos($content, '<svg') === 0) {
+            return $content;
+        }
+        $onerror = "this.onerror=null;this.outerHTML=" . esc_attr(wp_json_encode($icon)) . ";";
+        return '<img src="' . esc_attr($content) . '" alt="image"' . ($class !== '' ? ' class="' . esc_attr($class) . '"' : '') . ($img_style !== '' ? ' style="' . esc_attr($img_style) . '"' : '') . ' onerror="' . $onerror . '">';
+    }
+
     public function __construct() {
         global $wpdb;
         $this->wpdb                = $wpdb;

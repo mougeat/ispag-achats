@@ -27,11 +27,7 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
     <div class="ispag-article-visual-group">
         <input type="checkbox" class="ispag-article-checkbox" data-article-id="<?php echo $id; ?>" <?php echo $checked_attr; ?> >
         <div class="ispag-article-image">
-            <?php 
-            $content = str_replace('../../', '', trim($article->image));
-            if (strpos($content, '<svg') === 0) echo $content; 
-            else echo '<img src="' . htmlspecialchars($content, ENT_QUOTES) . '" alt="image">';
-            ?>
+            <?php echo ISPAG_Achat_Article_Repository::image_html($article->image); ?>
         </div>
     </div>
 

@@ -10,14 +10,7 @@ $user_can = current_user_can('manage_order');
     <div class="ispag-modal-left visual-container" style="min-height: 200px; background: #eee !important;">
         <div class="image-wrapper">
             <?php
-            $img_raw = trim($article->image);
-            if (empty($img_raw)) {
-                echo '<span class="dashicons dashicons-format-image" style="font-size:50px; color:#ccc;"></span>';
-            } elseif (strpos($img_raw, '<svg') === 0) {
-                echo $img_raw;
-            } else {
-                echo '<img src="' . htmlspecialchars($img_raw, ENT_QUOTES) . '" alt="Article" style="display:block; max-width:100%; height:auto; margin:auto;">';
-            }
+            echo ISPAG_Achat_Article_Repository::image_html($article->image, '', 50, 'display:block; max-width:100%; height:auto; margin:auto;');
             ?>
         </div>
     </div>
