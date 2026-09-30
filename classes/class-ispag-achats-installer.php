@@ -102,21 +102,9 @@ class ISPAG_Achats_Installer {
      * existant (qui gère ses droits autrement, par un plugin de rôles par ex.), rien n'est touché.
      */
     private static function grant_default_caps() {
-        // Une seule fois par plugin : un droit retiré ensuite volontairement n'est jamais redonné
-        $flag = 'ispag_caps_granted_achats';
-        if (get_option($flag)) {
-            return;
+        // Droits et rôles ISPAG : registre central dans ISPAG Project Manager (page « ISPAG Rights »)
+        if (class_exists('ISPAG_Capabilities')) {
+            ISPAG_Capabilities::install();
         }
-        $admin = get_role('administrator');
-        if (!$admin) {
-            return;
-        }
-        // Un droit à la fois : un autre plugin ISPAG a pu en accorder une partie avant nous (ex. manage_order)
-        foreach (self::CAPS as $cap) {
-            if (!$admin->has_cap($cap)) {
-                $admin->add_cap($cap);
-            }
-        }
-        update_option($flag, 1);
     }
 }

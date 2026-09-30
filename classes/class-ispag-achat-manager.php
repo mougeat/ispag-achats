@@ -169,7 +169,7 @@ class ISPAG_Achat_Manager
             echo '<div class="ispag-alert ispag-alert-danger">
                         <i class="dashicons dashicons-lock"></i>
                         <strong>' . esc_html__('Restricted access', 'ispag-crm') . ' :</strong> ' .
-                        esc_html__('You do not have the necessary rights to view this order.', 'ispag-crm') . '<br/>
+                        esc_html__('You do not have the necessary rights to view this order.', 'ispag-crm') . (current_user_can('manage_options') ? ' <code>view_supplier_order</code> — <a href="' . esc_url(admin_url('admin.php?page=ispag-rights')) . '">ISPAG Rights</a>' : '') . '<br/>
                         <a href="' . wp_login_url( get_permalink() ) . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
                     </div>';
             return ob_get_clean();
