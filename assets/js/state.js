@@ -89,7 +89,7 @@ $(document).on('click', '.achat-action-btn', function () {
 
 // async function ispag_send_rfq(achatId, btn) {
 //     btn.disabled = true;
-//     btn.innerText = "Envoi...";
+//     btn.innerText = "Sending...";
 
 //     try {
 //         const response = await fetch(ajaxurl, {
@@ -130,7 +130,7 @@ async function ispag_send_generic_ajax({
     achatId, 
     btn, 
     action = 'ispag_prepare_rfq_mail', 
-    sendingText = 'Envoi...', 
+    sendingText = 'Sending...', 
     successCallback = null,
     type, 
 }) {
@@ -177,7 +177,7 @@ function ispag_send_rfq(achatId, btn){
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'send_proposal_request',
         
         successCallback: (data) => {
@@ -193,7 +193,7 @@ function ispag_send_order(achatId, btn) {
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'send_purchase_order',
         successCallback: (data) => {
 //            console.log(data);
@@ -208,7 +208,7 @@ function ispag_send_drawing_modification(achatId, btn) {
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'drawing_modified',
         successCallback: (data) => {
 //            console.log(data);
@@ -223,7 +223,7 @@ function ispag_send_drawing_validation(achatId, btn) {
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'drawing_validated',
         successCallback: (data) => {
 //            console.log(data);

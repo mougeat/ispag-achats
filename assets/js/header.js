@@ -10,7 +10,7 @@ jQuery(document).ready(function($) {
             achat_id: $btn.data('achat')
         };
 
-        $btn.prop('disabled', true).text('Application...');
+        $btn.prop('disabled', true).text('Applying...');
 
         $.post(ispag_fournisseurs.ajaxurl, data, function(response) {
             if (response.success) {
