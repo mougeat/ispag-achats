@@ -206,4 +206,62 @@ jQuery(function ($) {
             $msg.text('Network error').css({ display: 'block', background: '#f8d7da', color: '#721c24' });
         }).always(function () { $btn.prop('disabled', false); });
     });
+
+    // --- Contacts du fournisseur : choisir / changer / retirer un contact ---
+    $(document).on('click keydown', '.ispag-sc-edit', function (e) {
+        if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+        const $row = $(this).closest('.ispag-supplier-contact');
+        const $info = $row.find('.ispag-sc-info');
+        if ($row.data('editing')) return;
+        $row.data('editing', true).data('infoHtml', $info.html());
+        $info.html(
+            '<input type="search" class="ispag-sc-search" placeholder="Search a contact..." style="width:100%; margin-bottom:4px;" autocomplete="off">' +
+            '<div class="ispag-sc-results" style="max-height:180px; overflow:auto;"></div>' +
+            '<div style="margin-top:4px;"><button type="button" class="ispag-btn ispag-sc-clear">Remove</button> ' +
+            '<button type="button" class="ispag-btn ispag-sc-cancel">Cancel</button></div>'
+        );
+        $info.find('.ispag-sc-search').trigger('focus');
+    });
+
+    function scClose($row) {
+        $row.find('.ispag-sc-info').html($row.data('infoHtml') || '');
+        $row.data('editing', false);
+    }
+    $(document).on('click', '.ispag-sc-cancel', function () { scClose($(this).closest('.ispag-supplier-contact')); });
+    $(document).on('keydown', '.ispag-sc-search', function (e) { if (e.key === 'Escape') scClose($(this).closest('.ispag-supplier-contact')); });
+
+    let scTimer = null;
+    $(document).on('input', '.ispag-sc-search', function () {
+        const $input = $(this);
+        const $res = $input.siblings('.ispag-sc-results');
+        clearTimeout(scTimer);
+        scTimer = setTimeout(function () {
+            const q = $.trim($input.val());
+            if (q.length < 2) { $res.empty(); return; }
+            $.post(ajaxurl, { action: 'ispag_achat_search_contacts', nonce: (window.ispagVars || {}).nonce, q: q }).done(function (r) {
+                $res.empty();
+                const list = (r && r.success && r.data.results) || [];
+                if (!list.length) { $res.append($('<div>').css({ color: '#999', padding: '4px' }).text('No contact found.')); return; }
+                list.forEach(function (c) {
+                    $('<div class="ispag-sc-result" role="button" tabindex="0">').css({ cursor: 'pointer', padding: '4px', borderBottom: '1px solid #f0f0f0' })
+                        .attr('data-user-id', c.id).text(c.name + (c.mail ? ' — ' + c.mail : '')).appendTo($res);
+                });
+            });
+        }, 250);
+    });
+
+    function scSave($row, userId) {
+        $row.css('opacity', 0.5);
+        $.post(ajaxurl, {
+            action: 'ispag_achat_set_supplier_contact',
+            nonce: (window.ispagVars || {}).nonce,
+            supplier_id: $row.data('supplier-id'),
+            role: $row.data('role'),
+            user_id: userId
+        }).done(function (r) {
+            if (r && r.success) { $row.replaceWith(r.data.html); } else { $row.css('opacity', 1); alert('Save failed.'); }
+        }).fail(function () { $row.css('opacity', 1); alert('Network error'); });
+    }
+    $(document).on('click', '.ispag-sc-result', function () { scSave($(this).closest('.ispag-supplier-contact'), $(this).data('user-id')); });
+    $(document).on('click', '.ispag-sc-clear', function () { scSave($(this).closest('.ispag-supplier-contact'), 0); });
 });

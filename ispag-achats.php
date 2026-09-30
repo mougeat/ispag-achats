@@ -78,6 +78,7 @@ add_action('init', function () {
     ISPAG_Achat_Supplier_Repository::init();
     ISPAG_Achat_Document_Analyser::init();
     ISPAG_Achat_Commande_Manager::init();
+    ISPAG_Achat_Supplier_Contacts::init();
 
     ISPAG_CarryBox_Manager::init();
     

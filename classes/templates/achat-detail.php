@@ -11,15 +11,6 @@ $liste_url = trailingslashit(get_site_url()) . 'liste-des-achats/';
 $supplier_row = !empty($achat->IdFournisseur)
     ? $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d", (int) $achat->IdFournisseur))
     : null;
-$supplier_contacts = [];
-if ($supplier_row) {
-    foreach ([__('Order contact', 'creation-reservoir') => (int) $supplier_row->IdContactCommande, __('Drawing contact', 'creation-reservoir') => (int) $supplier_row->IdContactPlan] as $c_label => $c_id) {
-        $c_user = $c_id > 0 ? get_userdata($c_id) : null;
-        if ($c_user) {
-            $supplier_contacts[] = ['label' => $c_label, 'name' => $c_user->display_name, 'mail' => $c_user->user_email, 'phone' => get_user_meta($c_id, 'billing_phone', true)];
-        }
-    }
-}
 $created_by_user = $achat->created_by ? get_userdata((int) $achat->created_by) : null;
 $created_by_name = $created_by_user ? $created_by_user->display_name : '—';
 $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
@@ -169,16 +160,10 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
                 <?php endif; ?>
             </div>
 
-            <?php if ($supplier_contacts): ?>
-                <div class="ispag-card ispag-contact-card" style="font-size:14px;">
-                    <h5><?php _e('Contacts', 'creation-reservoir'); ?></h5>
-                    <?php foreach ($supplier_contacts as $sc): ?>
-                        <p style="margin:5px 0;"><strong><?php echo esc_html($sc['name']); ?></strong> <span style="color:#666;">(<?php echo esc_html($sc['label']); ?>)</span><br>
-                            <a href="mailto:<?php echo esc_attr($sc['mail']); ?>"><?php echo esc_html($sc['mail']); ?></a>
-                            <?php if ($sc['phone']): ?><br><a href="tel:<?php echo esc_attr($sc['phone']); ?>"><?php echo esc_html($sc['phone']); ?></a><?php endif; ?></p>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+            <?php
+            // Contacts du fournisseur (commande/offre, plan, facturation, livraison), modifiables
+            echo ISPAG_Achat_Supplier_Contacts::render_card($supplier_row, $can_edit);
+            ?>
 
             <div class="ispag-card" style="font-size:14px;">
                 <h5><?php _e('Project', 'creation-reservoir'); ?></h5>

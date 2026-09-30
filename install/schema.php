@@ -116,6 +116,8 @@ CREATE TABLE IF NOT EXISTS `{prefix}achats_fournisseurs` (
   `Fournisseur` text NOT NULL,
   `IdContactCommande` int NOT NULL,
   `IdContactPlan` int NOT NULL,
+  `IdContactFacturation` int NOT NULL DEFAULT '0',
+  `IdContactLivraison` int NOT NULL DEFAULT '0',
   `TVA` text NOT NULL,
   `Mail` text NOT NULL,
   `compagnyDomain` text NOT NULL,
