@@ -72,24 +72,84 @@ class ISPAG_Achat_Supplier_Contacts {
         }
     }
 
+    /**
+     * IDs des contacts (utilisateurs) qui appartiennent au fournisseur :
+     *  - rattachés à une entreprise du CRM qui correspond au fournisseur (viag_id, domaine ou nom identique) ;
+     *  - dont l'e-mail est au domaine du fournisseur ;
+     *  - déjà choisis sur ce fournisseur (commande, plan, facturation, livraison).
+     */
+    public static function supplier_user_ids($supplier) {
+        global $wpdb;
+        $ids = [];
+        foreach (array_keys(self::roles()) as $col) {
+            if (!empty($supplier->$col)) {
+                $ids[] = (int) $supplier->$col;
+            }
+        }
+
+        $companies_table = $wpdb->prefix . 'ispag_companies';
+        $company_ids = [];
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $companies_table)) === $companies_table) {
+            $domain = strtolower(trim(preg_replace('#^https?://(www\.)?#i', '', (string) $supplier->compagnyDomain), " /"));
+            $viag   = (int) $supplier->viag_id;
+            $name   = trim((string) $supplier->Fournisseur);
+            $company_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT Id FROM {$companies_table}
+                 WHERE (%d > 0 AND viag_id = %d)
+                    OR (%s <> '' AND LOWER(compagny_domain) = %s)
+                    OR (%s <> '' AND LOWER(company_name) = LOWER(%s))",
+                $viag, $viag, $domain, $domain, $name, $name
+            ));
+        }
+        if ($company_ids) {
+            $ph = implode(',', array_fill(0, count($company_ids), '%d'));
+            $like = [];
+            $args = [];
+            foreach ($company_ids as $cid) {
+                $like[] = 'FIND_IN_SET(%d, REPLACE(m.meta_value, \' \', \'\'))';
+                $args[] = (int) $cid;
+            }
+            $rows = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT m.user_id FROM {$wpdb->usermeta} m WHERE m.meta_key = 'ispag_company_id' AND (" . implode(' OR ', $like) . ')',
+                ...$args
+            ));
+            $ids = array_merge($ids, array_map('intval', $rows));
+        }
+
+        $mail_domain = strtolower(trim(preg_replace('#^https?://(www\.)?#i', '', (string) $supplier->compagnyDomain), " /"));
+        if ($mail_domain !== '' && strpos($mail_domain, '.') !== false) {
+            $rows = $wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->users} WHERE user_email LIKE %s", '%@' . $wpdb->esc_like($mail_domain)));
+            $ids = array_merge($ids, array_map('intval', $rows));
+        }
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    private static function get_supplier($supplier_id) {
+        global $wpdb;
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d", (int) $supplier_id));
+    }
+
+    /** Recherche UNIQUEMENT parmi les contacts du fournisseur (sans texte : tous ses contacts). */
     public static function ajax_search() {
         self::guard();
-        $term = sanitize_text_field(wp_unslash($_POST['q'] ?? ''));
-        if (mb_strlen($term) < 2) {
-            wp_send_json_success(['results' => []]);
+        $supplier = self::get_supplier(absint($_POST['supplier_id'] ?? 0));
+        if (!$supplier) {
+            wp_send_json_error('unknown_supplier', 400);
         }
-        $query = new WP_User_Query([
-            'search'         => '*' . $term . '*',
-            'search_columns' => ['user_login', 'user_email', 'display_name', 'user_nicename'],
-            'number'         => 15,
-            'orderby'        => 'display_name',
-            'fields'         => ['ID', 'display_name', 'user_email'],
-        ]);
+        $term = mb_strtolower(sanitize_text_field(wp_unslash($_POST['q'] ?? '')));
         $results = [];
-        foreach ((array) $query->get_results() as $u) {
-            $results[] = ['id' => (int) $u->ID, 'name' => $u->display_name, 'mail' => $u->user_email];
+        foreach (self::supplier_user_ids($supplier) as $uid) {
+            $u = get_userdata($uid);
+            if (!$u) {
+                continue;
+            }
+            $hay = mb_strtolower($u->display_name . ' ' . $u->user_email . ' ' . $u->first_name . ' ' . $u->last_name);
+            if ($term === '' || strpos($hay, $term) !== false) {
+                $results[] = ['id' => (int) $u->ID, 'name' => $u->display_name, 'mail' => $u->user_email];
+            }
         }
-        wp_send_json_success(['results' => $results]);
+        usort($results, function ($a, $b) { return strcasecmp($a['name'], $b['name']); });
+        wp_send_json_success(['results' => array_slice($results, 0, 50)]);
     }
 
     public static function ajax_set() {
@@ -101,8 +161,9 @@ class ISPAG_Achat_Supplier_Contacts {
         if (!$supplier_id || !array_key_exists($column, self::roles())) {
             wp_send_json_error('bad_request', 400);
         }
-        if ($user_id && !get_userdata($user_id)) {
-            wp_send_json_error('unknown_user', 400);
+        $supplier_check = self::get_supplier($supplier_id);
+        if (!$supplier_check || ($user_id && (!get_userdata($user_id) || !in_array($user_id, self::supplier_user_ids($supplier_check), true)))) {
+            wp_send_json_error('not_a_contact_of_this_supplier', 400);
         }
         $table = $wpdb->prefix . 'achats_fournisseurs';
         if ($wpdb->update($table, [$column => $user_id], ['Id' => $supplier_id], ['%d'], ['%d']) === false) {

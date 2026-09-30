@@ -215,12 +215,12 @@ jQuery(function ($) {
         if ($row.data('editing')) return;
         $row.data('editing', true).data('infoHtml', $info.html());
         $info.html(
-            '<input type="search" class="ispag-sc-search" placeholder="Search a contact..." style="width:100%; margin-bottom:4px;" autocomplete="off">' +
+            '<input type="search" class="ispag-sc-search" placeholder="Filter this supplier\'s contacts..." style="width:100%; margin-bottom:4px;" autocomplete="off">' +
             '<div class="ispag-sc-results" style="max-height:180px; overflow:auto;"></div>' +
             '<div style="margin-top:4px;"><button type="button" class="ispag-btn ispag-sc-clear">Remove</button> ' +
             '<button type="button" class="ispag-btn ispag-sc-cancel">Cancel</button></div>'
         );
-        $info.find('.ispag-sc-search').trigger('focus');
+        $info.find('.ispag-sc-search').trigger('focus').trigger('input');   // affiche tout de suite les contacts du fournisseur
     });
 
     function scClose($row) {
@@ -237,11 +237,11 @@ jQuery(function ($) {
         clearTimeout(scTimer);
         scTimer = setTimeout(function () {
             const q = $.trim($input.val());
-            if (q.length < 2) { $res.empty(); return; }
-            $.post(ajaxurl, { action: 'ispag_achat_search_contacts', nonce: (window.ispagVars || {}).nonce, q: q }).done(function (r) {
+            const supplierId = $input.closest('.ispag-supplier-contact').data('supplier-id');
+            $.post(ajaxurl, { action: 'ispag_achat_search_contacts', nonce: (window.ispagVars || {}).nonce, supplier_id: supplierId, q: q }).done(function (r) {
                 $res.empty();
                 const list = (r && r.success && r.data.results) || [];
-                if (!list.length) { $res.append($('<div>').css({ color: '#999', padding: '4px' }).text('No contact found.')); return; }
+                if (!list.length) { $res.append($('<div>').css({ color: '#999', padding: '4px' }).text('No contact found for this supplier.')); return; }
                 list.forEach(function (c) {
                     $('<div class="ispag-sc-result" role="button" tabindex="0">').css({ cursor: 'pointer', padding: '4px', borderBottom: '1px solid #f0f0f0' })
                         .attr('data-user-id', c.id).text(c.name + (c.mail ? ' — ' + c.mail : '')).appendTo($res);
