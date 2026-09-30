@@ -41,6 +41,9 @@ $class_secondary = ($article->is_secondary ?? false) ? 'ispag-article-secondary'
         </div>
 
         <div class="ispag-article-buttons-row">
+            <?php if (!empty($article->IdArticleStandard) && class_exists('ISPAG_Standard_Articles_Pages') && ISPAG_Standard_Articles_Pages::can_view()): ?>
+                <a href="<?php echo esc_url(ISPAG_Standard_Article_Service::article_url((int) $article->IdArticleStandard)); ?>" target="_blank" rel="noopener" class="ispag-btn ispag-btn-secondary-outlined ispag-std-link-btn" style="padding: 2px 8px;" title="<?php echo esc_attr__('Standard article', 'creation-reservoir'); ?>">📦</a>
+            <?php endif; ?>
             <?php if (!empty($article->last_drawing_url)): 
                 $url_plan = $article->last_drawing_url;
                 $text_plan = ($user_can_manage_order || $user_is_owner) ? __('Check drawing for validation', 'creation-reservoir') : __('Drawing', 'creation-reservoir');
