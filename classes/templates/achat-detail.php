@@ -25,6 +25,8 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
     <!-- Colonne de gauche : identité et actions -->
     <div class="ispag-left-panel" data-panel="left">
         <div class="ispag-card ispag-header-card ispag-achat-header">
+            <div style="display:flex; align-items:baseline; gap:.4rem;">
+            <span aria-hidden="true" style="font-size:1.6rem; user-select:none;">🧾</span>
             <h4 id="editable-purchase-title"
                 class="ispag-editable-title"
                 contenteditable="<?php echo $can_edit ? 'true' : 'false'; ?>"
@@ -34,9 +36,10 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
                 data-value="<?php echo esc_attr(stripslashes($achat->RefCommande)); ?>"
                 data-deal="<?php echo esc_attr($achat->Id); ?>"
                 <?php echo $can_edit ? '' : 'data-readonly="true"'; ?>
-                style="margin-top:0; font-size:1.6rem;">
-                🧾 <?php echo esc_html(stripslashes($achat->RefCommande)); ?>
+                style="margin-top:0; font-size:1.6rem; flex:1; min-width:0;">
+                <?php echo esc_html(stripslashes($achat->RefCommande)); ?>
             </h4>
+            </div>
 
             <div class="achat-meta" style="display:grid; grid-template-columns:1fr; gap:.75rem; margin-top:1rem;">
                 <?php
