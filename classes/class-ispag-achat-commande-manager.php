@@ -8,7 +8,7 @@ class ISPAG_Achat_Commande_Manager {
 
     private $wpdb;
     private $table_commandes;      // wor9711_achats_commande_liste_fournisseurs
-    private $table_fournisseurs;   // wor9711_achats_fournisseurs
+    private $table_fournisseurs;   // wor9711_ispag_companies (isSupplier = 1)
     private $table_etats;          // wor9711_achats_etat_commandes_fournisseur
     private $table_projets;        // wor9711_achats_liste_commande (Projets Clients)
     private $text_domain = 'creation-reservoir';
@@ -29,7 +29,7 @@ class ISPAG_Achat_Commande_Manager {
 
         // Définir les noms de tables
         $this->table_commandes    = 'wor9711_achats_commande_liste_fournisseurs';
-        $this->table_fournisseurs = 'wor9711_achats_fournisseurs';
+        $this->table_fournisseurs = 'wor9711_ispag_companies';
         $this->table_etats        = 'wor9711_achats_etat_commandes_fournisseur';
         $this->table_projets      = 'wor9711_achats_liste_commande';
 
@@ -117,7 +117,7 @@ class ISPAG_Achat_Commande_Manager {
      */
     private function get_liste_fournisseurs() {
         $sql = $this->wpdb->prepare(
-            "SELECT Id, Fournisseur FROM {$this->table_fournisseurs} WHERE isSupplier = %d ORDER BY Fournisseur ASC",
+            "SELECT id AS Id, company_name AS Fournisseur FROM {$this->table_fournisseurs} WHERE isSupplier = %d ORDER BY company_name ASC",
             1
         );
         $user_id = get_current_user_id();

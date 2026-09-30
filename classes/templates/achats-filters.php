@@ -1,7 +1,7 @@
 <?php
 /**
  * Template pour les champs de recherche/filtrage des achats
- * Basé sur les tables personnalisées : wor9711_achats_fournisseurs et wor9711_achats_commande_liste_fournisseurs
+ * Basé sur les tables personnalisées : wor9711_ispag_companies et wor9711_achats_commande_liste_fournisseurs
  */
 global $wpdb;
 
@@ -12,7 +12,7 @@ $statuses = $wpdb->get_results(
 
 // Récupère les fournisseurs depuis la table fournisseurs
 $fournisseurs = $wpdb->get_results(
-    "SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs ORDER BY Fournisseur ASC"
+    "SELECT id AS Id, company_name AS Fournisseur FROM {$wpdb->prefix}ispag_companies WHERE isSupplier = 1 ORDER BY company_name ASC"
 );
 
 // ✅ Récupère uniquement les utilisateurs ayant la capacité "edit_supplier_order"

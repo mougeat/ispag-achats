@@ -194,9 +194,22 @@ class ISPAG_Achat_Status_Controller {
         }
 
         // 2. Récupérer infos fournisseur
+        $meta_table = $wpdb->prefix . 'ispag_companies_meta';
+        $get_meta = function ($key) use ($wpdb, $meta_table, $achat) {
+            return $wpdb->get_var($wpdb->prepare(
+                "SELECT meta_value FROM {$meta_table} WHERE company_id = %d AND meta_key = %s ORDER BY meta_id DESC LIMIT 1",
+                $achat->IdFournisseur,
+                $key
+            ));
+        };
         $fournisseur = $wpdb->get_row($wpdb->prepare("
-            SELECT IdContactCommande, IdContactPlan, Langue FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d
+            SELECT id FROM {$wpdb->prefix}ispag_companies WHERE id = %d
         ", $achat->IdFournisseur));
+        if ($fournisseur) {
+            $fournisseur->IdContactCommande = $get_meta('ispag_supplier_contact_order');
+            $fournisseur->IdContactPlan     = $get_meta('ispag_supplier_contact_plan');
+            $fournisseur->Langue            = $get_meta('ispag_supplier_lang');
+        }
 
         if (!$fournisseur) {
             wp_send_json_error(['message' => 'Supplier not found.']);

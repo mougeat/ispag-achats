@@ -27,7 +27,7 @@ class ISPAG_Achat_Manager
 
         $this->table_achats = $wpdb->prefix . 'achats_commande_liste_fournisseurs';
         $this->table_articles = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
-        $this->table_fournisseurs = $wpdb->prefix . 'achats_fournisseurs';
+        $this->table_fournisseurs = $wpdb->prefix . 'ispag_companies';
 
         // $this->logger->log_user_action('achat_manager', 'class_constructed', [], $user_id);
     }
@@ -141,7 +141,7 @@ class ISPAG_Achat_Manager
         ]);
 
         $fournisseurs = $wpdb->get_results(
-            "SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC"
+            "SELECT id AS Id, company_name AS Fournisseur FROM {$wpdb->prefix}ispag_companies WHERE isSupplier = 1 ORDER BY company_name ASC"
         );
 
         $formatted_fournisseurs = array_map(function($f)
@@ -295,11 +295,11 @@ class ISPAG_Achat_Manager
         {
             $fournisseur_nom = $wpdb->get_var(
                 $wpdb->prepare(
-                    "SELECT Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d",
+                    "SELECT company_name FROM {$wpdb->prefix}ispag_companies WHERE id = %d",
                     $achat->IdFournisseur
                 )
             );
-            $logger->log_db_change('achat_manager', 'achats_fournisseurs', 'FETCH_FOURNISSEUR', ['achat_id' => $achat->Id, 'fournisseur_id' => $achat->IdFournisseur, 'fournisseur_nom' => $fournisseur_nom], $user_id);
+            $logger->log_db_change('achat_manager', 'ispag_companies', 'FETCH_FOURNISSEUR', ['achat_id' => $achat->Id, 'fournisseur_id' => $achat->IdFournisseur, 'fournisseur_nom' => $fournisseur_nom], $user_id);
         }
 
         $responsable_nom = isset($achat->responsable_nom) ? $achat->responsable_nom : '';
@@ -408,8 +408,8 @@ class ISPAG_Achat_Manager
             return esc_html__('Purchase not found.', 'creation-reservoir');
         }
 
-        $fournisseurs = $wpdb->get_results("SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC");
-        $logger->log_db_change('achat_manager', 'achats_fournisseurs', 'SELECT_ALL', ['count' => count($fournisseurs)], $user_id);
+        $fournisseurs = $wpdb->get_results("SELECT id AS Id, company_name AS Fournisseur FROM {$wpdb->prefix}ispag_companies WHERE isSupplier = 1 ORDER BY company_name ASC");
+        $logger->log_db_change('achat_manager', 'ispag_companies', 'SELECT_ALL', ['count' => count($fournisseurs)], $user_id);
 
         include plugin_dir_path(__FILE__) . 'templates/achat-detail.php';
 
@@ -574,11 +574,11 @@ class ISPAG_Achat_Manager
         if ($args['field'] == 'Fournisseur')
         {
             $supplier_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT Id FROM {$wpdb->prefix}achats_fournisseurs WHERE Fournisseur = %s",
+                "SELECT id FROM {$wpdb->prefix}ispag_companies WHERE company_name = %s AND isSupplier = 1",
                 $args['value']
             ));
 
-            $logger->log_db_change('achat_manager', 'achats_fournisseurs', 'FETCH_SUPPLIER_ID', ['supplier_name' => $args['value'], 'supplier_id' => $supplier_id], $user_id);
+            $logger->log_db_change('achat_manager', 'ispag_companies', 'FETCH_SUPPLIER_ID', ['supplier_name' => $args['value'], 'supplier_id' => $supplier_id], $user_id);
 
             if (!$supplier_id)
             {
@@ -962,11 +962,11 @@ function ajax_filter_achats_custom_tables()
         $ids_placeholder = implode(',', array_fill(0, count($paginated_ids), '%d'));
         
         $sql = "
-            SELECT clf.*, f.Fournisseur AS fournisseur_nom, u.display_name AS responsable_nom,
+            SELECT clf.*, f.company_name AS fournisseur_nom, u.display_name AS responsable_nom,
                    SUM(IFNULL((af.UnitPrice - af.discount) * af.Qty, 0)) AS prix_net_total
             FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
             LEFT JOIN {$wpdb->prefix}achats_articles_cmd_fournisseurs af ON clf.Id = af.IdCommande
-            LEFT JOIN {$wpdb->prefix}achats_fournisseurs f ON clf.IdFournisseur = f.Id
+            LEFT JOIN {$wpdb->prefix}ispag_companies f ON clf.IdFournisseur = f.id
             LEFT JOIN {$wpdb->users} u ON clf.created_by = u.ID
             WHERE clf.Id IN ($ids_placeholder)
             GROUP BY clf.Id

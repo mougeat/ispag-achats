@@ -2,7 +2,7 @@
 
 class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
 
-    protected $id_carrybox = 444; // À vérifier dans ta table wor9711_achats_fournisseurs
+    protected $id_carrybox = 444; // ID dans wor9711_ispag_companies (id) : à remapper après migration
 
     public function __construct($deal_id) {
         parent::__construct($deal_id);

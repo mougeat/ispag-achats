@@ -15,7 +15,7 @@ class ISPAG_Achat_Repository {
         $this->wpdb = $wpdb;
         $this->table_achats = $wpdb->prefix . 'achats_commande_liste_fournisseurs';
         $this->table_articles = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
-        $this->table_fournisseurs = $wpdb->prefix . 'achats_fournisseurs';
+        $this->table_fournisseurs = $wpdb->prefix . 'ispag_companies';
         $this->table_etat = $wpdb->prefix . 'achats_etat_commandes_fournisseur';
         $this->table_detail_projet = $wpdb->prefix . 'achats_details_commande';
 
@@ -52,10 +52,10 @@ class ISPAG_Achat_Repository {
 
     public function get_achats($user_id = null, $all = false, $search = '', $select_state = '', $offset = 0, $limit = 20) {
         $query = "
-            SELECT a.*, f.Fournisseur, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color
+            SELECT a.*, f.company_name AS Fournisseur, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color
             FROM {$this->table_achats} a
             LEFT JOIN {$this->table_articles} ar ON ar.IdCommande = a.Id
-            LEFT JOIN {$this->table_fournisseurs} f ON f.Id = a.IdFournisseur
+            LEFT JOIN {$this->table_fournisseurs} f ON f.id = a.IdFournisseur
             LEFT JOIN {$this->table_etat} e ON e.Id = a.EtatCommande
             WHERE (archive IS NULL || archive = 0)
         ";
@@ -68,7 +68,7 @@ class ISPAG_Achat_Repository {
         }
 
         if (!empty($search)) {
-            $query .= " AND (a.RefCommande LIKE %s OR f.Fournisseur LIKE %s OR a.ConfCmdFournisseur LIKE %s OR a.NrCommande LIKE %d OR e.Id LIKE %d OR a.Id = %d OR a.hubspot_deal_id = %d)";
+            $query .= " AND (a.RefCommande LIKE %s OR f.company_name LIKE %s OR a.ConfCmdFournisseur LIKE %s OR a.NrCommande LIKE %d OR e.Id LIKE %d OR a.Id = %d OR a.hubspot_deal_id = %d)";
             $like = '%' . $search . '%';
             $equal = $search;
 
@@ -134,10 +134,10 @@ class ISPAG_Achat_Repository {
         }
 
         $query = "
-            SELECT a.*, f.Fournisseur, f.Monnaie AS Devise, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color, e.allow_price_recalculation
+            SELECT a.*, f.company_name AS Fournisseur, (SELECT m.meta_value FROM {$this->wpdb->prefix}ispag_companies_meta m WHERE m.company_id = f.id AND m.meta_key = 'ispag_supplier_currency' ORDER BY m.meta_id DESC LIMIT 1) AS Devise, ar.TimestampDateLivraisonConfirme, e.Etat, e.ClassCss, e.color, e.allow_price_recalculation
             FROM {$this->table_achats} a
             LEFT JOIN {$this->table_articles} ar ON ar.IdCommande = a.Id
-            LEFT JOIN {$this->table_fournisseurs} f ON f.Id = a.IdFournisseur
+            LEFT JOIN {$this->table_fournisseurs} f ON f.id = a.IdFournisseur
             LEFT JOIN {$this->table_etat} e ON e.Id = a.EtatCommande
             WHERE a.Id = %d
             GROUP BY a.Id LIMIT 1
