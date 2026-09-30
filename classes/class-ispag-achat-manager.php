@@ -129,7 +129,7 @@ class ISPAG_Achat_Manager
         wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', ['jquery'], false, true);
         wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', ['jquery'], false, true);
 
-        wp_localize_script('ispag-scroll-achats', 'ajaxurl', admin_url('admin-ajax.php'));
+        wp_add_inline_script('ispag-scroll-achats', 'var ajaxurl = ' . wp_json_encode(admin_url('admin-ajax.php')) . ';', 'before');
 
         wp_localize_script('ispag-scroll-achats', 'ispagVars', [
             'ajaxurl' => admin_url('admin-ajax.php'),
