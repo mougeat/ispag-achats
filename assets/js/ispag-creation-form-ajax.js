@@ -76,13 +76,13 @@ jQuery(document).ready(function($) {
                     }, 1000);
 
                 } else {
-                    // Erreur : Affiche le message rouge
+                    // Error: Affiche le message rouge
                     messageArea.html('❌ ' + response.data.message)
                                .addClass('ispag-notice error');
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                // Erreur de connexion ou autre problème HTTP/JS
+                // Error de connexion ou autre problème HTTP/JS
                 messageArea.html('❌ An unknown network or server error occurred. Please check logs.')
                            .addClass('ispag-notice error');
                 console.error("AJAX Error:", textStatus, errorThrown, jqXHR.responseText);

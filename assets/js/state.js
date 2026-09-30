@@ -104,7 +104,7 @@ $(document).on('click', '.achat-action-btn', function () {
 //         const result = await response.json();
 
 //         if (!result.success) {
-//             alert("Erreur : " + result.message);
+//             alert("Error: " + result.message);
 //             return;
 //         }
 
@@ -152,8 +152,8 @@ async function ispag_send_generic_ajax({
 
         const result = await response.json();
         if (!result.success) {
-            console.error('❌ Erreur PHP:', result.data.message);
-            alert("Erreur : " + result.data.message);
+            console.error('❌ Error PHP:', result.data.message);
+            alert("Error: " + result.data.message);
             return;
         }
 
@@ -164,7 +164,7 @@ async function ispag_send_generic_ajax({
         }
 
     } catch (e) {
-        console.error('🔥 Erreur Critique:', e);
+        console.error('🔥 Error Critique:', e);
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;

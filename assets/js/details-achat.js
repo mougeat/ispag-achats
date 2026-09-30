@@ -27,7 +27,7 @@ function handleAddressUpdate(btn, actionName) {
             // On remplace tout le bloc par le nouveau HTML généré par PHP
             jQuery('#ispag-delivery-box').replaceWith(response.data.html);
         } else {
-            alert('Erreur : ' + (response.data || 'Inconnue'));
+            alert('Error: ' + (response.data || 'Inconnue'));
             btn.prop('disabled', false).html(originalText);
         }
     }).fail(() => {
@@ -57,19 +57,20 @@ jQuery(document).on('click', '.ispag-delete-achat', async function () {
             // alert('Achat supprimé');
             window.close();
         } else {
-            alert('Erreur: ' + response.data);
+            alert('Error: ' + response.data);
         }
     });
 });
 
 
-// --- ONGLETS SECONDAIRES CHARGÉS À LA DEMANDE (détails / suivis / documents) ---
-// Le panneau contient déjà un skeleton rendu par le serveur ; le contenu réel est récupéré
-// au premier affichage de l'onglet (clic, onglet actif au chargement, ou lien ?delivery=true).
+// --- ONGLETS CHARGÉS EN ARRIÈRE-PLAN (articles / détails / suivis / documents) ---
+// La structure de la page et les informations de base sont rendues par le serveur ; chaque panneau contient un skeleton.
+// L'onglet actif est chargé tout de suite, les autres l'un après l'autre en tâche de fond (ou au clic s'ils ne sont pas prêts).
 jQuery(function ($) {
     function loadLazyTab($panel) {
-        if (!$panel.length || $panel.data('lazyState')) return; // déjà chargé ou en cours
+        if (!$panel.length || $panel.data('lazyState')) return $.Deferred().resolve().promise(); // déjà chargé ou en cours
         $panel.data('lazyState', 'loading');
+        const done = $.Deferred();
 
         const request = {
             action: 'ispag_achat_load_tab',
@@ -81,6 +82,13 @@ jQuery(function ($) {
         function fail() {
             $panel.data('lazyState', null); // permet de réessayer au prochain clic
             $panel.html('<div class="ispag-notice warning"><p>Loading failed. Click the tab again to retry.</p></div>');
+            done.resolve();
+        }
+
+        function ok() {
+            $panel.data('lazyState', 'loaded');
+            $(document).trigger('ispag:achat-tab-loaded', [$panel.data('lazy-tab'), $panel]);
+            done.resolve();
         }
 
         if (typeof window.ISPAGLoad === 'function') {
@@ -88,26 +96,55 @@ jQuery(function ($) {
                 action: request.action,
                 data: request,
                 skeleton: window.ISPAGSkeleton.lines(5)
-            }).done(function () {
-                $panel.data('lazyState', 'loaded');
-            }).fail(function (err) {
-                if (err !== 'abort') fail();
+            }).done(ok).fail(function (err) {
+                if (err !== 'abort') fail(); else done.resolve();
             });
         } else {
             // Repli sans skeleton du thème
             $.post(ajaxurl, request).done(function (response) {
                 if (!response || !response.success) return fail();
-                $panel.data('lazyState', 'loaded').html(response.data.html).trigger('ispag:loaded', [response.data]);
+                $panel.html(response.data.html).trigger('ispag:loaded', [response.data]);
+                ok();
             }).fail(fail);
         }
+        return done.promise();
     }
 
+    // Affichage des onglets (les panneaux existent déjà ; on charge s'ils ne le sont pas encore)
     $(document).on('click', '.tab-titles li[data-tab]', function () {
-        loadLazyTab($('#' + $(this).data('tab') + '[data-lazy-tab]'));
+        const tab = $(this).data('tab');
+        $('.tab-titles li').removeClass('active');
+        $(this).addClass('active');
+        $('.tab-content').removeClass('active');
+        const $panel = $('#' + tab + '[data-lazy-tab]').addClass('active');
+        loadLazyTab($panel);
     });
 
-    // Onglet déjà actif au chargement (ex. ?delivery=true activé par tabs.js)
+    // Chargement en tâche de fond : onglet actif d'abord, puis les autres à la suite
+    function idle(fn) {
+        if (window.requestIdleCallback) { window.requestIdleCallback(fn, { timeout: 1500 }); } else { setTimeout(fn, 200); }
+    }
     setTimeout(function () {
-        loadLazyTab($('.tab-content.active[data-lazy-tab]'));
+        const $panels = $('.tab-content[data-lazy-tab]');
+        const $active = $panels.filter('.active').first();
+        const queue = [$active].concat($panels.not($active).toArray().map(function (el) { return $(el); }));
+        (function next() {
+            const $p = queue.shift();
+            if (!$p) return;
+            loadLazyTab($p).always(function () { idle(next); });
+        })();
     }, 0);
+
+    // --- Sélection d'articles (chargés en arrière-plan : gestionnaires délégués) ---
+    function updateBulkActions() {
+        const $boxes = $('.ispag-article-checkbox');
+        const any = $boxes.filter(':checked').length > 0;
+        $('#select-all-articles').prop('checked', $boxes.length > 0 && $boxes.filter(':checked').length === $boxes.length);
+        $('.ispag-bulk-actions').css('display', any ? 'block' : 'none');
+    }
+    $(document).on('change', '#select-all-articles', function () {
+        $('.ispag-article-checkbox').prop('checked', this.checked);
+        updateBulkActions();
+    });
+    $(document).on('change', '.ispag-article-checkbox', updateBulkActions);
 });

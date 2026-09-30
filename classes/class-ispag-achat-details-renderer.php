@@ -121,7 +121,7 @@ class ISPAG_Achat_Details_Renderer {
         echo '<div class="ispag-delivery-actions" style="margin-top: 10px; display: flex; gap: 10px;">';
         echo '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-btn-copy-description" data-target="#delivery-info-copy">📋</button>';
         echo '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-btn-copy-from-project" data-achat="' . esc_attr($achat->Id) . '" data-deal-id="' . esc_attr($achat->hubspot_deal_id) . '">📥 ' . __('Copy from project', 'creation-reservoir') . '</button>';
-        echo '<button type="button" class="ispag-btn ispag-btn-blue-outlined ispag-btn-set-carrybox" data-achat="' . esc_attr($achat->Id) . '" data-deal-id="' . esc_attr($achat->hubspot_deal_id) . '">📦 Livraison Carry Box</button>';
+        echo '<button type="button" class="ispag-btn ispag-btn-blue-outlined ispag-btn-set-carrybox" data-achat="' . esc_attr($achat->Id) . '" data-deal-id="' . esc_attr($achat->hubspot_deal_id) . '">📦 Carry Box delivery</button>';
         echo '</div>';
         echo '</div>';
     }

@@ -92,7 +92,7 @@ class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
         $this->set_delivery_address($achat_id, $project);
 
         return [
-            'message'  => 'Commande Carry Box créée avec article logistique.',
+            'message'  => 'Carry Box order created with logistics article.',
             'achat_id' => $achat_id
         ];
     }

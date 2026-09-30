@@ -6,7 +6,7 @@
 defined('ABSPATH') || exit;
 
 return [
-    ['key' => 'purchases_list', 'slug' => 'liste-des-achats', 'title' => 'Liste des achats', 'content' => '[ispag_achats]', 'group' => 'purchases_list'],
+    ['key' => 'purchases_list', 'slug' => 'liste-des-achats', 'title' => 'Purchase list', 'content' => '[ispag_achats]', 'group' => 'purchases_list'],
     ['key' => 'purchases_list_de', 'slug' => 'einkaufsliste', 'title' => 'Einkaufsliste', 'content' => '[ispag_achats]', 'lang' => 'de', 'group' => 'purchases_list'],
     ['key' => 'purchase_detail', 'slug' => 'details-achats', 'title' => 'Purchase details', 'content' => '[ispag_achat_detail]', 'group' => 'purchase_detail'],
     ['key' => 'purchase_detail_de', 'slug' => 'einkaufsdetail', 'title' => 'Einkaufsdetail', 'content' => '[ispag_achat_detail]', 'lang' => 'de', 'group' => 'purchase_detail'],

@@ -106,7 +106,7 @@
 //             }
 
 //         } catch (Exception $e) {
-// // \1('❌ [DEBUG ACHAT] Erreur analyse PDF achats : ' . $e->getMessage());
+// // \1('❌ [DEBUG ACHAT] Error analyse PDF achats : ' . $e->getMessage());
 //         }
 //     }
 

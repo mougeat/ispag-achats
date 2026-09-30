@@ -151,7 +151,7 @@ class ISPAG_Achat_Status_Controller {
         } catch (Throwable $e) {
             // Renvoie l'erreur PHP réelle au format JSON pour que ton JS ne crash pas
             wp_send_json_error([
-                'message' => 'Erreur PHP Fatale : ' . $e->getMessage(),
+                'message' => 'Fatal PHP error: ' . $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
@@ -187,7 +187,7 @@ class ISPAG_Achat_Status_Controller {
         ", $achat->IdFournisseur));
 
         if (!$fournisseur) {
-            wp_send_json_error(['message' => 'Fournisseur introuvable.']);
+            wp_send_json_error(['message' => 'Supplier not found.']);
         }
 
         

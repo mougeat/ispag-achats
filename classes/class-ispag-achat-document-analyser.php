@@ -88,7 +88,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
                 }
             }
         } catch (Exception $e) {
-            self::$logger->log('achat_document_analyser', 'ERROR: Erreur lors de l\'analyse du PDF - ' . $e->getMessage(), $user_id);
+            self::$logger->log('achat_document_analyser', 'ERROR: Error lors de l\'analyse du PDF - ' . $e->getMessage(), $user_id);
         }
 
         self::$logger->log('achat_document_analyser', 'WARNING: Aucun mot-clé trouvé dans le PDF', $user_id);
@@ -192,7 +192,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
         if (!$data_extracted) {
             self::$logger->log('achat_document_analyser', 'ERROR: Format JSON invalide pour les données de facture', $user_id);
-            wp_send_json_error('Le format JSON extrait est invalide.');
+            wp_send_json_error('The extracted JSON format is invalid.');
         }
 
         self::$logger->log_user_action(

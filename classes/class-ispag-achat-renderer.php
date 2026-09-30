@@ -308,8 +308,8 @@ class ISPAG_Achat_Renderer {
         if (in_array($supplier_id, $target_suppliers) && $total_volume > 0) {
             $theoretical_trans = ceil($total_volume / 1000) * 250;
             if (!$transport_found || abs($current_transport_price - $theoretical_trans) > 1.00) {
-                $msg = "Transport : " . number_format($total_volume, 0, '.', "'") . " L calculés.";
-                self::render_adjustment_notice($msg, "Appliquer Transport ($theoretical_trans CHF)", 'TRANS', $theoretical_trans, $achat_id);
+                $msg = "Transport: " . number_format($total_volume, 0, '.', "'") . " L calculated.";
+                self::render_adjustment_notice($msg, "Apply transport ($theoretical_trans CHF)", 'TRANS', $theoretical_trans, $achat_id);
             }
         }
 

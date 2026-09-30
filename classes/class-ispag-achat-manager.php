@@ -76,7 +76,7 @@ class ISPAG_Achat_Manager
 
         $achat_id = absint($_POST['achat_id'] ?? 0);
         $tab = sanitize_key($_POST['tab'] ?? '');
-        if (!$achat_id || !in_array($tab, ['details', 'suivis', 'documents'], true))
+        if (!$achat_id || !in_array($tab, ['articles', 'details', 'suivis', 'documents'], true))
         {
             wp_send_json_error('bad_request', 400);
         }
@@ -84,6 +84,9 @@ class ISPAG_Achat_Manager
         ob_start();
         switch ($tab)
         {
+            case 'articles':
+                do_action('ispag_achat_articles_tab', $achat_id);
+                break;
             case 'details':
                 do_action('ispag_achat_details_tab', $achat_id);
                 break;
@@ -205,7 +208,7 @@ class ISPAG_Achat_Manager
         echo self::render_skeleton_rows(8, 10);
         echo '</tbody>';
         echo '</table></div>';
-        // echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Chargement...</div>';
+        // echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Loading...</div>';
 
         $logger->log_user_action('achat_manager', 'ispag_achats_shortcode_complete', [], $user_id);
         return ob_get_clean();
@@ -384,7 +387,7 @@ class ISPAG_Achat_Manager
         if (!$achat_id)
         {
             $logger->log('achat_manager', 'ERROR: Missing or invalid achat_id', $user_id);
-            echo '<div class="ispag-error-message">ID d\'achat manquant.</div>';
+            echo '<div class="ispag-error-message">Missing purchase ID.</div>';
             return;
         }
 
@@ -400,7 +403,7 @@ class ISPAG_Achat_Manager
         if (!$achat)
         {
             $logger->log('achat_manager', 'ERROR: Achat not found', $user_id);
-            return 'Achat introuvable.';
+            return esc_html__('Purchase not found.', 'creation-reservoir');
         }
 
         $fournisseurs = $wpdb->get_results("SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC");
@@ -410,7 +413,7 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'ispag_achat_detail_shortcode_complete', ['achat_id' => $achat_id], $user_id);
 
-        $title = esc_html(stripslashes($achat->RefCommande ?? 'Achat sans titre'));
+        $title = esc_html(stripslashes($achat->RefCommande ?? 'Untitled purchase'));
         echo "<script>
             document.addEventListener('DOMContentLoaded', function() {
                 // Récupère le titre actuel de la page (ex: 'Mon Compte - Mon Site')
@@ -519,7 +522,7 @@ class ISPAG_Achat_Manager
                             location.reload();
                         }, 3000);
                     } else {
-                        msgBox.textContent = response.data?.message || \'Erreur inconnue\';
+                        msgBox.textContent = response.data?.message || \'Unknown error\';
                         msgBox.style.display = \'block\';
                         msgBox.style.backgroundColor = \'#f8d7da\';
                         msgBox.style.color = \'#721c24\';
@@ -596,7 +599,7 @@ class ISPAG_Achat_Manager
             $timestamp = strtotime($_POST['invoiced_date']);
             if ($timestamp)
             {
-                $updates[] = "Facture = 1";
+                $updates[] = "Invoice = 1";
                 $logger->log_user_action('achat_manager', 'invoiced_date_added', ['timestamp' => $timestamp], $user_id);
             }
         }
@@ -802,7 +805,7 @@ class ISPAG_Achat_Manager
             $inserted = $wpdb->insert($table_purchase, $data);
 
             if ($inserted === false) {
-                return ['success' => false, 'message' => 'Erreur lors de l\'insertion'];
+                return ['success' => false, 'message' => 'Error while inserting'];
             }
 
             return ['success' => true, 'message' => 'Creation OK'];

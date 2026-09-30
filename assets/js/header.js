@@ -17,7 +17,7 @@ jQuery(document).ready(function($) {
                 // On recharge l'onglet ou la page pour voir le changement
                 location.reload(); 
             } else {
-                alert('Erreur : ' + response.data);
+                alert('Error: ' + response.data);
                 $btn.prop('disabled', false).text('Retry');
             }
         });
