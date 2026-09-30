@@ -107,35 +107,4 @@ CREATE TABLE IF NOT EXISTS `{prefix}achats_etat_commandes_fournisseur` (
 ) ENGINE=InnoDB {charset}
 SQL
     ,
-    'achats_fournisseurs' => <<<'SQL'
-CREATE TABLE IF NOT EXISTS `{prefix}achats_fournisseurs` (
-  `Id` int NOT NULL AUTO_INCREMENT,
-  `viag_id` bigint NOT NULL,
-  `isSupplier` int NOT NULL,
-  `isIngenieur` int NOT NULL,
-  `Fournisseur` text NOT NULL,
-  `IdContactCommande` int NOT NULL,
-  `IdContactPlan` int NOT NULL,
-  `IdContactFacturation` int NOT NULL DEFAULT '0',
-  `IdContactLivraison` int NOT NULL DEFAULT '0',
-  `TVA` text NOT NULL,
-  `Mail` text NOT NULL,
-  `compagnyDomain` text NOT NULL,
-  `SupplierAdresse` text NOT NULL,
-  `Ville` text NOT NULL,
-  `CodePostal` text NOT NULL,
-  `region` text NOT NULL,
-  `Pays` text NOT NULL,
-  `industry` enum('Installateur CVC','Ingenieur CVC') DEFAULT NULL,
-  `NumTel` text NOT NULL,
-  `Langue` text NOT NULL,
-  `Monnaie` text NOT NULL,
-  `deliveryDays` int NOT NULL,
-  `TransportTime` int NOT NULL DEFAULT '0',
-  `Image` text NOT NULL,
-  PRIMARY KEY (`Id`),
-  KEY `compagnydomain_idx` (`compagnyDomain`(100))
-) ENGINE=InnoDB {charset}
-SQL
-    ,
 ];

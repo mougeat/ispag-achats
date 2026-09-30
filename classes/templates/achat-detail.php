@@ -9,7 +9,7 @@ $liste_url = trailingslashit(get_site_url()) . 'liste-des-achats/';
 
 // Fournisseur (carte de droite) : une seule petite requête
 $supplier_row = !empty($achat->IdFournisseur)
-    ? $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d", (int) $achat->IdFournisseur))
+    ? ISPAG_Achat_Supplier_Repository::get_supplier_row((int) $achat->IdFournisseur)
     : null;
 $created_by_user = $achat->created_by ? get_userdata((int) $achat->created_by) : null;
 $created_by_name = $created_by_user ? $created_by_user->display_name : '—';

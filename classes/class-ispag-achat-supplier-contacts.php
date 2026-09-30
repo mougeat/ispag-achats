@@ -3,7 +3,7 @@ defined('ABSPATH') or die();
 
 /**
  * Contacts d'un fournisseur affichés (et modifiables) dans la fiche achat : commande/offre, plan, facturation, livraison.
- * Chaque rôle est une colonne de achats_fournisseurs contenant l'ID d'un utilisateur WordPress (contact CRM).
+ * Chaque rôle est une meta de ispag_companies_meta (voir ISPAG_Achat_Supplier_Repository::LEGACY_FIELDS) contenant l'ID d'un utilisateur WordPress (contact CRM).
  */
 class ISPAG_Achat_Supplier_Contacts {
 
@@ -74,7 +74,7 @@ class ISPAG_Achat_Supplier_Contacts {
 
     /**
      * IDs des contacts (utilisateurs) qui appartiennent au fournisseur :
-     *  - rattachés à une entreprise du CRM qui correspond au fournisseur (viag_id, domaine ou nom identique) ;
+     *  - rattachés à une entreprise du CRM qui correspond au fournisseur (même entreprise, domaine ou nom identique) ;
      *  - dont l'e-mail est au domaine du fournisseur ;
      *  - déjà choisis sur ce fournisseur (commande, plan, facturation, livraison).
      */
@@ -91,14 +91,14 @@ class ISPAG_Achat_Supplier_Contacts {
         $company_ids = [];
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $companies_table)) === $companies_table) {
             $domain = strtolower(trim(preg_replace('#^https?://(www\.)?#i', '', (string) $supplier->compagnyDomain), " /"));
-            $viag   = (int) $supplier->viag_id;
-            $name   = trim((string) $supplier->Fournisseur);
+            $self_id = (int) $supplier->Id;
+            $name    = trim((string) $supplier->Fournisseur);
             $company_ids = $wpdb->get_col($wpdb->prepare(
                 "SELECT Id FROM {$companies_table}
-                 WHERE (%d > 0 AND viag_id = %d)
+                 WHERE Id = %d
                     OR (%s <> '' AND LOWER(compagny_domain) = %s)
                     OR (%s <> '' AND LOWER(company_name) = LOWER(%s))",
-                $viag, $viag, $domain, $domain, $name, $name
+                $self_id, $domain, $domain, $name, $name
             ));
         }
         if ($company_ids) {
@@ -126,7 +126,7 @@ class ISPAG_Achat_Supplier_Contacts {
 
     private static function get_supplier($supplier_id) {
         global $wpdb;
-        return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d", (int) $supplier_id));
+        return ISPAG_Achat_Supplier_Repository::get_supplier_row($supplier_id);
     }
 
     /** Recherche UNIQUEMENT parmi les contacts du fournisseur (sans texte : tous ses contacts). */
@@ -165,11 +165,11 @@ class ISPAG_Achat_Supplier_Contacts {
         if (!$supplier_check || ($user_id && (!get_userdata($user_id) || !in_array($user_id, self::supplier_user_ids($supplier_check), true)))) {
             wp_send_json_error('not_a_contact_of_this_supplier', 400);
         }
-        $table = $wpdb->prefix . 'achats_fournisseurs';
-        if ($wpdb->update($table, [$column => $user_id], ['Id' => $supplier_id], ['%d'], ['%d']) === false) {
+        $logical = ISPAG_Achat_Supplier_Repository::LEGACY_FIELDS[$column];
+        if (!ISPAG_Achat_Supplier_Repository::set_supplier_meta($supplier_id, $logical, $user_id)) {
             wp_send_json_error('db_error', 500);
         }
-        $supplier = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE Id = %d", $supplier_id));
+        $supplier = ISPAG_Achat_Supplier_Repository::get_supplier_row($supplier_id);
         wp_send_json_success(['html' => self::render_row($supplier, $column, true)]);
     }
 }

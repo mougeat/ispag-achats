@@ -41,7 +41,71 @@ class ISPAG_Achat_Supplier_Repository {
         'image'          => 'ispag_supplier_image',
         'contact_order'  => 'ispag_supplier_contact_order',
         'contact_plan'   => 'ispag_supplier_contact_plan',
+        'contact_billing'  => 'ispag_supplier_contact_billing',
+        'contact_delivery' => 'ispag_supplier_contact_delivery',
     ];
+
+    /**
+     * Ancien nom de colonne de achats_fournisseurs => clé logique de SUPPLIER_META_KEYS
+     * (les champs propres aux fournisseurs vivent dans wor9711_ispag_companies_meta).
+     */
+    const LEGACY_FIELDS = [
+        'NumTel'               => 'phone',
+        'Langue'               => 'lang',
+        'Monnaie'              => 'currency',
+        'TVA'                  => 'tva',
+        'SupplierAdresse'      => 'address',
+        'CodePostal'           => 'postal_code',
+        'Ville'                => 'city',
+        'Pays'                 => 'country',
+        'deliveryDays'         => 'delivery_days',
+        'TransportTime'        => 'transport_time',
+        'Image'                => 'image',
+        'IdContactCommande'    => 'contact_order',
+        'IdContactPlan'        => 'contact_plan',
+        'IdContactFacturation' => 'contact_billing',
+        'IdContactLivraison'   => 'contact_delivery',
+    ];
+
+    /**
+     * Fiche fournisseur (ligne de ispag_companies enrichie de ses metas) avec les anciens noms de champs :
+     * Id, Fournisseur, Mail, compagnyDomain, NumTel, Langue, Monnaie, TVA, SupplierAdresse, CodePostal, Ville, Pays,
+     * deliveryDays, TransportTime, Image, IdContactCommande/Plan/Facturation/Livraison.
+     */
+    public static function get_supplier_row($supplier_id) {
+        global $wpdb;
+        $row = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}ispag_companies WHERE Id = %d", (int) $supplier_id));
+        if (!$row) {
+            return null;
+        }
+        $repo  = new self();
+        $metas = $repo->get_supplier_metas($row->Id);
+        $row->Fournisseur     = $row->company_name;
+        $row->Mail            = $row->email;
+        $row->compagnyDomain  = $row->compagny_domain;
+        foreach (self::LEGACY_FIELDS as $legacy => $logical) {
+            $row->$legacy = $metas[$logical];
+        }
+        if ($row->NumTel === '' && !empty($row->phone)) {
+            $row->NumTel = $row->phone;
+        }
+        if ($row->Ville === '' && !empty($row->city)) {
+            $row->Ville = $row->city;
+        }
+        return $row;
+    }
+
+    /** Écrit (ou supprime si vide) une meta fournisseur. */
+    public static function set_supplier_meta($supplier_id, $logical_key, $value) {
+        global $wpdb;
+        $table    = $wpdb->prefix . 'ispag_companies_meta';
+        $meta_key = self::SUPPLIER_META_KEYS[$logical_key];
+        $wpdb->delete($table, ['company_id' => (int) $supplier_id, 'meta_key' => $meta_key], ['%d', '%s']);
+        if ($value === '' || $value === null || $value === 0 || $value === '0') {
+            return true;
+        }
+        return $wpdb->insert($table, ['company_id' => (int) $supplier_id, 'meta_key' => $meta_key, 'meta_value' => (string) $value], ['%d', '%s', '%s']) !== false;
+    }
 
     /**
      * Retourne les metas fournisseur (clé logique => valeur) d'une entreprise.
