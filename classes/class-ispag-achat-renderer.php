@@ -77,16 +77,13 @@ class ISPAG_Achat_Renderer {
                     echo '</div>'; // .ispag-article-card-container
                 echo '</div>'; // .ispag-article-group-wrapper
             }
-            echo apply_filters('ispag_bulk_selected_article', '', $achat_id);
+            // Les actions groupées (bulk) sont affichées dans la colonne de gauche de la fiche
             echo '</div>';
 
             // Barre d'actions flottante ou fixe en bas
             echo '<div class="ispag-achat-footer-actions">';
-                
                 echo '<div class="ispag-action-buttons-secondary">';
-                    echo self::get_add_article_btn($achat_id);
-                    echo self::get_delivery_btn($achat_id);
-                    echo self::get_delete_purchase_btn($achat_id);
+                    echo self::footer_buttons_html($achat_id);
                 echo '</div>';
             echo '</div>';
 
@@ -94,6 +91,11 @@ class ISPAG_Achat_Renderer {
         
         // echo self::display_modal();
         // echo ISPAG_Detail_Page::display_modal();
+    }
+
+    /** Boutons du bas de l'onglet Articles (ajout, bon de livraison, suppression) : dépendent du statut. */
+    public static function footer_buttons_html($achat_id) {
+        return self::get_add_article_btn($achat_id) . self::get_delivery_btn($achat_id) . self::get_delete_purchase_btn($achat_id);
     }
 
     /**

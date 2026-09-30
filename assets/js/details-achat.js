@@ -87,7 +87,7 @@ jQuery(function ($) {
 
         function ok() {
             $panel.data('lazyState', 'loaded');
-            $(document).trigger('ispag:achat-tab-loaded', [$panel.data('lazy-tab'), $panel]);
+            afterTabInjected($panel.data('lazy-tab'), $panel);
             done.resolve();
         }
 
@@ -108,6 +108,21 @@ jQuery(function ($) {
             }).fail(fail);
         }
         return done.promise();
+    }
+
+    // Les boutons/blocs d'un onglet chargé après coup doivent être « branchés » (les scripts s'initialisent au chargement de la page)
+    function afterTabInjected(tab, $panel) {
+        if (tab === 'articles') {
+            ['attachEditModalEvents', 'attachViewModalEvents', 'bindStandardTitleListener'].forEach(function (fn) {
+                if (typeof window[fn] === 'function') { try { window[fn](); } catch (e) { console.warn(fn, e); } }
+            });
+            if (typeof window.initTristateToggle === 'function') {
+                document.querySelectorAll('.ispag-toggle-chip').forEach(window.initTristateToggle);
+            }
+        }
+        // Zones de dépôt de documents (CRM) : à initialiser sur le contenu injecté
+        $(document).trigger('ispag:content-injected', [$panel]);
+        $(document).trigger('ispag:achat-tab-loaded', [tab, $panel]);
     }
 
     // Affichage des onglets (les panneaux existent déjà ; on charge s'ils ne le sont pas encore)
@@ -147,4 +162,48 @@ jQuery(function ($) {
         updateBulkActions();
     });
     $(document).on('change', '.ispag-article-checkbox', updateBulkActions);
+
+    // --- Actions groupées : ne recharge que les articles modifiés ---
+    function reloadArticleRows(ids) {
+        (ids || []).forEach(function (id) {
+            $.post(ajaxurl, { action: 'ispag_reload_article_row', article_id: id, is_purchase: 'true' }, function (html) {
+                const $row = $('.ispag-article[data-article-id="' + id + '"]');
+                if ($row.length && typeof html === 'string' && html.trim() !== '') { $row.replaceWith(html); }
+            });
+        });
+        // Boutons Edit / View des articles remplacés
+        setTimeout(function () { afterTabInjected('articles', $('#articles')); }, 800);
+    }
+    window.ispagReloadArticleRows = reloadArticleRows;
+
+    $(document).on('click', '#apply-bulk-update', function () {
+        const $bulk = $(this).closest('.ispag-bulk-actions');
+        const $msg = $('#ispag-bulk-message');
+        const ids = $('.ispag-article .ispag-article-checkbox:checked').map(function () { return $(this).data('article-id'); }).get();
+        if (!ids.length) { alert('No article selected'); return; }
+
+        const $btn = $(this).prop('disabled', true);
+        $.post(ajaxurl, {
+            action: 'ispag_bulk_achat_update_articles',
+            articles: ids.join(','),
+            achat_id: $('#achat-id').val(),
+            date_depart: $('#bulk-date-depart').val(),
+            livre_date: $('#bulk-livre-date').val(),
+            invoiced_date: $('#bulk-invoiced-date').val(),
+            _ajax_nonce: (window.ispagVars || {}).bulk_nonce
+        }).done(function (response) {
+            const ok = response && response.success;
+            $msg.text((response && response.data && response.data.message) || (ok ? 'Done' : 'Unknown error'))
+                .css({ display: 'block', background: ok ? '#d4edda' : '#f8d7da', color: ok ? '#155724' : '#721c24' });
+            if (ok) {
+                reloadArticleRows(ids);
+                $('.ispag-article-checkbox').prop('checked', false);
+                $bulk.find('input[type="date"]').val('');
+                setTimeout(function () { $msg.hide(); $bulk.hide(); }, 2500);
+                $(document).trigger('ispag:achat-articles-changed');
+            }
+        }).fail(function () {
+            $msg.text('Network error').css({ display: 'block', background: '#f8d7da', color: '#721c24' });
+        }).always(function () { $btn.prop('disabled', false); });
+    });
 });

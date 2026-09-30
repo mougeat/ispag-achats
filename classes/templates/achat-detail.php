@@ -109,6 +109,11 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
             <br>
             <a href="<?php echo esc_url(add_query_arg('search', $achat->hubspot_deal_id, $liste_url)); ?>" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-list-view"></span> <?php echo esc_html(__('To purchase list', 'creation-reservoir')); ?></a>
         </div>
+
+        <?php
+        // Actions groupées sur les articles sélectionnés (comme dans les projets) : masquées tant qu'aucun article n'est coché
+        echo apply_filters('ispag_bulk_selected_article', '', $achat->Id);
+        ?>
     </div>
 
     <!-- Contenu principal : onglets chargés en arrière-plan -->

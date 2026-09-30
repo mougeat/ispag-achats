@@ -75,7 +75,19 @@ class ISPAG_Achat_Status_Controller {
 
         do_action('ispag_save_status_changes', $achat_id, $slug, $etat_id);
 
-        wp_send_json_success(['updated' => $updated]);
+        // De quoi mettre à jour la page sans la recharger : nouveau statut + boutons qui en dépendent
+        $current = $this->get_current_status($achat_id);
+        ob_start();
+        self::render_action_button_for_achat($achat_id);
+        $action_html = ob_get_clean();
+        $footer_html = class_exists('ISPAG_Achat_Renderer') ? ISPAG_Achat_Renderer::footer_buttons_html($achat_id) : '';
+
+        wp_send_json_success([
+            'updated'     => $updated,
+            'status'      => $current ? ['Id' => (int) $current->Id, 'Etat' => __($current->Etat, 'creation-reservoir'), 'ClassCss' => $current->ClassCss, 'color' => $current->color] : null,
+            'action_html' => $action_html,
+            'footer_html' => $footer_html,
+        ]);
     }
 
     public function get_current_status($achat_id) {

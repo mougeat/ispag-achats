@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(res => res.json())
             .then(data => {
-//                console.log(data);
+                    dropdown.innerHTML = ''; // sinon chaque clic ajoutait à nouveau tous les statuts
                     data.forEach(stat => {
                         const li = document.createElement('li');
                         li.textContent = stat.Etat;
@@ -237,7 +237,7 @@ function ispag_send_drawing_validation(achatId, btn) {
 
  
 function updateStatus(achatId, Id){
-    fetch(ajaxurl, {
+    return fetch(ajaxurl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -245,8 +245,48 @@ function updateStatus(achatId, Id){
             achat_id: achatId,
             etat_id: Id
         })
-    }).then(() => 
-       location.reload()
-    // console.log('updated')
-    );
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (!res || !res.success) { throw new Error('update failed'); }
+        applyStatusChange(res.data);
+    })
+    .catch(() => {
+        // Repli : si la réponse n'est pas celle attendue, on recharge la page comme avant
+        location.reload();
+    });
+}
+
+/**
+ * Met à jour la page après un changement de statut, sans la recharger :
+ * bouton de statut, bouton d'action suivant, boutons du bas de l'onglet Articles, et onglet Suivi (rechargé en arrière-plan).
+ */
+function applyStatusChange(data) {
+    const $ = window.jQuery;
+    if (data.status) {
+        const btn = document.getElementById('achat-status-btn');
+        if (btn) {
+            btn.className = 'ispag-btn ' + (data.status.ClassCss || '');
+            btn.style.background = data.status.color || '';
+            btn.textContent = data.status.Etat + ' ⌄';
+        }
+    }
+    const dropdown = document.getElementById('achat-status-dropdown');
+    if (dropdown) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+
+    if ($) {
+        // bouton d'action lié au statut (Send order, Send RFQ…)
+        const $right = $('.ispag-achat-header-actions .ispag-buttons-right');
+        $right.find('.achat-action-btn').remove();
+        if (data.action_html) { $right.append(data.action_html); }
+        // boutons du bas (ajout, bon de livraison, suppression) : dépendent du statut
+        if (typeof data.footer_html === 'string') { $('.ispag-action-buttons-secondary').html(data.footer_html); }
+        // onglet Suivi : à recharger (en arrière-plan si visible, sinon au prochain affichage)
+        const $suivi = $('#suivis[data-lazy-tab]');
+        if ($suivi.length) {
+            $suivi.data('lazyState', null);
+            if ($suivi.hasClass('active')) { $('.tab-titles li[data-tab="suivis"]').trigger('click'); }
+            else { $suivi.html('<div class="ispag-skeleton-wrapper" aria-hidden="true"><span class="ispag-skeleton-line ispag-w-60"></span><span class="ispag-skeleton-line ispag-w-90"></span></div>'); }
+        }
+    }
 }

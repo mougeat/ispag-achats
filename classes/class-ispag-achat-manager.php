@@ -115,6 +115,7 @@ class ISPAG_Achat_Manager
         global $wpdb;
 
         wp_enqueue_style('ispag-main-style');
+        wp_enqueue_style('ispag-achat-detail', plugin_dir_url(__FILE__) . '../assets/css/achat-detail.css', ['ispag-main-style'], '1.0.0');
 
         // Le socle skeleton vit dans le thème (generatepress-child). Dépendance seulement s'il est enregistré,
         // sinon un handle manquant empêcherait le chargement du script.
@@ -136,6 +137,7 @@ class ISPAG_Achat_Manager
             'loading_text' => __('Loading', 'creation-reservoir'),
             'all_loaded_text' => __('All projects are loaded', 'creation-reservoir'),
             'security' => wp_create_nonce('ispag_achat_nonce'),
+            'bulk_nonce' => wp_create_nonce('ispag_bulk_update'),
         ]);
 
         $fournisseurs = $wpdb->get_results(
@@ -442,96 +444,25 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'bulk_actions_rendered', ['achat_id' => $achat_id], $user_id);
 
-        return '<div class="ispag-bulk-actions" style="border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; display:none;">
-            <h4>'. __('Bulk update selected articles', 'creation-reservoir') . '</h4>
-            <input type="hidden" id="achat-id" value="'.$achat_id.'">
+        return '<div class="ispag-card ispag-bulk-actions" data-achat-id="' . esc_attr($achat_id) . '" style="display:none;">
+            <h5>' . esc_html__('Bulk update selected articles', 'creation-reservoir') . '</h5>
+            <input type="hidden" id="achat-id" value="' . esc_attr($achat_id) . '">
 
-            <label>' . __('Factory departure date', 'creation-reservoir') . ' :
+            <label>' . esc_html__('Factory departure date', 'creation-reservoir') . '
                 <input type="date" id="bulk-date-depart">
             </label>
 
-            <label>
-                📦 ' . __('Delivered on', 'creation-reservoir') .' :
+            <label>📦 ' . esc_html__('Delivered on', 'creation-reservoir') . '
                 <input type="date" id="bulk-livre-date">
             </label>
 
-            <label>
-                🧾 ' . __('Invoiced on', 'creation-reservoir') .' :
+            <label>🧾 ' . esc_html__('Invoiced on', 'creation-reservoir') . '
                 <input type="date" id="bulk-invoiced-date">
             </label>
 
-            <button id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . __('Apply changes', 'creation-reservoir') . '</button>
-        </div>
-        <script>
-            document.addEventListener(\'DOMContentLoaded\', function () {
-                const cb = document.getElementById(\'bulk-demande-ok\');
-                const db = document.getElementById(\'bulk-drawing-ok\');
-                if(cb) {
-                    cb.indeterminate = true;
-                    db.indeterminate = true;
-                }
-            });
-            document.querySelectorAll(\'.ispag-article-checkbox\').forEach(cb => {
-                cb.addEventListener(\'change\', () => {
-                    const bulkDiv = document.querySelector(\'.ispag-bulk-actions\');
-                    const anyChecked = [...document.querySelectorAll(\'.ispag-article-checkbox\')].some(cb => cb.checked);
-                    if (anyChecked) {
-                        bulkDiv.style.display = \'block\';
-                    } else {
-                        bulkDiv.style.display = \'none\';
-                    }
-                });
-            });
-
-            document.getElementById(\'apply-bulk-update\').addEventListener(\'click\', function () {
-                const selectedIds = [...document.querySelectorAll(\'.ispag-article-checkbox:checked\')].map(cb => cb.dataset.articleId);
-
-                if (selectedIds.length === 0) {
-                    alert("' . __('No article selected', 'creation-reservoir') . '");
-                    return;
-                }
-
-                const data = {
-                    action: \'ispag_bulk_achat_update_articles\',
-                    articles: selectedIds,
-                    achat_id: document.getElementById(\'achat-id\').value,
-                    date_depart: document.getElementById(\'bulk-date-depart\').value,
-                    livre_date: document.getElementById(\'bulk-livre-date\').value,
-                    invoiced_date: document.getElementById(\'bulk-invoiced-date\').value,
-                    _ajax_nonce: \'' . wp_create_nonce('ispag_bulk_update') . '\'
-                };
-
-                fetch(\'' . admin_url('admin-ajax.php') . '\', {
-                    method: \'POST\',
-                    headers: { \'Content-Type\': \'application/x-www-form-urlencoded\' },
-                    body: new URLSearchParams(data)
-                })
-                .then(res => res.json())
-                .then(response => {
-                    const msgBox = document.getElementById(\'ispag-bulk-message\');
-
-                    if (response.success) {
-                        msgBox.textContent = response.data.message;
-                        msgBox.style.display = \'block\';
-                        msgBox.style.backgroundColor = \'#d4edda\';
-                        msgBox.style.color = \'#155724\';
-                        msgBox.style.border = \'1px solid #c3e6cb\';
-
-                        setTimeout(() => {
-                            msgBox.style.display = \'none\';
-                            location.reload();
-                        }, 3000);
-                    } else {
-                        msgBox.textContent = response.data?.message || \'Unknown error\';
-                        msgBox.style.display = \'block\';
-                        msgBox.style.backgroundColor = \'#f8d7da\';
-                        msgBox.style.color = \'#721c24\';
-                        msgBox.style.border = \'1px solid #f5c6cb\';
-                    }
-                });
-            });
-        </script>
-        ';
+            <button type="button" id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . esc_html__('Apply changes', 'creation-reservoir') . '</button>
+            <div id="ispag-bulk-message" class="bulk_message" style="display:none; margin-top:8px; padding:6px 10px; border-radius:6px;"></div>
+        </div>';
     }
 
     public static function bulk_achat_update_articles()

@@ -1,0 +1,15 @@
+/* Fiche achat (3 colonnes) : la colonne centrale défile, sinon le bas des onglets (Suivi, Documents…) est coupé */
+.ispag-achat-detail .ispag-main-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 40px;
+    -webkit-overflow-scrolling: touch;
+}
+.ispag-achat-detail .ispag-tabs .tab-content {
+    overflow: visible;
+}
+@media (max-width: 1024px) {
+    .ispag-achat-detail .ispag-main-content {
+        overflow-y: visible;
+    }
+}
