@@ -8,6 +8,7 @@ class ISPAG_Achat_Renderer {
     public static function init() {
         add_action('ispag_achat_articles_tab', [self::class, 'render_articles_tab'], 10, 1);
         add_filter('ispag_render_purchase_article_modal', [self::class, 'render_article_modal'], 10, 2);
+        add_filter('ispag_purchase_article_view_data', [self::class, 'article_view_data'], 10, 2);
         add_filter('ispag_render_purchase_article_modal_form', [self::class, 'render_article_modal_form'], 10, 3);
         add_filter('ispag_render_article_block', [self::class, 'reload_article_row'], 10, 2);
         add_action('wp_ajax_ispag_apply_purchase_adjustment', [self::class, 'ajax_apply_adjustment']);
@@ -159,20 +160,51 @@ class ISPAG_Achat_Renderer {
         include plugin_dir_path(__FILE__) . 'templates/render-article-block.php'; 
     }
 
-    public static function render_article_modal($html, $article_id){
-        $repo = new ISPAG_Achat_Article_Repository();
+    /** Données normalisées pour la modale d'affichage commune (ISPAG_Article_View du Project Manager). */
+    public static function article_view_data($data, $article_id){
+        $repo    = new ISPAG_Achat_Article_Repository();
         $article = $repo->get_article_by_id(null, $article_id);
-        // $article = apply_filters('ispag_get_article_by_id', null, $article_id);
-
-        $standard_titles = apply_filters('ispag_get_standard_titles_by_type', $article->Type);
-        $user_can_edit_order = current_user_can('edit_supplier_order');
-        $user_can_view_order = current_user_can('view_supplier_order');
-
         if (!$article) {
+            return null;
+        }
+        $show_prices = current_user_can('display_sales_prices');
+        $ts          = (int) ($article->TimestampDateLivraisonConfirme ?? 0);
+
+        $documents = [];
+        foreach ((array) ($article->documents ?? []) as $doc) {
+            $documents[] = ['label' => __($doc['label'], 'creation-reservoir'), 'url' => $doc['url']];
+        }
+
+        return [
+            'title'       => stripslashes((string) $article->RefSurMesure),
+            'subtitle'    => '',
+            'image_html'  => ISPAG_Achat_Article_Repository::image_html($article->image, '', 50, 'display:block; max-width:100%; height:auto; margin:auto;'),
+            'description' => $article->DescSurMesure ?? '',
+            'qty'         => (int) $article->Qty,
+            'unit_net'    => $show_prices ? (float) $article->UnitPriceNet : null,
+            'discount'    => (float) ($article->discount ?? 0),
+            'total'       => $show_prices ? (float) ($article->total_price ?? ((float) $article->UnitPriceNet * (int) $article->Qty)) : null,
+            'currency'    => get_option('wpcb_currency', 'CHF'),
+            'info'        => [
+                [__('Factory departure', 'creation-reservoir'), $ts ? date('d.m.Y', $ts) : '-'],
+            ],
+            'steps'       => [
+                [__('Drawing approved', 'creation-reservoir'), (int) $article->DrawingApproved === 1],
+                [__('Received / Delivered', 'creation-reservoir'), !empty($article->Recu)],
+                [__('Invoiced', 'creation-reservoir'), !empty($article->Facture)],
+            ],
+            'documents'   => $documents,
+            'is_staff'    => current_user_can('manage_order'),
+        ];
+    }
+
+    public static function render_article_modal($html, $article_id){
+        $data = self::article_view_data(null, $article_id);
+        if (!$data || !class_exists('ISPAG_Article_View')) {
             echo '<p>' . __('Article not found', 'creation-reservoir')  . '</p>';
             wp_die();
         }
-        include plugin_dir_path(__FILE__) . 'templates/modal-display-datas.php';
+        echo ISPAG_Article_View::body($data);
         return;
     }
 
