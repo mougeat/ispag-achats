@@ -115,7 +115,7 @@ class ISPAG_Achat_Manager
         global $wpdb;
 
         wp_enqueue_style('ispag-main-style');
-        wp_enqueue_style('ispag-achat-detail', plugin_dir_url(__FILE__) . '../assets/css/achat-detail.css', ['ispag-main-style'], '1.0.0');
+        wp_enqueue_style('ispag-achat-detail', plugin_dir_url(__FILE__) . '../assets/css/achat-detail.css', ['ispag-main-style'], filemtime(plugin_dir_path(__FILE__) . '../assets/css/achat-detail.css'));
 
         // Le socle skeleton vit dans le thème (generatepress-child). Dépendance seulement s'il est enregistré,
         // sinon un handle manquant empêcherait le chargement du script.

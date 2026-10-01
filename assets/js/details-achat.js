@@ -156,6 +156,9 @@ jQuery(function ($) {
         const any = $boxes.filter(':checked').length > 0;
         $('#select-all-articles').prop('checked', $boxes.length > 0 && $boxes.filter(':checked').length === $boxes.length);
         $('.ispag-bulk-actions').css('display', any ? 'block' : 'none');
+        $('.ispag-article--row').each(function () {
+            $(this).toggleClass('is-selected', $(this).find('.ispag-article-checkbox').prop('checked'));
+        });
     }
     $(document).on('change', '#select-all-articles', function () {
         $('.ispag-article-checkbox').prop('checked', this.checked);
@@ -163,12 +166,37 @@ jQuery(function ($) {
     });
     $(document).on('change', '.ispag-article-checkbox', updateBulkActions);
 
+    // --- Blocs articles : menu ⋯, clic sur la ligne, groupes repliables ---
+    $(document).on('click', '.ispag-more-toggle', function (e) {
+        e.stopPropagation();
+        const $more = $(this).closest('.ispag-more');
+        const open = !$more.hasClass('is-open');
+        $('.ispag-more.is-open').removeClass('is-open').find('.ispag-more-toggle').attr('aria-expanded', 'false');
+        $more.toggleClass('is-open', open);
+        $(this).attr('aria-expanded', open ? 'true' : 'false');
+    });
+    $(document).on('click', function (e) {
+        if (!$(e.target).closest('.ispag-more').length) {
+            $('.ispag-more.is-open').removeClass('is-open').find('.ispag-more-toggle').attr('aria-expanded', 'false');
+        }
+    });
+    $(document).on('click', '.ispag-article--row', function (e) {
+        if ($(e.target).closest('a, button, input, label, .ispag-more, .ispag-loading-overlay').length) { return; }
+        $(this).find('.ispag-btn-view').first().trigger('click');
+    });
+    $(document).on('click', '.ispag-group-toggle', function () {
+        const $wrap = $(this).closest('.ispag-article-group-wrapper');
+        const collapsed = !$wrap.hasClass('is-collapsed');
+        $wrap.toggleClass('is-collapsed', collapsed);
+        $(this).attr('aria-expanded', collapsed ? 'false' : 'true');
+    });
+
     // --- Actions groupées : ne recharge que les articles modifiés ---
     function reloadArticleRows(ids) {
         (ids || []).forEach(function (id) {
             $.post(ajaxurl, { action: 'ispag_reload_article_row', article_id: id, is_purchase: 'true' }, function (html) {
                 const $row = $('.ispag-article[data-article-id="' + id + '"]');
-                if ($row.length && typeof html === 'string' && html.trim() !== '') { $row.replaceWith(html); }
+                if ($row.length && typeof html === 'string' && html.trim() !== '') { const $new = $(html); $row.replaceWith($new); $new.filter('.ispag-article').addClass('is-updated'); }
             });
         });
         // Boutons Edit / View des articles remplacés

@@ -60,10 +60,19 @@ class ISPAG_Achat_Renderer {
                 $escaped_group = esc_html(stripslashes($group_name));
                 $group_id = 'group-title-' . md5($group_name);
                 
-                echo '<div class="ispag-article-group-wrapper" style="margin-bottom: 30px;">';
+                $group_total = 0;
+                foreach ($items as $it) {
+                    $group_total += isset($it->total_price) ? (float) $it->total_price : (float) $it->UnitPriceNet * (int) $it->Qty;
+                }
+                echo '<div class="ispag-article-group-wrapper">';
                     echo '<div class="ispag-article-group-header">';
-                        echo '<h3 id="' . esc_attr($group_id) . '"><span class="dashicons dashicons-category"></span> ' . $escaped_group . '</h3>';
-                        echo '<button class="ispag-btn-copy-group" data-target="' . esc_attr($group_id) . '" title="Copier le titre">📋</button>';
+                        echo '<button type="button" class="ispag-group-toggle" aria-expanded="true" title="' . esc_attr__('Collapse / expand', 'creation-reservoir') . '"><i class="fas fa-chevron-down"></i></button>';
+                        echo '<h3 id="' . esc_attr($group_id) . '">' . $escaped_group . '</h3>';
+                        echo '<span class="ispag-group-count">' . count($items) . '</span>';
+                        if (current_user_can('display_sales_prices')) {
+                            echo '<span class="ispag-group-total">' . number_format($group_total, 2) . ' ' . esc_html(get_option('wpcb_currency', 'CHF')) . '</span>';
+                        }
+                        echo '<button type="button" class="ispag-btn-copy-group" data-target="' . esc_attr($group_id) . '" title="' . esc_attr__('Copy title', 'creation-reservoir') . '">📋</button>';
                     echo '</div>';
 
                     // Conteneur pour tous les articles de ce groupe
