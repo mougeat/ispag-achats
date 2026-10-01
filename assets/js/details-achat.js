@@ -164,13 +164,6 @@ jQuery(function ($) {
     $(document).on('change', '.ispag-article-checkbox', updateBulkActions);
 
     // --- Blocs articles : menu ⋯, clic sur la ligne, groupes repliables ---
-    $(document).on('click', '.ispag-group-toggle', function () {
-        const $wrap = $(this).closest('.ispag-article-group-wrapper');
-        const collapsed = !$wrap.hasClass('is-collapsed');
-        $wrap.toggleClass('is-collapsed', collapsed);
-        $(this).attr('aria-expanded', collapsed ? 'false' : 'true');
-    });
-
     // --- Actions groupées : ne recharge que les articles modifiés ---
     function reloadArticleRows(ids) {
         (ids || []).forEach(function (id) {
