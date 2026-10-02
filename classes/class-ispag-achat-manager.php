@@ -124,10 +124,10 @@ class ISPAG_Achat_Manager
             $scroll_deps[] = 'ispag-skeleton';
         }
 
-        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', $scroll_deps, false, true);
-        wp_enqueue_script('ispag-state-achats', plugin_dir_url(__FILE__) . '../assets/js/state.js', ['jquery'], false, true);
-        wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', ['jquery'], false, true);
-        wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', ['jquery'], false, true);
+        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', $scroll_deps, filemtime(plugin_dir_path(__FILE__) . '../assets/js/infinite-scroll-achat.js'), true);
+        wp_enqueue_script('ispag-state-achats', plugin_dir_url(__FILE__) . '../assets/js/state.js', ['jquery'], filemtime(plugin_dir_path(__FILE__) . '../assets/js/state.js'), true);
+        wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', ['jquery'], filemtime(plugin_dir_path(__FILE__) . '../assets/js/details-achat.js'), true);
+        wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', ['jquery'], filemtime(plugin_dir_path(__FILE__) . '../assets/js/header.js'), true);
 
         wp_add_inline_script('ispag-scroll-achats', 'var ajaxurl = ' . wp_json_encode(admin_url('admin-ajax.php')) . ';', 'before');
 
