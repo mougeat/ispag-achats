@@ -94,7 +94,7 @@ class ISPAG_Achat_Manager
                 do_action('ispag_display_achat_suivi', $achat_id);
                 break;
             case 'documents':
-                echo ISPAG_Document_Manager::display_ispag_doc_manger($achat_id, true);
+                echo ISPAG_Achat_Renderer::render_documents_tab($achat_id);
                 break;
         }
         wp_send_json_success(['html' => ob_get_clean()]);

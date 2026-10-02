@@ -92,6 +92,32 @@ class ISPAG_Achat_Renderer {
         // echo ISPAG_Detail_Page::display_modal();
     }
 
+    /** Onglet Documents : uniquement la liste (la zone de dépôt est dans la colonne de droite de la fiche). */
+    public static function render_documents_tab($achat_id) {
+        if (!class_exists('ISPAG_Attachments_Repository') || !class_exists('ISPAG_Attachments_Card_Renderer')) {
+            return '<p>Error: The document management classes are not loaded.</p>';
+        }
+        global $wpdb;
+        $renderer = new ISPAG_Attachments_Card_Renderer(new ISPAG_Attachments_Repository($wpdb));
+
+        return '<div class="ispag-card ispag-docu-card" data-view="list" data-entity-type="purchase" data-entity-id="' . esc_attr($achat_id) . '">'
+            . $renderer->render_doc_list('purchase', $achat_id, -1, true)
+            . '</div>';
+    }
+
+    /** Carte « Add attachments » (zone de dépôt) de la colonne de droite. */
+    public static function render_upload_card($achat_id) {
+        if (!class_exists('ISPAG_Attachments_Doc_Types_Repository') || !class_exists('ISPAG_Attachments_Modal_Renderer')) {
+            return '';
+        }
+        global $wpdb;
+        $modal_renderer = new ISPAG_Attachments_Modal_Renderer(new ISPAG_Attachments_Doc_Types_Repository($wpdb));
+
+        return '<div class="ispag-card ispag-company-card"><h5>' . esc_html__('Add attachments', 'ispag-crm') . '</h5>'
+            . $modal_renderer->render_dropzone('purchase', $achat_id, 'ispag-upload-modal-dropzone')
+            . '</div>';
+    }
+
     /**
      * Boutons d'action du panneau de gauche (sous « To project » / « To purchase list »), groupés par famille
      * de fonction et séparés par un trait fin. Dépendent du statut (rafraîchis par state.js).

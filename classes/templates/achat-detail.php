@@ -174,6 +174,11 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
             echo ISPAG_Achat_Supplier_Contacts::render_card($supplier_row, $can_edit);
             ?>
 
+            <?php
+            // Zone de dépôt de documents (déplacée depuis l'onglet Documents)
+            echo ISPAG_Achat_Renderer::render_upload_card($achat->Id);
+            ?>
+
             <div class="ispag-card" style="font-size:14px;">
                 <h5><?php _e('Project', 'creation-reservoir'); ?></h5>
                 <p style="margin:5px 0;"><a href="<?php echo esc_url($achat->project_url); ?>"><?php echo esc_html(__('Open the project', 'creation-reservoir')); ?></a></p>
