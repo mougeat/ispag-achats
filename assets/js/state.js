@@ -207,11 +207,32 @@ function ispag_open_mail(data, noFileMessage) {
             return false;
         }
         ispag_download_via_frame(data.eml_url);
+        // Première fois : on explique, d'office, comment ouvrir automatiquement le brouillon
+        if ($('#ispag-eml-help').attr('data-seen') !== '1') {
+            ispag_show_eml_help();
+        }
     } else {
         send_mail(data);
     }
     return true;
 }
+
+// Fenêtre d'aide « brouillon Outlook » : affichée au premier envoi, puis avec le bouton « i »
+function ispag_show_eml_help() {
+    $('#ispag-eml-help').prop('hidden', false);
+}
+function ispag_hide_eml_help() {
+    const $m = $('#ispag-eml-help');
+    $m.prop('hidden', true);
+    if ($m.attr('data-seen') !== '1') {
+        $m.attr('data-seen', '1');
+        $.post(ajaxurl, { action: 'ispag_eml_help_seen', nonce: $m.data('nonce') });
+    }
+}
+$(document).on('click', '.ispag-eml-help-btn', ispag_show_eml_help);
+$(document).on('click', '.ispag-eml-help__close', ispag_hide_eml_help);
+$(document).on('click', '#ispag-eml-help', function (e) { if (e.target === this) ispag_hide_eml_help(); });
+$(document).on('keydown', function (e) { if (e.key === 'Escape' && !$('#ispag-eml-help').prop('hidden')) ispag_hide_eml_help(); });
 
 function ispag_send_order(achatId, btn) {
     ispag_send_generic_ajax({

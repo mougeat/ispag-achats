@@ -123,8 +123,15 @@ class ISPAG_Achat_Renderer {
         ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
         $action_btn = ob_get_clean();
 
+        // Bouton « i » : explique comment ouvrir automatiquement le brouillon Outlook (.eml) des envois par e-mail
+        $info_btn = '';
+        if (preg_match('/data-hook="(ispag_send_order|ispag_send_drawing_modification|ispag_send_drawing_validation)"/', $action_btn)) {
+            $info_btn = '<button type="button" class="ispag-eml-help-btn" title="' . esc_attr__('How to open the email draft automatically', 'creation-reservoir')
+                . '" aria-label="' . esc_attr__('Help: email draft', 'creation-reservoir') . '">i</button>';
+        }
+
         $groups = [
-            apply_filters('ispag_print_purchase_order_btn', null, $achat_id) . $action_btn, // commande (Print, Send order…)
+            apply_filters('ispag_print_purchase_order_btn', null, $achat_id) . ($action_btn !== '' ? '<span class="ispag-btn-row">' . $action_btn . $info_btn . '</span>' : ''), // commande (Print, Send order…)
             self::get_add_article_btn($achat_id) . self::get_delivery_btn($achat_id), // articles
             self::get_delete_purchase_btn($achat_id),                                  // suppression
         ];

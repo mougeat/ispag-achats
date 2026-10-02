@@ -188,6 +188,8 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
     </div>
 </div>
 
+<?php echo ISPAG_Achat_Mail_Draft::help_modal_html(); ?>
+
 <select id="ispag-fournisseurs-source" style="display:none;">
     <?php foreach ($fournisseurs as $f): ?>
         <option value="<?php echo esc_attr($f->Fournisseur); ?>"><?php echo esc_html($f->Fournisseur); ?></option>

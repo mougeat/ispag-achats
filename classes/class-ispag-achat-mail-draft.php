@@ -65,8 +65,54 @@ class ISPAG_Achat_Mail_Draft {
         return $slug === null ? 1 : count(self::latest_documents($achat_id, $slug));
     }
 
+    const HELP_META   = 'ispag_eml_help_seen';
+    const HELP_ACTION = 'ispag_eml_help_seen';
+
     public static function init() {
         add_action('wp_ajax_' . self::ACTION, [self::class, 'download']);
+        add_action('wp_ajax_' . self::HELP_ACTION, [self::class, 'ajax_help_seen']);
+    }
+
+    /** L'utilisateur a-t-il déjà lu l'aide « ouvrir automatiquement le brouillon » ? */
+    public static function help_seen() {
+        return (bool) get_user_meta(get_current_user_id(), self::HELP_META, true);
+    }
+
+    public static function ajax_help_seen() {
+        check_ajax_referer('ispag_eml_help', 'nonce');
+        update_user_meta(get_current_user_id(), self::HELP_META, 1);
+        wp_send_json_success();
+    }
+
+    /**
+     * Fenêtre d'aide (affichée automatiquement au premier envoi, puis à la demande avec le bouton « i »).
+     * Le navigateur télécharge le brouillon .eml : un réglage unique lui fait ouvrir ces fichiers tout seul.
+     */
+    public static function help_modal_html() {
+        ob_start();
+        ?>
+        <div id="ispag-eml-help" class="ispag-eml-help" hidden
+             data-seen="<?php echo self::help_seen() ? '1' : '0'; ?>"
+             data-nonce="<?php echo esc_attr(wp_create_nonce('ispag_eml_help')); ?>">
+            <div class="ispag-eml-help__box" role="dialog" aria-modal="true" aria-labelledby="ispag-eml-help-title">
+                <h3 id="ispag-eml-help-title"><?php esc_html_e('Your email is ready', 'creation-reservoir'); ?></h3>
+                <p><?php esc_html_e('A small file ending in “.eml” has just been downloaded. Open it: your email appears in Outlook with the recipient, the text and the attachments already filled in.', 'creation-reservoir'); ?></p>
+                <p><strong><?php esc_html_e('Want it to open by itself next time?', 'creation-reservoir'); ?></strong>
+                   <?php esc_html_e('Do this once:', 'creation-reservoir'); ?></p>
+                <ol>
+                    <li><?php esc_html_e('In your browser, find the downloaded file (download bar, or the download arrow at the top right).', 'creation-reservoir'); ?></li>
+                    <li><?php esc_html_e('Click the “…” (or “⋮”) next to the file.', 'creation-reservoir'); ?></li>
+                    <li><?php esc_html_e('Choose “Always open files of this type”.', 'creation-reservoir'); ?></li>
+                </ol>
+                <p class="ispag-eml-help__small"><?php esc_html_e('If the file does not open in Outlook: right-click it, choose “Open with”, select Outlook and tick “Always use this app”.', 'creation-reservoir'); ?></p>
+                <p class="ispag-eml-help__small"><?php esc_html_e('You can read this again at any time with the “i” button next to the send button.', 'creation-reservoir'); ?></p>
+                <div class="ispag-eml-help__actions">
+                    <button type="button" class="ispag-btn ispag-btn-secondary-outlined ispag-eml-help__close"><?php esc_html_e('Got it', 'creation-reservoir'); ?></button>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
     }
 
     /** Adresse de téléchargement du brouillon (protégée par un nonce lié à la commande). */
