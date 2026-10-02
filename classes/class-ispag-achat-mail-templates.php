@@ -87,7 +87,7 @@ class ISPAG_Achat_Mail_Templates {
             '{PROJECT_NAME}'   => __('Project name', 'creation-reservoir'),
             '{PROJECT_NUMBER}' => __('Order number', 'creation-reservoir'),
             '{PROJECT_URL}'    => __('Link to the project (address only)', 'creation-reservoir'),
-            '{PROJECT_LINK}'   => __('Link to the project (clickable, shows the project name)', 'creation-reservoir'),
+            '{PROJECT_LINK}'   => __('Link to the project (clickable: "view the project" in the recipient language)', 'creation-reservoir'),
             '{PRODUCT_LIST}'   => __('List of items, grouped', 'creation-reservoir'),
             '{DELIVERY_DATE}'  => __('Planned delivery date (or period)', 'creation-reservoir'),
             '{DELIVERY_ADRESS}' => __('Delivery address', 'creation-reservoir'),
@@ -96,6 +96,10 @@ class ISPAG_Achat_Mail_Templates {
             '{DELIVERY_CONTACT}' => __('On-site contact', 'creation-reservoir'),
             '{DELIVERY_CONTACT_PHONE}' => __('On-site contact phone', 'creation-reservoir'),
             '{SURVEY_LINK}'    => __('Satisfaction survey link', 'creation-reservoir'),
+            '{IF_DRAWINGS}'    => __('Start of a text kept only if the order contains a type 1 item (drawings to approve) — close it with {/IF_DRAWINGS}', 'creation-reservoir'),
+            '{/IF_DRAWINGS}'   => __('End of the "with drawings" text', 'creation-reservoir'),
+            '{IF_NO_DRAWINGS}' => __('Start of a text kept only if the order has no type 1 item — close it with {/IF_NO_DRAWINGS}', 'creation-reservoir'),
+            '{/IF_NO_DRAWINGS}' => __('End of the "without drawings" text', 'creation-reservoir'),
             '{USER_NAME}'      => __('Name of the person who triggered the e-mail', 'creation-reservoir'),
         ];
     }

@@ -99,6 +99,7 @@
     function fill(text) {
         let out = text;
         const sample = $form.find('[name="message_family"]').val() === 'project_mail' ? (cfg.sampleProject || {}) : (cfg.sample || {});
+        out = out.replace(/\{\/?IF_(NO_)?DRAWINGS\}/g, ''); // aperçu : on affiche les deux variantes
         $.each(sample, function (tag, val) { out = out.split(tag).join(val); });
         return out;
     }
