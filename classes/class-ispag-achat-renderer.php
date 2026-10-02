@@ -343,7 +343,8 @@ class ISPAG_Achat_Renderer {
 
         $supplier_id = intval($achat->IdFournisseur);
         $currency = strtoupper($achat->Devise ?? 'CHF');
-        $target_suppliers = [1, 3, 395]; 
+        // Fournisseurs avec transport automatique : réglage (ISPAG Settings → Purchase settings), Id de ispag_companies
+        $target_suppliers = ISPAG_Achat_Settings::transport_supplier_ids();
         
         $transport_found = false;
         $dedouanement_found = false;
@@ -375,8 +376,9 @@ class ISPAG_Achat_Renderer {
                         if (!empty($art->technical_volume)) {
                             $total_volume += (floatval($art->technical_volume) * $qty);
                         } 
-                        elseif (preg_match('/(\d+)\s*litres/i', $art->RefSurMesure, $matches)) {
-                            $total_volume += floatval($matches[1]) * $qty;
+                        elseif (preg_match('/(\d[\d\s\'.]*)\s*(?:litres?|liters?)\b/iu', (string) $art->RefSurMesure, $matches)) {
+                            // « 1250 litres », « 1 500 liters »… (titre selon la langue active)
+                            $total_volume += floatval(preg_replace('/\D/', '', $matches[1])) * $qty;
                         }
                     }
                     
