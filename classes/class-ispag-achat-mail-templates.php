@@ -4,7 +4,7 @@ defined('ABSPATH') || exit;
 /**
  * Modèles d'e-mail des commandes fournisseur (table achats_template_mail, famille « purchase_order »).
  *
- * - Page de gestion : shortcode [ispag_mail_templates] (page « Email templates », créée par l'installateur de pages).
+ * - Page de gestion dans l'administration : ISPAG Settings → Email templates (droit manage_options).
  * - Un modèle = un type de message × une langue, avec un objet et un texte contenant des balises {TAG}
  *   remplacées à l'envoi (voir tags() et ISPAG_Achat_Status_Controller::replace_text()).
  * - Les modèles par défaut (anglais) sont ajoutés à l'installation : install/default-mail-templates.php.
@@ -16,7 +16,7 @@ class ISPAG_Achat_Mail_Templates {
     const DEFAULT_LANG = 'en_US';
 
     public static function init() {
-        add_shortcode('ispag_mail_templates', [self::class, 'shortcode']);
+        add_action('admin_menu', [self::class, 'admin_menu']);
         add_action('wp_ajax_ispag_mail_template_save', [self::class, 'ajax_save']);
         add_action('wp_ajax_ispag_mail_template_delete', [self::class, 'ajax_delete']);
     }
@@ -98,7 +98,7 @@ class ISPAG_Achat_Mail_Templates {
 
     private static function guard() {
         check_ajax_referer(self::NONCE, 'nonce');
-        if (!current_user_can('manage_order')) {
+        if (!current_user_can('manage_options')) {
             wp_send_json_error(__('Not authorized', 'creation-reservoir'), 403);
         }
     }
@@ -155,10 +155,18 @@ class ISPAG_Achat_Mail_Templates {
 
     // ------------------------------------------------------------------ page
 
-    public static function shortcode() {
-        if (!is_user_logged_in() || !current_user_can('manage_order')) {
-            return '<p>' . esc_html__('Access restricted.', 'creation-reservoir') . '</p>';
+    public static function admin_menu() {
+        $title = __('Email templates', 'creation-reservoir');
+        if (class_exists('ISPAG_Settings')) {
+            add_submenu_page(ISPAG_Settings::PAGE, $title, $title, 'manage_options', 'ispag-mail-templates', [self::class, 'render_admin']);
+        } else {
+            add_management_page($title, $title, 'manage_options', 'ispag-mail-templates', [self::class, 'render_admin']);
         }
+        add_action('admin_enqueue_scripts', [self::class, 'enqueue_admin_assets']);
+    }
+
+    public static function enqueue_admin_assets($hook) {
+        if (strpos((string) $hook, 'ispag-mail-templates') === false) return;
 
         wp_enqueue_style('ispag-mail-templates', plugins_url('../assets/css/mail-templates.css', __FILE__), [], filemtime(dirname(__DIR__) . '/assets/css/mail-templates.css'));
         wp_enqueue_script('ispag-mail-templates', plugins_url('../assets/js/mail-templates.js', __FILE__), ['jquery'], filemtime(dirname(__DIR__) . '/assets/js/mail-templates.js'), true);
@@ -177,19 +185,28 @@ class ISPAG_Achat_Mail_Templates {
                 '{USER_NAME}' => wp_get_current_user()->display_name, '{COMPANY_NAME}' => (string) get_option('wpcb_companyName'),
             ],
         ]);
+    }
 
+    public static function render_admin() {
+        if (!current_user_can('manage_options')) {
+            wp_die(esc_html__('Not authorized', 'creation-reservoir'));
+        }
+        echo '<div class="wrap">' . self::render_page() . '</div>';
+    }
+
+    private static function render_page(): string {
         ob_start();
         ?>
         <div class="ispag-mailtpl" id="ispag-mailtpl">
             <div class="ispag-mailtpl-head">
-                <h2><?php esc_html_e('Email templates', 'creation-reservoir'); ?></h2>
-                <button type="button" class="ispag-btn ispag-btn-secondary-outlined" id="ispag-mailtpl-new">＋ <?php esc_html_e('New template', 'creation-reservoir'); ?></button>
+                <h1><?php esc_html_e('Email templates', 'creation-reservoir'); ?></h1>
+                <button type="button" class="button" id="ispag-mailtpl-new">＋ <?php esc_html_e('New template', 'creation-reservoir'); ?></button>
             </div>
             <p class="ispag-mailtpl-help"><?php esc_html_e('One template per message type and language. If a supplier’s language has no template, the English one is used.', 'creation-reservoir'); ?></p>
 
             <div id="ispag-mailtpl-list"><?php echo self::render_list(); ?></div>
 
-            <form id="ispag-mailtpl-form" class="ispag-card" hidden>
+            <form id="ispag-mailtpl-form" hidden>
                 <h3 id="ispag-mailtpl-form-title"></h3>
                 <input type="hidden" name="id" value="0">
                 <div class="ispag-mailtpl-row">
@@ -227,9 +244,9 @@ class ISPAG_Achat_Mail_Templates {
                 </div>
 
                 <div class="ispag-mailtpl-actions">
-                    <button type="submit" class="ispag-btn ispag-btn-green"><?php esc_html_e('Save', 'creation-reservoir'); ?></button>
-                    <button type="button" class="ispag-btn ispag-btn-grey-outlined" id="ispag-mailtpl-preview-btn"><?php esc_html_e('Preview', 'creation-reservoir'); ?></button>
-                    <button type="button" class="ispag-btn ispag-btn-grey-outlined" id="ispag-mailtpl-cancel"><?php esc_html_e('Cancel', 'creation-reservoir'); ?></button>
+                    <button type="submit" class="button button-primary"><?php esc_html_e('Save', 'creation-reservoir'); ?></button>
+                    <button type="button" class="button" id="ispag-mailtpl-preview-btn"><?php esc_html_e('Preview', 'creation-reservoir'); ?></button>
+                    <button type="button" class="button" id="ispag-mailtpl-cancel"><?php esc_html_e('Cancel', 'creation-reservoir'); ?></button>
                     <span class="ispag-mailtpl-status" aria-live="polite"></span>
                 </div>
             </form>
@@ -254,9 +271,9 @@ class ISPAG_Achat_Mail_Templates {
                     . ' data-subject="' . esc_attr($r->subject) . '" data-message="' . esc_attr($r->message) . '">'
                     . '<td>' . esc_html($label) . '</td><td>' . esc_html($r->lang) . '</td><td>' . esc_html($r->subject) . '</td>'
                     . '<td class="ispag-mailtpl-row-actions">'
-                    . '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-mailtpl-edit">✏️ ' . esc_html__('Edit', 'creation-reservoir') . '</button> '
-                    . '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-mailtpl-copy" title="' . esc_attr__('Duplicate (e.g. to translate)', 'creation-reservoir') . '">⧉</button> '
-                    . '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-mailtpl-delete" title="' . esc_attr__('Delete', 'creation-reservoir') . '">🗑</button>'
+                    . '<button type="button" class="button ispag-mailtpl-edit">✏️ ' . esc_html__('Edit', 'creation-reservoir') . '</button> '
+                    . '<button type="button" class="button ispag-mailtpl-copy" title="' . esc_attr__('Duplicate (e.g. to translate)', 'creation-reservoir') . '">⧉</button> '
+                    . '<button type="button" class="button ispag-mailtpl-delete" title="' . esc_attr__('Delete', 'creation-reservoir') . '">🗑</button>'
                     . '</td></tr>';
             }
             echo '</tbody></table>';

@@ -40,8 +40,6 @@ spl_autoload_register(function ($class) {
 require_once __DIR__ . '/classes/class-ispag-page-installer.php';
 ISPAG_Page_Installer::register('ISPAG Achats', require __DIR__ . '/install/pages.php');
 register_activation_hook(__FILE__, function () { ISPAG_Page_Installer::on_activation('ISPAG Achats'); });
-// Rattrapage après mise à jour (par FTP, donc sans réactivation) : crée les pages manquantes, une fois par version de la liste
-add_action('init', function () { if (method_exists('ISPAG_Page_Installer', 'ensure_created')) { ISPAG_Page_Installer::ensure_created('ISPAG Achats', '2'); } }, 20);
 
 // ispag_load_textdomain() est définie par ISPAG Project Manager ; sans lui, ce rappel plantait tout le site
 add_action('init', function () { if (function_exists('ispag_load_textdomain')) ispag_load_textdomain(); });
