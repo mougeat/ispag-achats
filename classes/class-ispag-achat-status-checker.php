@@ -60,6 +60,8 @@ class ISPAG_Achat_Status_Checker
     // CRON
     // ------------------------------------------------------------------
 
+    const INTERVENTION_SLOTS = ['06:00', '12:00'];
+
     public static function maybe_schedule_cron()
     {
         $user_id = get_current_user_id();
@@ -69,37 +71,36 @@ class ISPAG_Achat_Status_Checker
             self::$logger->log_user_action('achat_status_checker', 'cron_scheduled', ['action' => 'ispag_check_auto_status'], $user_id);
         }
 
-        // Notifications d'intervention : 2x par jour (8h00 et 20h00, heure du site)
-        $interventions_event = wp_get_scheduled_event('ispag_check_achats_interventions');
-        if ($interventions_event && $interventions_event->schedule !== 'twicedaily')
+        // Notifications d'intervention : 2x par jour (6h00 et 12h00, heure du site).
+        // Deux événements quotidiens (un par créneau, distingués par leur argument) car 6h/12h
+        // ne sont pas espacés régulièrement.
+        $legacy_event = wp_get_scheduled_event('ispag_check_achats_interventions');
+        if ($legacy_event)
         {
-            // Ancienne planification (toutes les heures) : on la remplace
-            wp_unschedule_event($interventions_event->timestamp, 'ispag_check_achats_interventions');
-            $interventions_event = false;
+            // Ancienne planification sans créneau (toutes les heures / 2x par jour) : on la remplace
+            wp_unschedule_event($legacy_event->timestamp, 'ispag_check_achats_interventions');
         }
-        if (!$interventions_event)
+        foreach (self::INTERVENTION_SLOTS as $slot)
         {
-            wp_schedule_event(self::next_intervention_run_timestamp(), 'twicedaily', 'ispag_check_achats_interventions');
-            self::$logger->log_user_action('achat_status_checker', 'cron_scheduled', ['action' => 'ispag_check_achats_interventions'], $user_id);
+            if (!wp_next_scheduled('ispag_check_achats_interventions', [$slot]))
+            {
+                wp_schedule_event(self::next_slot_timestamp($slot), 'daily', 'ispag_check_achats_interventions', [$slot]);
+                self::$logger->log_user_action('achat_status_checker', 'cron_scheduled', ['action' => 'ispag_check_achats_interventions', 'slot' => $slot], $user_id);
+            }
         }
     }
 
     /**
-     * Prochain 08:00 ou 20:00 (fuseau du site), pour caler le cron "twicedaily" sur 8h / 20h.
+     * Prochaine occurrence de l'heure $slot (ex. "06:00") dans le fuseau du site.
      */
-    private static function next_intervention_run_timestamp()
+    private static function next_slot_timestamp($slot)
     {
-        $tz  = wp_timezone();
-        $now = time();
-        foreach (['today 08:00', 'today 20:00', 'tomorrow 08:00'] as $when)
+        $ts = (new DateTimeImmutable('today ' . $slot, wp_timezone()))->getTimestamp();
+        if ($ts <= time())
         {
-            $ts = (new DateTimeImmutable($when, $tz))->getTimestamp();
-            if ($ts > $now)
-            {
-                return $ts;
-            }
+            $ts = (new DateTimeImmutable('tomorrow ' . $slot, wp_timezone()))->getTimestamp();
         }
-        return $now + HOUR_IN_SECONDS;
+        return $ts;
     }
 
     public static function activation_hook()
@@ -115,10 +116,10 @@ class ISPAG_Achat_Status_Checker
         $user_id = get_current_user_id();
         foreach (['ispag_check_auto_status', 'ispag_check_achats_interventions'] as $hook)
         {
-            $timestamp = wp_next_scheduled($hook);
-            if ($timestamp)
+            // wp_unschedule_hook supprime aussi les événements avec arguments (créneaux 6h/12h)
+            if (wp_next_scheduled($hook) || wp_next_scheduled($hook, ['06:00']) || wp_next_scheduled($hook, ['12:00']))
             {
-                wp_unschedule_event($timestamp, $hook);
+                wp_unschedule_hook($hook);
                 self::$logger->log_user_action('achat_status_checker', 'cron_unscheduled', ['hook' => $hook], $user_id);
             }
         }
@@ -744,7 +745,7 @@ class ISPAG_Achat_Status_Checker
     // NOTIFICATIONS D'INTERVENTION
     // ------------------------------------------------------------------
   
-    public static function ispag_check_achats_interventions_callback()
+    public static function ispag_check_achats_interventions_callback($slot = null)
     {
         global $wpdb;
         $user_id = get_current_user_id();
