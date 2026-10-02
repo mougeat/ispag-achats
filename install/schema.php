@@ -107,4 +107,22 @@ CREATE TABLE IF NOT EXISTS `{prefix}achats_etat_commandes_fournisseur` (
 ) ENGINE=InnoDB {charset}
 SQL
     ,
+    'achats_template_mail' => <<<'SQL'
+CREATE TABLE IF NOT EXISTS `{prefix}achats_template_mail` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `Brevo_id` int NOT NULL,
+  `lang` text NOT NULL,
+  `subject` text NOT NULL,
+  `message` text NOT NULL,
+  `telegram` text,
+  `message_type` text NOT NULL,
+  `message_family` mediumtext NOT NULL,
+  `prompt` text NOT NULL,
+  `join_doc_typ` text NOT NULL,
+  `selectionnable` int NOT NULL,
+  `created_by` int NOT NULL,
+  PRIMARY KEY (`Id`)
+) ENGINE=InnoDB {charset}
+SQL
+    ,
 ];

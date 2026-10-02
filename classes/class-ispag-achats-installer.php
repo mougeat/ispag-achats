@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
  */
 class ISPAG_Achats_Installer {
 
-    const DB_VERSION = '1.2.0';
+    const DB_VERSION = '1.3.0';
     const OPTION     = 'ispag_achats_db_version';
 
     /** Droits utilisés par ce plugin (voir grant_default_caps()). */
@@ -51,6 +51,7 @@ class ISPAG_Achats_Installer {
         if (!self::seed()) {
             $ok = false;
         }
+        self::seed_mail_templates();
         $wpdb->suppress_errors($suppress);
 
         self::grant_default_caps();
@@ -94,6 +95,32 @@ class ISPAG_Achats_Installer {
             }
         }
         return $ok;
+    }
+
+    /**
+     * Modèles d'e-mail par défaut (anglais) des commandes fournisseur (install/default-mail-templates.php).
+     * Un modèle n'est ajouté que s'il n'existe pas déjà pour le même type et la même langue : les modèles existants
+     * (ou modifiés depuis la page « Modèles d'e-mail ») ne sont jamais touchés.
+     */
+    private static function seed_mail_templates() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'achats_template_mail';
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+            return;
+        }
+        $file = dirname(__DIR__) . '/install/default-mail-templates.php';
+        foreach ((array) require $file as $tpl) {
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT Id FROM `{$table}` WHERE message_family = %s AND message_type = %s AND lang = %s LIMIT 1",
+                ISPAG_Achat_Mail_Templates::FAMILY, $tpl['message_type'], $tpl['lang']
+            ));
+            if ($exists) continue;
+            $wpdb->insert($table, [
+                'Brevo_id' => 0, 'lang' => $tpl['lang'], 'subject' => $tpl['subject'], 'message' => $tpl['message'],
+                'message_type' => $tpl['message_type'], 'message_family' => ISPAG_Achat_Mail_Templates::FAMILY,
+                'prompt' => '', 'join_doc_typ' => '', 'selectionnable' => 1, 'created_by' => 0,
+            ]);
+        }
     }
 
     /**

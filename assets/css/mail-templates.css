@@ -1,0 +1,23 @@
+.ispag-mailtpl { max-width: 980px; }
+.ispag-mailtpl-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ispag-mailtpl-help { color: #666; margin: 0 0 14px; }
+.ispag-mailtpl-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+.ispag-mailtpl-table th, .ispag-mailtpl-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+.ispag-mailtpl-table th { font-size: 12px; text-transform: uppercase; color: #777; background: #fafafa; }
+.ispag-mailtpl-row-actions { white-space: nowrap; text-align: right !important; }
+.ispag-mailtpl-empty { color: #888; font-style: italic; }
+#ispag-mailtpl-form { margin-top: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+#ispag-mailtpl-form[hidden] { display: none; }
+#ispag-mailtpl-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #555; }
+#ispag-mailtpl-form input[type=text], #ispag-mailtpl-form select, #ispag-mailtpl-form textarea { width: 100%; box-sizing: border-box; font-size: 14px; }
+#ispag-mailtpl-form textarea { font-family: inherit; line-height: 1.5; }
+.ispag-mailtpl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ispag-mailtpl-tags > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.ispag-mailtpl-tag { font-family: monospace; font-size: 12px; padding: 3px 8px; border: 1px solid #ccd; border-radius: 12px; background: #f4f6fb; cursor: pointer; }
+.ispag-mailtpl-tag:hover { background: #e6ebf8; }
+.ispag-mailtpl-preview { background: #fafafa; border: 1px dashed #ccc; border-radius: 8px; padding: 10px 12px; }
+.ispag-mailtpl-preview[hidden] { display: none; }
+.ispag-mailtpl-preview-subject { font-weight: 600; margin: 6px 0; }
+.ispag-mailtpl-preview-body { white-space: pre-wrap; margin: 0; font-family: inherit; }
+.ispag-mailtpl-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 700px) { .ispag-mailtpl-row { grid-template-columns: 1fr; } }

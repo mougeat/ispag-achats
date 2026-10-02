@@ -236,15 +236,11 @@ class ISPAG_Achat_Status_Controller {
         }
         $email_contact = $user->user_email;
 
-        // 4. Récupérer le template
-        $template = $wpdb->get_row($wpdb->prepare("
-            SELECT subject, message FROM {$wpdb->prefix}achats_template_mail 
-            WHERE lang = %s AND message_family = 'purchase_order' AND message_type = %s
-            LIMIT 1
-        ", $lang, $message_type));
+        // 4. Récupérer le template (langue du fournisseur, à défaut le modèle anglais par défaut)
+        $template = ISPAG_Achat_Mail_Templates::get_template($message_type, $lang);
 
         if (!$template) {
-            wp_send_json_error(['message' => 'Template not found for language: ' . $lang]);
+            wp_send_json_error(['message' => 'Template not found for type "' . $message_type . '" (language: ' . $lang . '). Create it in the Email templates page.']);
         }
 
         // 5. Remplacer les tags
@@ -324,19 +320,44 @@ class ISPAG_Achat_Status_Controller {
         // // 4. Récupérer projet
         // $project = (new ISPAG_Projet_Repository())->get_project_by_deal_id($achat->hubspot_deal_id);
 
-        // 5. Remplacer les balises
+        // 5. Remplacer les balises : {TAG} (voir ISPAG_Achat_Mail_Templates::tags()) + anciennes balises sans accolades
+        $ref_parts    = explode(' - ', (string) $achat->RefCommande, 2);
+        $order_number = trim($ref_parts[0]);
+        $project_name = isset($ref_parts[1]) ? trim($ref_parts[1]) : '';
+        $delivery     = (new ISPAG_Achat_Details_Repository())->get_infos_livraison($achat_id);
+        $d = function ($k) use ($delivery) { return trim(stripslashes((string) ($delivery->$k ?? ''))); };
+        $zip_city = trim($d('NIP') . ' ' . $d('City'));
+        $delivery_block = implode("\n", array_filter([$d('AdresseDeLivraison'), $d('DeliveryAdresse2'), $d('DeliveryAdresse3'), $zip_city]));
+        $sender = wp_get_current_user();
+
         $replacements = [
+            '{FIRST_NAME}'       => $user->first_name,
+            '{LAST_NAME}'        => $user->last_name,
+            '{SUPPLIER_NAME}'    => (string) ($achat->Fournisseur ?? ''),
+            '{ORDER_NUMBER}'     => $order_number,
+            '{PROJECT_NAME}'     => $project_name,
+            '{ORDER_REF}'        => stripslashes((string) $achat->RefCommande),
+            '{ORDER_DATE}'       => !empty($achat->TimestampDateCreation) ? date_i18n('d.m.Y', (int) $achat->TimestampDateCreation) : date_i18n('d.m.Y'),
+            '{PRODUCT_LIST}'     => $product_list,
+            '{DELIVERY_ADDRESS}' => $delivery_block,
+            '{DELIVERY_CONTACT}' => $d('PersonneContact'),
+            '{DELIVERY_PHONE}'   => $d('num_tel_contact'),
+            '{PURCHASE_URL}'     => (string) $achat->purchase_url,
+            '{USER_NAME}'        => $sender->display_name,
+            '{COMPANY_NAME}'     => (string) get_option('wpcb_companyName'),
+
+            // Anciennes balises (modèles existants)
             'PRENOM'   => $user->first_name,
             'NOM'   => $user->last_name,
             'PROJECT_NAME'   => $achat->RefCommande,
             'PURCHASE_LINK'  => '<a href="' . $achat->purchase_url . '">ici</a>',
             'PRODUCT_LIST'   => $product_list,
-            'DELIVERY_ADRESS' => '',
-            'DELIVERY_ADRESS2' => '',
-            'DELIVERY_NIP' => '',
-            'DELIVERY_CITY' => '',
-            'DELIVERY_CONTACT' => '',
-            'DELIVERY_CONTACT_PHONE' => '',
+            'DELIVERY_ADRESS' => $d('AdresseDeLivraison'),
+            'DELIVERY_ADRESS2' => $d('DeliveryAdresse2'),
+            'DELIVERY_NIP' => $d('NIP'),
+            'DELIVERY_CITY' => $d('City'),
+            'DELIVERY_CONTACT' => $d('PersonneContact'),
+            'DELIVERY_CONTACT_PHONE' => $d('num_tel_contact'),
             'DELIVERY_DATE' => '',
         ];
 
