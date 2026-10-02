@@ -89,6 +89,7 @@ class ISPAG_Achat_Mail_Templates {
             '{PROJECT_URL}'    => __('Link to the project (address only)', 'creation-reservoir'),
             '{PROJECT_LINK}'   => __('Link to the project (clickable: "view the project" in the recipient language)', 'creation-reservoir'),
             '{PRODUCT_LIST}'   => __('List of items, grouped', 'creation-reservoir'),
+            '{DELIVERY_LIST}'  => __('Items not delivered yet that have a delivery date, grouped, with their planned delivery', 'creation-reservoir'),
             '{DELIVERY_DATE}'  => __('Planned delivery date (or period)', 'creation-reservoir'),
             '{DELIVERY_ADRESS}' => __('Delivery address', 'creation-reservoir'),
             '{DELIVERY_NIP}'   => __('Delivery postal code', 'creation-reservoir'),
@@ -248,7 +249,7 @@ class ISPAG_Achat_Mail_Templates {
             'sampleProject' => [
                 '{PRENOM}' => 'Anna', '{NOM}' => 'Muller', '{PROJECT_NAME}' => 'Test project', '{PROJECT_NUMBER}' => 'KST300/21111',
                 '{PROJECT_URL}' => home_url('/project-detail/123'), '{PROJECT_LINK}' => 'Test project', '{PRODUCT_LIST}' => "Tanks\n- Energy accumulator 1500 liters",
-                '{DELIVERY_DATE}' => date_i18n('d.m.Y'), '{RETURN_DATE}' => date_i18n('d.m.Y', strtotime('+7 days')), '{RETURN_DAYS}' => '5', '{ORDER_DATE}' => date_i18n('d.m.Y'), '{DELIVERY_ADRESS}' => 'Champs-Paccot 19', '{DELIVERY_NIP}' => '1627', '{DELIVERY_CITY}' => 'Vaulruz',
+                '{DELIVERY_DATE}' => date_i18n('d.m.Y'), '{DELIVERY_LIST}' => "Tanks\n- Energy accumulator 1500 liters: " . date_i18n('d.m.Y'), '{RETURN_DATE}' => date_i18n('d.m.Y', strtotime('+7 days')), '{RETURN_DAYS}' => '5', '{ORDER_DATE}' => date_i18n('d.m.Y'), '{DELIVERY_ADRESS}' => 'Champs-Paccot 19', '{DELIVERY_NIP}' => '1627', '{DELIVERY_CITY}' => 'Vaulruz',
                 '{DELIVERY_CONTACT}' => 'John Doe', '{DELIVERY_CONTACT_PHONE}' => '+41 79 000 00 00', '{SURVEY_LINK}' => 'https://example.com/survey',
                 '{USER_NAME}' => wp_get_current_user()->display_name,
             ],
