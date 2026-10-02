@@ -104,6 +104,10 @@ class ISPAG_Achat_Mail_Templates {
             '{/IF_DRAWINGS}'   => __('End of the "with drawings" text', 'creation-reservoir'),
             '{IF_NO_DRAWINGS}' => __('Start of a text kept only if the order has no type 1 item — close it with {/IF_NO_DRAWINGS}', 'creation-reservoir'),
             '{/IF_NO_DRAWINGS}' => __('End of the "without drawings" text', 'creation-reservoir'),
+            '{IF_ATTACHMENTS}' => __('Start of a text kept only if a document is attached to the e-mail — close it with {/IF_ATTACHMENTS}', 'creation-reservoir'),
+            '{/IF_ATTACHMENTS}' => __('End of the "with attachments" text', 'creation-reservoir'),
+            '{IF_NO_ATTACHMENTS}' => __('Start of a text kept only if no document is attached — close it with {/IF_NO_ATTACHMENTS}', 'creation-reservoir'),
+            '{/IF_NO_ATTACHMENTS}' => __('End of the "without attachments" text', 'creation-reservoir'),
             '{USER_NAME}'      => __('Name of the person who triggered the e-mail', 'creation-reservoir'),
         ];
     }
