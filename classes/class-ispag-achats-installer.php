@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
  */
 class ISPAG_Achats_Installer {
 
-    const DB_VERSION = '1.5.0';
+    const DB_VERSION = '1.6.0';
     const OPTION     = 'ispag_achats_db_version';
 
     /** Droits utilisés par ce plugin (voir grant_default_caps()). */
@@ -115,20 +115,22 @@ class ISPAG_Achats_Installer {
                 ISPAG_Achat_Mail_Templates::FAMILY, $tpl['message_type'], $tpl['lang']
             ));
             if ($exists) {
-                // Mise à jour du texte par défaut de la commande (sans liste d'articles : le bon de commande est joint) :
-                // uniquement pour les modèles jamais modifiés (created_by = 0) qui contiennent encore la liste d'articles.
-                if ($tpl['message_type'] === 'send_purchase_order') {
-                    $wpdb->query($wpdb->prepare(
-                        "UPDATE `{$table}` SET message = %s WHERE Id = %d AND created_by = 0 AND message LIKE %s",
-                        $tpl['message'], $exists, '%{PRODUCT_LIST}%'
-                    ));
-                }
+                // Mise à jour du texte par défaut, UNIQUEMENT pour un modèle installé par nous et jamais modifié :
+                // marqué created_by = -1, ou (anciennes installations) created_by = 0 avec un objet identique à un objet par défaut.
+                // Un modèle enregistré depuis la page d'admin porte l'ID de l'utilisateur : il n'est jamais remplacé.
+                $subjects = array_merge([$tpl['subject']], (array) ($tpl['legacy_subjects'] ?? []));
+                $in = implode(',', array_fill(0, count($subjects), '%s'));
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE `{$table}` SET subject = %s, message = %s, created_by = -1
+                     WHERE Id = %d AND (created_by = -1 OR (created_by = 0 AND subject IN ($in)))",
+                    array_merge([$tpl['subject'], $tpl['message'], $exists], $subjects)
+                ));
                 continue;
             }
             $wpdb->insert($table, [
                 'Brevo_id' => 0, 'lang' => $tpl['lang'], 'subject' => $tpl['subject'], 'message' => $tpl['message'],
                 'message_type' => $tpl['message_type'], 'message_family' => ISPAG_Achat_Mail_Templates::FAMILY,
-                'prompt' => '', 'join_doc_typ' => '', 'selectionnable' => 1, 'created_by' => 0,
+                'prompt' => '', 'join_doc_typ' => '', 'selectionnable' => 1, 'created_by' => -1,
             ]);
         }
     }

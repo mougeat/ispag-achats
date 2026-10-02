@@ -2,6 +2,7 @@
 /**
  * Modèles d'e-mail par défaut (anglais, français, allemand, italien) pour les commandes fournisseur — famille « purchase_order ».
  * Ajoutés par l'installateur UNIQUEMENT s'il n'existe pas déjà un modèle pour le même type et la même langue.
+ * 'legacy_subjects' : anciens objets par défaut, pour reconnaître (et mettre à jour) un modèle installé par nous et jamais modifié.
  * Les balises {TAG} sont remplacées à l'envoi (liste : ISPAG_Achat_Mail_Templates::tags()).
  */
 defined('ABSPATH') || exit;
@@ -22,7 +23,8 @@ return [
     [
         'message_type' => 'send_proposal_request',
         'lang'         => 'en_US',
-        'subject'      => 'Request for quotation - {PROJECT_NAME}',
+        'subject'      => 'Request for quotation {ORDER_NUMBER} - {PROJECT_NAME}',
+        'legacy_subjects' => ['Request for quotation - {PROJECT_NAME}'],
         'message'      => "Hello {FIRST_NAME},\n\n"
             . "We would like to receive your best quotation for the following items (project \"{PROJECT_NAME}\", ref. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\n"
             . "Delivery address:\n{DELIVERY_ADDRESS}\n\n"
@@ -58,7 +60,8 @@ return [
     [
         'message_type' => 'send_proposal_request',
         'lang'         => 'fr_FR',
-        'subject'      => "Demande d'offre - {PROJECT_NAME}",
+        'subject'      => "Demande d'offre {ORDER_NUMBER} - {PROJECT_NAME}",
+        'legacy_subjects' => ["Demande d'offre - {PROJECT_NAME}"],
         'message'      => "Bonjour {FIRST_NAME},\n\nNous souhaiterions recevoir votre meilleure offre pour les articles suivants (projet « {PROJECT_NAME} », réf. {ORDER_NUMBER}) :\n{PRODUCT_LIST}\n\nAdresse de livraison :\n{DELIVERY_ADDRESS}\n\nMerci de nous indiquer votre prix et votre délai de livraison.\n\nMeilleures salutations,\n{USER_NAME}\n{COMPANY_NAME}",
     ],
     [
@@ -82,7 +85,8 @@ return [
     [
         'message_type' => 'send_proposal_request',
         'lang'         => 'de_DE',
-        'subject'      => 'Anfrage - {PROJECT_NAME}',
+        'subject'      => 'Anfrage {ORDER_NUMBER} - {PROJECT_NAME}',
+        'legacy_subjects' => ['Anfrage - {PROJECT_NAME}'],
         'message'      => "Guten Tag {FIRST_NAME},\n\nwir bitten Sie um Ihr bestes Angebot für die folgenden Artikel (Projekt „{PROJECT_NAME}“, Ref. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\nLieferadresse:\n{DELIVERY_ADDRESS}\n\nBitte teilen Sie uns Ihren Preis und Ihre Lieferzeit mit.\n\nFreundliche Grüsse\n{USER_NAME}\n{COMPANY_NAME}",
     ],
     [
@@ -106,7 +110,8 @@ return [
     [
         'message_type' => 'send_proposal_request',
         'lang'         => 'it_IT',
-        'subject'      => 'Richiesta di offerta - {PROJECT_NAME}',
+        'subject'      => 'Richiesta di offerta {ORDER_NUMBER} - {PROJECT_NAME}',
+        'legacy_subjects' => ['Richiesta di offerta - {PROJECT_NAME}'],
         'message'      => "Buongiorno {FIRST_NAME},\n\nvorremmo ricevere la vostra migliore offerta per i seguenti articoli (progetto «{PROJECT_NAME}», rif. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\nIndirizzo di consegna:\n{DELIVERY_ADDRESS}\n\nVi preghiamo di indicarci prezzo e tempi di consegna.\n\nCordiali saluti,\n{USER_NAME}\n{COMPANY_NAME}",
     ],
     [
