@@ -266,3 +266,68 @@ jQuery(function ($) {
     $(document).on('click', '.ispag-sc-result', function () { scSave($(this).closest('.ispag-supplier-contact'), $(this).data('user-id')); });
     $(document).on('click', '.ispag-sc-clear', function () { scSave($(this).closest('.ispag-supplier-contact'), 0); });
 });
+
+// --- ADRESSE DE LIVRAISON : lecture / édition de tous les champs d'un coup ---
+(function ($) {
+    function box(el) { return $(el).closest('#ispag-delivery-box'); }
+
+    $(document).on('click', '.ispag-delivery-edit-btn', function () {
+        const $b = box(this);
+        $b.find('.ispag-delivery-view').prop('hidden', true);
+        $b.find('.ispag-delivery-actions').prop('hidden', true);
+        $b.find('.ispag-delivery-edit-btn').prop('hidden', true);
+        $b.find('.ispag-delivery-form').prop('hidden', false).find('input:first').trigger('focus');
+    });
+
+    $(document).on('click', '.ispag-delivery-cancel-btn', function () {
+        const $b = box(this);
+        $b.find('.ispag-delivery-form').prop('hidden', true).get(0).reset();
+        $b.find('.ispag-delivery-view, .ispag-delivery-actions, .ispag-delivery-edit-btn').prop('hidden', false);
+    });
+
+    // Échap = annuler
+    $(document).on('keydown', '.ispag-delivery-form input', function (e) {
+        if (e.key === 'Escape') { $(this).closest('#ispag-delivery-box').find('.ispag-delivery-cancel-btn').trigger('click'); }
+    });
+
+    // Code postal → ville (si la ville est vide)
+    $(document).on('blur', '.ispag-delivery-form input[name="NIP"]', function () {
+        const zip = $.trim(this.value);
+        const $city = $(this).closest('form').find('input[name="City"]');
+        if (!zip || $.trim($city.val())) return;
+        const country = zip.length <= 4 ? 'CH' : 'FR';
+        fetch('https://api.zippopotam.us/' + country + '/' + encodeURIComponent(zip))
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                const city = d && d.places && d.places[0] && d.places[0]['place name'];
+                if (city && !$.trim($city.val())) { $city.val(city); }
+            })
+            .catch(function () {});
+    });
+
+    $(document).on('submit', '.ispag-delivery-form', function (e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $b = box(this);
+        const $btn = $form.find('button[type="submit"]');
+        const $status = $form.find('.ispag-delivery-status');
+        const data = $form.serializeArray();
+        data.push({ name: 'action', value: 'ispag_achat_save_delivery' });
+        data.push({ name: 'achat_id', value: $b.data('achat') });
+        data.push({ name: 'nonce', value: $b.data('nonce') });
+
+        $btn.prop('disabled', true);
+        $status.text('⏳ …');
+        $.post(ajaxurl, $.param(data)).done(function (response) {
+            if (response && response.success && response.data && response.data.html) {
+                $b.replaceWith(response.data.html);
+            } else {
+                $btn.prop('disabled', false);
+                $status.text('❌ ' + ((response && response.data) || 'Error'));
+            }
+        }).fail(function () {
+            $btn.prop('disabled', false);
+            $status.text('❌ Network error');
+        });
+    });
+})(jQuery);
