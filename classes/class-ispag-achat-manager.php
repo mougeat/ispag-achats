@@ -322,7 +322,7 @@ class ISPAG_Achat_Manager
 
         return '
             <tr class="project-row-item">
-                <td data-label="' . esc_attr__('Reference', 'creation-reservoir') . '" class="td-title"><strong><a href="' . esc_url(home_url('/purchase/' . $achat->Id)) . '" target="_blank" class="project-link ispag_achat_link">' . esc_html(stripslashes($achat->RefCommande)) . '</a></strong></td>
+                <td data-label="' . esc_attr__('Reference', 'creation-reservoir') . '" class="td-title"><strong><a href="' . esc_url(home_url('/purchase/' . $achat->Id)) . '" class="project-link ispag_achat_link">' . esc_html(stripslashes($achat->RefCommande)) . '</a></strong></td>
                 <td data-label="' . esc_attr__('Order date', 'creation-reservoir') . '">' . esc_html($date_creation) . '</td>
                 <td data-label="' . esc_attr__('Delivery date', 'creation-reservoir') . '">' . esc_html($date_reception) . '</td>
                 <td data-label="' . esc_attr__('Supplier', 'creation-reservoir') . '" class="td-contact"><span class="company-name">' . esc_html($fournisseur_nom) . '</span><br><small class="creator-name">' . __('by', 'creation-reservoir') . ' : ' . esc_html($responsable_nom) . '</small></td>
