@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-    const COLS = 8;
+    const COLS = 7;
     const $list = $('#ispag-achats-list');
     if (!$list.length) return;
 

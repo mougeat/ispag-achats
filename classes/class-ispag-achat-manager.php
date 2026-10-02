@@ -194,10 +194,9 @@ class ISPAG_Achat_Manager
         ob_start();
         include plugin_dir_path(__FILE__) . 'templates/achats-filters.php';
 
-        echo '<div class="ispag-table-wrapper">';
+        echo '<div class="ispag-table-wrapper ispag-card">';
         echo '<table class="ispag-project-table">';
         echo '<thead><tr>
-                <th>#</th>
                 <th>' . __('Reference', 'creation-reservoir') . '</th>
                 <th>' . __('Order date', 'creation-reservoir') . '</th>
                 <th>' . __('Delivery date', 'creation-reservoir') . '</th>
@@ -207,7 +206,7 @@ class ISPAG_Achat_Manager
                 <th>' . __('State', 'creation-reservoir') . '</th>
             </tr></thead>';
         echo '<tbody id="ispag-achats-list">'; 
-        echo self::render_skeleton_rows(8, 10);
+        echo self::render_skeleton_rows(7, 10);
         echo '</tbody>';
         echo '</table></div>';
         // echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Loading...</div>';
@@ -319,16 +318,17 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'render_achat_row_complete', ['achat_id' => $achat->Id], $user_id);
 
+        $badge_color = $bgcolor ?: '#ccc';
+
         return '
-            <tr>
-                <td style="background-color:#D1E7DD;">' . ($index + 1) . '</td>
-                <td><a href="' . esc_url(home_url('/purchase/' . $achat->Id)) . '" target="_blank" class="ispag_achat_link"><strong>' . esc_html(stripslashes($achat->RefCommande)) . '</strong></a></td>
-                <td>' . esc_html($date_creation) . '</td>
-                <td>' . esc_html($date_reception) . '</td>
-                <td><strong>' . esc_html($fournisseur_nom) . '</strong><br><small class="creator-name">' . __('by', 'creation-reservoir') . ' : ' . esc_html($responsable_nom) . '</small></td>
-                <td>' . number_format_i18n($achat->prix_net_total, 2) . '</td>
-                <td>' . esc_html($achat->ConfCmdFournisseur) . '</td>
-                <td><span class="ispag-state-badge ' . esc_attr($class_css) . '" style="background-color:' . esc_attr($bgcolor) . '; opacity: 0.8;">' . esc_html($etat_text) . '</span></td>
+            <tr class="project-row-item">
+                <td data-label="' . esc_attr__('Reference', 'creation-reservoir') . '" class="td-title"><strong><a href="' . esc_url(home_url('/purchase/' . $achat->Id)) . '" target="_blank" class="project-link ispag_achat_link">' . esc_html(stripslashes($achat->RefCommande)) . '</a></strong></td>
+                <td data-label="' . esc_attr__('Order date', 'creation-reservoir') . '">' . esc_html($date_creation) . '</td>
+                <td data-label="' . esc_attr__('Delivery date', 'creation-reservoir') . '">' . esc_html($date_reception) . '</td>
+                <td data-label="' . esc_attr__('Supplier', 'creation-reservoir') . '" class="td-contact"><span class="company-name">' . esc_html($fournisseur_nom) . '</span><br><small class="creator-name">' . __('by', 'creation-reservoir') . ' : ' . esc_html($responsable_nom) . '</small></td>
+                <td data-label="' . esc_attr__('Order amount', 'creation-reservoir') . '">' . number_format_i18n($achat->prix_net_total, 2) . '</td>
+                <td data-label="' . esc_attr__('Order confirmation', 'creation-reservoir') . '">' . esc_html($achat->ConfCmdFournisseur) . '</td>
+                <td data-label="' . esc_attr__('State', 'creation-reservoir') . '" class="td-step"><span class="ispag-next-step-badge step-badge ' . esc_attr($class_css) . '" style="color:' . esc_attr($badge_color) . '; border:1px solid ' . esc_attr($badge_color) . ';">' . esc_html($etat_text) . '</span></td>
             </tr>
         ';
     }
@@ -998,7 +998,7 @@ function ajax_filter_achats_custom_tables()
 
     if ($html === '' && $page === 1)
     {
-        $html = '<tr class="ispag-empty-row"><td colspan="8" style="text-align:center;padding:24px;">' . esc_html__('No purchase found', 'creation-reservoir') . '</td></tr>';
+        $html = '<tr class="ispag-empty-row"><td colspan="7" style="text-align:center;padding:24px;">' . esc_html__('No purchase found', 'creation-reservoir') . '</td></tr>';
     }
 
     $logger->log_user_action('achat_manager', 'ajax_filter_achats_custom_tables_complete', [], $user_id);
