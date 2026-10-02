@@ -24,6 +24,15 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         add_filter('ispag_generate_purchase_order_pdf', [self::class, 'build_pdf'], 20, 7);
     }
 
+    /**
+     * Référence courte affichée dans le PDF : pour les articles sur mesure, le titre (très long) est déjà dans la description.
+     * Types : 1 = cuve (ASP), 2 = isolation (ISO), 5 = échangeur à plaques (EPT).
+     */
+    private static function pdf_ref($article) {
+        $short = [1 => 'ASP', 2 => 'ISO', 5 => 'EPT'];
+        return $short[(int) ($article->Type ?? 0)] ?? $article->RefSurMesure;
+    }
+
     /** Construit le PDF avec la mise en page dédiée au bon de commande. */
     public static function build_pdf($default, $project_header, $project_data, $infos, $table_header, $articles, $title) {
         if (!class_exists('ISPAG_PDF_Generator')) {
@@ -251,7 +260,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
 
             foreach ($purchase_articles as $article) {
                 $articles[] = [
-                    'ref' => ((int) ($article->Type ?? 0) === 1) ? 'ASP' : $article->RefSurMesure, // cuve : le titre (très long) est déjà dans la description
+                    'ref' => self::pdf_ref($article),
                     'description' => $article->DescSurMesure, // nettoyé (HTML/entités) par le gabarit PDF
                     'unitPrice' => number_format($article->UnitPrice, 2, '.', "'"),
                     'qty' => $article->Qty,
