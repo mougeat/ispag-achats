@@ -20,6 +20,22 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
 
         add_action('wp_ajax_ispag_generate_purchase_order_pdf', [self::class, 'generate_purchase_order_pdf'], 10, 2);
         add_filter('ispag_print_purchase_order_btn', [self::class, 'print_purchase_order_btn'], 10, 2);
+        // Mise en page moderne du bon de commande (priorité 20 : remplace le gabarit « bulletin de livraison » du projet manager)
+        add_filter('ispag_generate_purchase_order_pdf', [self::class, 'build_pdf'], 20, 7);
+    }
+
+    /** Construit le PDF avec la mise en page dédiée au bon de commande. */
+    public static function build_pdf($default, $project_header, $project_data, $infos, $table_header, $articles, $title) {
+        if (!class_exists('ISPAG_PDF_Generator')) {
+            $file = WP_PLUGIN_DIR . '/ispag-project-manager/classes/class-ispag-pdf-generator.php';
+            if (file_exists($file)) require_once $file;
+        }
+        if (!class_exists('ISPAG_PDF_Generator')) {
+            return $default;
+        }
+        $pdf = new ISPAG_Achat_Purchase_Order_PDF();
+        $pdf->generate_purchase_order($project_header, $project_data, $infos, $table_header, $articles, $title);
+        return $pdf;
     }
 
     /**
@@ -160,6 +176,14 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             $projectName = isset($parts[1]) ? trim($parts[1]) : '';
             $projectNum = trim($parts[0]);
 
+            // Nom du projet : celui du projet lié si disponible, sinon la partie après « - » de la référence d'achat
+            if (!empty($project_data->hubspot_deal_id)) {
+                $linked_project = apply_filters('ispag_get_project_by_deal_id', null, $project_data->hubspot_deal_id);
+                if (!empty($linked_project->ObjetCommande)) {
+                    $projectName = trim(stripslashes($linked_project->ObjetCommande));
+                }
+            }
+
             self::$logger->log_user_action(
                 'achat_generate_purchase_order_pdf',
                 'project_info_extracted',
@@ -184,17 +208,17 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             );
 
             // Préparation des en-têtes
-            $titre_project = __('Project', 'creation-reservoir');
+            $titre_project = __('Project name', 'creation-reservoir');
             $titre_ref = __('Order number', 'creation-reservoir');
             $titre_delivery_date = __('Order date', 'creation-reservoir');
 
             $table_header = [
                 ['label' => __('Ref', 'creation-reservoir'), 'key' => 'ref', 'width' => 20],
                 ['label' => __('Description', 'creation-reservoir'), 'key' => 'description', 'width' => 90],
-                ['label' => __('Unit price', 'creation-reservoir'), 'key' => 'unitPrice', 'width' => 25, 'align' => 'C'],
-                ['label' => __('Quantity', 'creation-reservoir'), 'key' => 'qty', 'width' => 15, 'align' => 'C'],
-                ['label' => __('Discount', 'creation-reservoir'), 'key' => 'discount', 'width' => 15, 'align' => 'C'],
-                ['label' => __('Total', 'creation-reservoir'), 'key' => 'total', 'width' => 25, 'align' => 'C'],
+                ['label' => __('Unit price', 'creation-reservoir'), 'key' => 'unitPrice', 'width' => 25, 'align' => 'R'],
+                ['label' => __('Qty', 'creation-reservoir'), 'key' => 'qty', 'width' => 15, 'align' => 'C'],
+                ['label' => __('Disc.', 'creation-reservoir'), 'key' => 'discount', 'width' => 15, 'align' => 'C'],
+                ['label' => __('Total', 'creation-reservoir'), 'key' => 'total', 'width' => 25, 'align' => 'R'],
             ];
 
             $project_header = [
@@ -225,7 +249,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             foreach ($purchase_articles as $article) {
                 $articles[] = [
                     'ref' => $article->RefSurMesure,
-                    'description' => $article->DescSurMesure,
+                    'description' => $article->DescSurMesure, // nettoyé (HTML/entités) par le gabarit PDF
                     'unitPrice' => number_format($article->UnitPrice, 2, '.', "'"),
                     'qty' => $article->Qty,
                     'discount' => $article->discount .'%',
