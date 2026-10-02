@@ -45,11 +45,7 @@ class ISPAG_Achat_Renderer {
                         <input type="checkbox" id="select-all-articles" class="ispag-article-checkbox">
                         <label for="select-all-articles">' .  __('Select all', 'creation-reservoir') . '</label>
                     </div>';
-                
-                echo '<div class="ispag-buttons-right">';
-                    echo apply_filters('ispag_print_purchase_order_btn', null, $achat_id); 
-                    echo ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
-                echo '</div>';
+
             echo '</div>';
 
             echo '<div class="ispag-achat-articles-list">';
@@ -123,7 +119,12 @@ class ISPAG_Achat_Renderer {
      * de fonction et séparés par un trait fin. Dépendent du statut (rafraîchis par state.js).
      */
     public static function footer_buttons_html($achat_id) {
+        ob_start();
+        ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
+        $action_btn = ob_get_clean();
+
         $groups = [
+            apply_filters('ispag_print_purchase_order_btn', null, $achat_id) . $action_btn, // commande (Print, Send order…)
             self::get_add_article_btn($achat_id) . self::get_delivery_btn($achat_id), // articles
             self::get_delete_purchase_btn($achat_id),                                  // suppression
         ];

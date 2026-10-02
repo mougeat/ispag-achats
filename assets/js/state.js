@@ -275,11 +275,7 @@ function applyStatusChange(data) {
     if (dropdown) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
 
     if ($) {
-        // bouton d'action lié au statut (Send order, Send RFQ…)
-        const $right = $('.ispag-achat-header-actions .ispag-buttons-right');
-        $right.find('.achat-action-btn').remove();
-        if (data.action_html) { $right.append(data.action_html); }
-        // boutons du bas (ajout, bon de livraison, suppression) : dépendent du statut
+        // boutons d'action du panneau de gauche (commande, ajout, bon de livraison, suppression) : dépendent du statut
         if (typeof data.footer_html === 'string') { $('.ispag-action-buttons-secondary').html(data.footer_html); }
         // onglet Suivi : à recharger (en arrière-plan si visible, sinon au prochain affichage)
         const $suivi = $('#suivis[data-lazy-tab]');
