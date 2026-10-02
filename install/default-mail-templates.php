@@ -26,7 +26,6 @@ return [
         'legacy_subjects' => ['Request for quotation - {PROJECT_NAME}'],
         'message'      => "Hello {FIRST_NAME},\n\n"
             . "We would like to receive your best quotation for the following items (project \"{PROJECT_NAME}\", ref. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\n"
-            . "Delivery address:\n{DELIVERY_ADDRESS}\n\n"
             . "Please send us your price and delivery time.\n\n"
             . "Best regards,",
     ],
@@ -61,7 +60,7 @@ return [
         'lang'         => 'fr_FR',
         'subject'      => "Demande d'offre {ORDER_NUMBER} - {PROJECT_NAME}",
         'legacy_subjects' => ["Demande d'offre - {PROJECT_NAME}"],
-        'message'      => "Bonjour {FIRST_NAME},\n\nNous souhaiterions recevoir votre meilleure offre pour les articles suivants (projet « {PROJECT_NAME} », réf. {ORDER_NUMBER}) :\n{PRODUCT_LIST}\n\nAdresse de livraison :\n{DELIVERY_ADDRESS}\n\nMerci de nous indiquer votre prix et votre délai de livraison.\n\nMeilleures salutations,",
+        'message'      => "Bonjour {FIRST_NAME},\n\nNous souhaiterions recevoir votre meilleure offre pour les articles suivants (projet « {PROJECT_NAME} », réf. {ORDER_NUMBER}) :\n{PRODUCT_LIST}\n\nMerci de nous indiquer votre prix et votre délai de livraison.\n\nMeilleures salutations,",
     ],
     [
         'message_type' => 'drawing_validated',
@@ -86,7 +85,7 @@ return [
         'lang'         => 'de_DE',
         'subject'      => 'Anfrage {ORDER_NUMBER} - {PROJECT_NAME}',
         'legacy_subjects' => ['Anfrage - {PROJECT_NAME}'],
-        'message'      => "Guten Tag {FIRST_NAME},\n\nwir bitten Sie um Ihr bestes Angebot für die folgenden Artikel (Projekt „{PROJECT_NAME}“, Ref. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\nLieferadresse:\n{DELIVERY_ADDRESS}\n\nBitte teilen Sie uns Ihren Preis und Ihre Lieferzeit mit.\n\nFreundliche Grüsse",
+        'message'      => "Guten Tag {FIRST_NAME},\n\nwir bitten Sie um Ihr bestes Angebot für die folgenden Artikel (Projekt „{PROJECT_NAME}“, Ref. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\nBitte teilen Sie uns Ihren Preis und Ihre Lieferzeit mit.\n\nFreundliche Grüsse",
     ],
     [
         'message_type' => 'drawing_validated',
@@ -111,7 +110,7 @@ return [
         'lang'         => 'it_IT',
         'subject'      => 'Richiesta di offerta {ORDER_NUMBER} - {PROJECT_NAME}',
         'legacy_subjects' => ['Richiesta di offerta - {PROJECT_NAME}'],
-        'message'      => "Buongiorno {FIRST_NAME},\n\nvorremmo ricevere la vostra migliore offerta per i seguenti articoli (progetto «{PROJECT_NAME}», rif. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\nIndirizzo di consegna:\n{DELIVERY_ADDRESS}\n\nVi preghiamo di indicarci prezzo e tempi di consegna.\n\nCordiali saluti,",
+        'message'      => "Buongiorno {FIRST_NAME},\n\nvorremmo ricevere la vostra migliore offerta per i seguenti articoli (progetto «{PROJECT_NAME}», rif. {ORDER_NUMBER}):\n{PRODUCT_LIST}\n\nVi preghiamo di indicarci prezzo e tempi di consegna.\n\nCordiali saluti,",
     ],
     [
         'message_type' => 'drawing_validated',

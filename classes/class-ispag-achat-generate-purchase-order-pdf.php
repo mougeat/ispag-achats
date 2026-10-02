@@ -101,7 +101,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
     /**
      * Génère le PDF de commande d'achat.
      */
-    public static function generate_purchase_order_pdf() {
+    public static function generate_purchase_order_pdf($return = false) {
         $user_id = get_current_user_id();
         self::$logger->log_user_action(
             'achat_generate_purchase_order_pdf',
@@ -368,6 +368,11 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
                 ],
                 $user_id
             );
+
+            if ($return) {
+                // Utilisé par le brouillon Outlook : on renvoie le PDF (déjà enregistré dans la médiathèque et l'historique)
+                return ['content' => $pdf->Output('S'), 'file_name' => $file_name . '.pdf'];
+            }
 
             $pdf->Output('I', $file_name . '.pdf');
             self::$logger->log_user_action(

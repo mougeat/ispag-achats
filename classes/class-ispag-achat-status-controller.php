@@ -176,11 +176,28 @@ class ISPAG_Achat_Status_Controller {
      * @return void
      */
     public static function prepare_mail($achat_id = null, $message_type = null ) {
+        $mail = self::build_mail($achat_id, $message_type);
+        if (is_wp_error($mail)) {
+            wp_send_json_error(['message' => $mail->get_error_message()]);
+        }
+        // La commande part en brouillon Outlook (.eml avec le bon de commande en pièce jointe) ; les autres messages en mailto
+        if ($message_type === 'send_purchase_order' && class_exists('ISPAG_Achat_Mail_Draft')) {
+            $mail['eml_url'] = ISPAG_Achat_Mail_Draft::download_url($achat_id, $message_type);
+        }
+        wp_send_json_success($mail);
+    }
+
+    /**
+     * Prépare le mail (destinataire, objet, texte avec balises remplacées) d'un type de message pour une commande.
+     *
+     * @return array|WP_Error
+     */
+    public static function build_mail($achat_id = null, $message_type = null ) {
         global $wpdb;
 
         // $achat_id = intval($_POST['achat_id']);
         if (!$achat_id) {
-            wp_send_json_error(['message' => 'ID de commande manquant.']);
+            return new WP_Error('mail', 'ID de commande manquant.');
         }
 
         // 1. Récupérer IdFournisseur et EtatCommande
@@ -188,7 +205,7 @@ class ISPAG_Achat_Status_Controller {
             SELECT IdFournisseur, hubspot_deal_id FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d
         ", $achat_id));
         if (!$achat){
-            wp_send_json_error(['message' => 'Order not found.']);
+            return new WP_Error('mail', 'Order not found.');
         }
 
         // 2. Récupérer infos fournisseur
@@ -210,7 +227,7 @@ class ISPAG_Achat_Status_Controller {
         }
 
         if (!$fournisseur) {
-            wp_send_json_error(['message' => 'Supplier not found.']);
+            return new WP_Error('mail', 'Supplier not found.');
         }
 
         
@@ -232,7 +249,7 @@ class ISPAG_Achat_Status_Controller {
         // 3. Récupérer contact user
         $user = get_user_by('ID', $contact_id);
         if (!$user) {
-            wp_send_json_error(['message' => 'Contact utilisateur introuvable.']);
+            return new WP_Error('mail', 'Contact utilisateur introuvable.');
         }
         $email_contact = $user->user_email;
 
@@ -240,7 +257,7 @@ class ISPAG_Achat_Status_Controller {
         $template = ISPAG_Achat_Mail_Templates::get_template($message_type, $lang);
 
         if (!$template) {
-            wp_send_json_error(['message' => 'Template not found for type "' . $message_type . '" (language: ' . $lang . '). Create it in the Email templates page.']);
+            return new WP_Error('mail', 'Template not found for type "' . $message_type . '" (language: ' . $lang . '). Create it in the Email templates page.');
         }
 
         // 5. Remplacer les tags
@@ -256,8 +273,8 @@ class ISPAG_Achat_Status_Controller {
         $current_status = $instance->get_current_status($achat_id);
         $next_status = $instance->get_next_status($current_status->Id);
 
-        // 6. Réponse avec mailto
-        wp_send_json_success([
+        // 6. Données du mail
+        return [
             'current_status' => $current_status->Id,
             'next_status' => $next_status,
             'achat_id' => $achat_id,
@@ -265,7 +282,7 @@ class ISPAG_Achat_Status_Controller {
             'message' => $message,
             'email_contact' => $email_contact,
             'email_copy' => ' ' // à adapter
-        ]);
+        ];
     }
 
     

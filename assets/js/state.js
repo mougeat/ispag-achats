@@ -188,6 +188,15 @@ function ispag_send_rfq(achatId, btn){
     });
 }
 
+// Télécharge un fichier sans quitter la page (le statut est mis à jour juste après)
+function ispag_download_via_frame(url) {
+    const frame = document.createElement('iframe');
+    frame.style.display = 'none';
+    frame.src = url;
+    document.body.appendChild(frame);
+    setTimeout(function () { frame.remove(); }, 60000);
+}
+
 function ispag_send_order(achatId, btn) {
     ispag_send_generic_ajax({
         achatId: achatId,
@@ -196,8 +205,12 @@ function ispag_send_order(achatId, btn) {
         sendingText: 'Sending the email...',
         type: 'send_purchase_order',
         successCallback: (data) => {
-//            console.log(data);
-            send_mail(data);
+            if (data.eml_url) {
+                // Brouillon Outlook (.eml) : destinataire, objet, texte et bon de commande PDF déjà joints
+                ispag_download_via_frame(data.eml_url);
+            } else {
+                send_mail(data);
+            }
             updateStatus(achatId, data.next_status);
         }
     });
