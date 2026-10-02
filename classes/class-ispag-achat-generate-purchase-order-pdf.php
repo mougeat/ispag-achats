@@ -248,7 +248,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
 
             foreach ($purchase_articles as $article) {
                 $articles[] = [
-                    'ref' => $article->RefSurMesure,
+                    'ref' => ((int) ($article->Type ?? 0) === 1) ? 'ASP' : $article->RefSurMesure, // cuve : le titre (très long) est déjà dans la description
                     'description' => $article->DescSurMesure, // nettoyé (HTML/entités) par le gabarit PDF
                     'unitPrice' => number_format($article->UnitPrice, 2, '.', "'"),
                     'qty' => $article->Qty,
