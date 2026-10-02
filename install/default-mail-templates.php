@@ -34,7 +34,7 @@ return [
         'lang'         => 'en_US',
         'subject'      => 'Drawing validated - {PROJECT_NAME} ({ORDER_NUMBER})',
         'message'      => "Hello {FIRST_NAME},\n\n"
-            . "The drawing for order {ORDER_NUMBER} (project \"{PROJECT_NAME}\") has been validated by our customer.\n"
+            . "The drawing for order {ORDER_NUMBER} (project \"{PROJECT_NAME}\") has been validated by our customer (validation attached).\n"
             . "You can proceed with the production.\n\n"
             . "Best regards,",
     ],
@@ -64,7 +64,7 @@ return [
         'message_type' => 'drawing_validated',
         'lang'         => 'fr_FR',
         'subject'      => 'Plan validé - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Bonjour {FIRST_NAME},\n\nLe plan de la commande {ORDER_NUMBER} (projet « {PROJECT_NAME} ») a été validé par notre client.\nVous pouvez lancer la fabrication.\n\nMeilleures salutations,",
+        'message'      => "Bonjour {FIRST_NAME},\n\nLe plan de la commande {ORDER_NUMBER} (projet « {PROJECT_NAME} ») a été validé par notre client (validation en pièce jointe).\nVous pouvez lancer la fabrication.\n\nMeilleures salutations,",
     ],
     [
         'message_type' => 'drawing_modified',
@@ -89,7 +89,7 @@ return [
         'message_type' => 'drawing_validated',
         'lang'         => 'de_DE',
         'subject'      => 'Zeichnung freigegeben - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Guten Tag {FIRST_NAME},\n\ndie Zeichnung zur Bestellung {ORDER_NUMBER} (Projekt „{PROJECT_NAME}“) wurde von unserem Kunden freigegeben.\nSie können mit der Fertigung beginnen.\n\nFreundliche Grüsse",
+        'message'      => "Guten Tag {FIRST_NAME},\n\ndie Zeichnung zur Bestellung {ORDER_NUMBER} (Projekt „{PROJECT_NAME}“) wurde von unserem Kunden freigegeben (Freigabe im Anhang).\nSie können mit der Fertigung beginnen.\n\nFreundliche Grüsse",
     ],
     [
         'message_type' => 'drawing_modified',
@@ -114,7 +114,7 @@ return [
         'message_type' => 'drawing_validated',
         'lang'         => 'it_IT',
         'subject'      => 'Disegno approvato - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Buongiorno {FIRST_NAME},\n\nil disegno dell'ordine {ORDER_NUMBER} (progetto «{PROJECT_NAME}») è stato approvato dal nostro cliente.\nPotete avviare la produzione.\n\nCordiali saluti,",
+        'message'      => "Buongiorno {FIRST_NAME},\n\nil disegno dell'ordine {ORDER_NUMBER} (progetto «{PROJECT_NAME}») è stato approvato dal nostro cliente (approvazione in allegato).\nPotete avviare la produzione.\n\nCordiali saluti,",
     ],
     [
         'message_type' => 'drawing_modified',
