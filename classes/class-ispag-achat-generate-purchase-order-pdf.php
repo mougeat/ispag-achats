@@ -147,6 +147,8 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         if (!empty($achat_id)) {
             $details_repo = new ISPAG_Achat_Details_Repository();
             $project_data = apply_filters('ispag_get_achat_by_id', null, $achat_id);
+            // Adresse de livraison (table des infos de commande, via l'ID d'achat) : affichée dans le PDF si renseignée
+            $project_data->delivery = $details_repo->get_infos_livraison($achat_id);
             $supplier_info = apply_filters('ispag_get_supplier_info', null, $project_data->IdFournisseur);
 
             self::$logger->log_db_change(
