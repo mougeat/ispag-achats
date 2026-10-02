@@ -285,7 +285,7 @@ function applyStatusChange(data) {
         const $suivi = $('#suivis[data-lazy-tab]');
         if ($suivi.length) {
             $suivi.data('lazyState', null);
-            if ($suivi.hasClass('active')) { $('.tab-titles li[data-tab="suivis"]').trigger('click'); }
+            if ($suivi.hasClass('active')) { $('.ispag-tabs-navigation .ispag-tab-btn[data-tab="suivis"]').trigger('click'); }
             else { $suivi.html('<div class="ispag-skeleton-wrapper" aria-hidden="true"><span class="ispag-skeleton-line ispag-w-60"></span><span class="ispag-skeleton-line ispag-w-90"></span></div>'); }
         }
     }

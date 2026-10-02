@@ -31,10 +31,6 @@ class ISPAG_Achat_Renderer {
             echo '<div class="ispag-empty-state">';
                 echo '<span class="dashicons dashicons-cart"></span>';
                 echo '<div class="ispag-notice warning"><p>' . __('No items were found for this supplier order.', 'creation-reservoir') . '</p></div>';
-                echo '<div class="ispag-actions-group">';
-                    echo self::get_add_article_btn($achat_id);
-                    echo self::get_delete_purchase_btn($achat_id);
-                echo '</div>';
             echo '</div>';
             // echo self::display_modal();
             // echo ISPAG_Detail_Page::display_modal();
@@ -90,22 +86,27 @@ class ISPAG_Achat_Renderer {
             // Les actions groupées (bulk) sont affichées dans la colonne de gauche de la fiche
             echo '</div>';
 
-            // Barre d'actions flottante ou fixe en bas
-            echo '<div class="ispag-achat-footer-actions">';
-                echo '<div class="ispag-action-buttons-secondary">';
-                    echo self::footer_buttons_html($achat_id);
-                echo '</div>';
-            echo '</div>';
-
         echo '</div>'; // .ispag-achat-modern-container
         
         // echo self::display_modal();
         // echo ISPAG_Detail_Page::display_modal();
     }
 
-    /** Boutons du bas de l'onglet Articles (ajout, bon de livraison, suppression) : dépendent du statut. */
+    /**
+     * Boutons d'action du panneau de gauche (sous « To project » / « To purchase list »), groupés par famille
+     * de fonction et séparés par un trait fin. Dépendent du statut (rafraîchis par state.js).
+     */
     public static function footer_buttons_html($achat_id) {
-        return self::get_add_article_btn($achat_id) . self::get_delivery_btn($achat_id) . self::get_delete_purchase_btn($achat_id);
+        $groups = [
+            self::get_add_article_btn($achat_id) . self::get_delivery_btn($achat_id), // articles
+            self::get_delete_purchase_btn($achat_id),                                  // suppression
+        ];
+        $html = '';
+        foreach ($groups as $group) {
+            if (trim((string) $group) === '') continue;
+            $html .= '<hr class="ispag-btn-sep"><div class="ispag-btn-group">' . $group . '</div>';
+        }
+        return $html;
     }
 
     /**
@@ -250,7 +251,7 @@ class ISPAG_Achat_Renderer {
         if(!in_array($achat->EtatCommande, $array_etat)){
             return;
         }
-        return '<button id="generate-pdf" class="ispag-btn ispag-btn-secondary-outlined" style="margin-top: 1rem;">
+        return '<button id="generate-pdf" class="ispag-btn ispag-btn-secondary-outlined" >
                 📄 ' .  __('Delivery note', 'creation-reservoir') . '
             </button>
             <script>

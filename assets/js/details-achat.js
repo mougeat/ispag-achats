@@ -126,9 +126,9 @@ jQuery(function ($) {
     }
 
     // Affichage des onglets (les panneaux existent déjà ; on charge s'ils ne le sont pas encore)
-    $(document).on('click', '.tab-titles li[data-tab]', function () {
+    $(document).on('click', '.ispag-tabs-navigation .ispag-tab-btn[data-tab]', function () {
         const tab = $(this).data('tab');
-        $('.tab-titles li').removeClass('active');
+        $('.ispag-tabs-navigation .ispag-tab-btn').removeClass('active');
         $(this).addClass('active');
         $('.tab-content').removeClass('active');
         const $panel = $('#' + tab + '[data-lazy-tab]').addClass('active');

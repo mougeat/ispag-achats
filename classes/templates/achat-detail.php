@@ -99,9 +99,15 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
         </div>
 
         <div class="ispag-card ispag-project-btn-card">
-            <a href="<?php echo esc_url($achat->project_url); ?>" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-portfolio"></span> <?php echo esc_html(__('To project', 'creation-reservoir')); ?></a>
-            <br>
-            <a href="<?php echo esc_url(add_query_arg('search', $achat->hubspot_deal_id, $liste_url)); ?>" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-list-view"></span> <?php echo esc_html(__('To purchase list', 'creation-reservoir')); ?></a>
+            <!-- Famille « navigation » -->
+            <div class="ispag-btn-group">
+                <a href="<?php echo esc_url($achat->project_url); ?>" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-portfolio"></span> <?php echo esc_html(__('To project', 'creation-reservoir')); ?></a>
+                <a href="<?php echo esc_url(add_query_arg('search', $achat->hubspot_deal_id, $liste_url)); ?>" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-list-view"></span> <?php echo esc_html(__('To purchase list', 'creation-reservoir')); ?></a>
+            </div>
+            <!-- Autres familles (articles, suppression) : dépendent du statut, rafraîchies par state.js -->
+            <div class="ispag-action-buttons-secondary">
+                <?php echo ISPAG_Achat_Renderer::footer_buttons_html($achat->Id); ?>
+            </div>
         </div>
 
         <?php
@@ -113,12 +119,12 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
     <!-- Contenu principal : onglets chargés en arrière-plan -->
     <div class="ispag-main-content" data-panel="main">
         <div class="ispag-tabs">
-            <ul class="tab-titles">
-                <li class="active" data-tab="articles"><?php echo __('Articles', 'creation-reservoir'); ?></li>
-                <li data-tab="details"><?php echo __('Details', 'creation-reservoir'); ?></li>
-                <li data-tab="suivis"><?php echo __('Follow up', 'creation-reservoir'); ?></li>
-                <li data-tab="documents"><?php echo __('Document flow', 'creation-reservoir'); ?></li>
-            </ul>
+            <div class="ispag-tabs-navigation">
+                <button type="button" class="ispag-tab-btn active" data-tab="articles"><?php echo __('Articles', 'creation-reservoir'); ?></button>
+                <button type="button" class="ispag-tab-btn" data-tab="details"><?php echo __('Details', 'creation-reservoir'); ?></button>
+                <button type="button" class="ispag-tab-btn" data-tab="suivis"><?php echo __('Follow up', 'creation-reservoir'); ?></button>
+                <button type="button" class="ispag-tab-btn" data-tab="documents"><?php echo __('Document flow', 'creation-reservoir'); ?></button>
+            </div>
 
             <?php foreach (['articles', 'details', 'suivis', 'documents'] as $tab_key): ?>
                 <div class="tab-content<?php echo $tab_key === 'articles' ? ' active' : ''; ?>" id="<?php echo esc_attr($tab_key); ?>"

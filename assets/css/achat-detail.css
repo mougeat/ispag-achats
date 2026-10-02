@@ -23,3 +23,7 @@
 }
 .ispag-achat-detail .ispag-article-group-header h3 { margin: 0; font-size: 1.1em; font-weight: 600; flex: 0 1 auto; }
 .ispag-article-group-wrapper.is-collapsed .ispag-article-card-container { display: none; }
+
+/* Panneau de gauche : boutons groupés par famille, séparés par un trait fin */
+.ispag-achat-detail .ispag-project-btn-card .ispag-btn-group { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.ispag-achat-detail .ispag-project-btn-card .ispag-btn-sep { border: 0; border-top: 1px solid #e5e7eb; margin: 10px 0; }
