@@ -160,7 +160,8 @@ async function ispag_send_generic_ajax({
         console.info('✅ Données reçues :', result.data);
         
         if (typeof successCallback === 'function') {
-            successCallback(result.data);
+            // Si le rappel renvoie une promesse (téléchargement du brouillon), le bouton reste désactivé jusqu'à sa fin
+            await successCallback(result.data);
         }
 
     } catch (e) {
@@ -188,33 +189,55 @@ function ispag_send_rfq(achatId, btn){
     });
 }
 
-// Télécharge un fichier sans quitter la page (le statut est mis à jour juste après)
-function ispag_download_via_frame(url) {
-    const frame = document.createElement('iframe');
-    frame.style.display = 'none';
-    frame.src = url;
-    document.body.appendChild(frame);
-    setTimeout(function () { frame.remove(); }, 60000);
+// Télécharge un fichier sans quitter la page. Retourne une promesse résolue quand le serveur a terminé
+// (le PDF de la commande est alors enregistré) : on peut ensuite rafraîchir la liste des documents.
+function ispag_download_file(url) {
+    return fetch(url, { credentials: 'same-origin' })
+        .then(function (res) {
+            if (!res.ok) { throw new Error('HTTP ' + res.status); }
+            const m = /filename="?([^";]+)"?/i.exec(res.headers.get('Content-Disposition') || '');
+            const name = m ? m[1] : 'email.eml';
+            return res.blob().then(function (blob) { return { blob: blob, name: name }; });
+        })
+        .then(function (f) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(f.blob);
+            a.download = f.name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 10000);
+        });
+}
+
+// Rafraîchit la liste des documents de la commande (le PDF ou les pièces jointes viennent d'y être ajoutés)
+function ispag_refresh_documents() {
+    $('.ispag-docu-card[data-entity-type="purchase"]').trigger('ispag:refresh-attachments');
 }
 
 /**
  * Ouvre le message : brouillon Outlook (.eml, pièces jointes incluses) si le serveur en fournit un, sinon mailto.
- * Retourne false si l'utilisateur renonce (aucun fichier à joindre) : le statut ne doit alors pas changer.
+ * Retourne false si l'utilisateur renonce (aucun fichier à joindre), sinon une promesse (true = message créé) :
+ * le statut ne change que si le message a bien été créé.
  */
 function ispag_open_mail(data, noFileMessage) {
     if (data.eml_url) {
         if (data.attachments_count === 0 && !window.confirm(noFileMessage)) {
             return false;
         }
-        ispag_download_via_frame(data.eml_url);
         // Première fois : on explique, d'office, comment ouvrir automatiquement le brouillon
         if ($('#ispag-eml-help').attr('data-seen') !== '1') {
             ispag_show_eml_help();
         }
-    } else {
-        send_mail(data);
+        return ispag_download_file(data.eml_url).then(function () {
+            ispag_refresh_documents();
+            return true;
+        }).catch(function () {
+            alert('The email draft could not be created. Please try again.');
+            return false;
+        });
     }
-    return true;
+    send_mail(data);
+    return Promise.resolve(true);
 }
 
 // Fenêtre d'aide « brouillon Outlook » : affichée au premier envoi, puis avec le bouton « i »
@@ -243,8 +266,9 @@ function ispag_send_order(achatId, btn) {
         type: 'send_purchase_order',
         successCallback: (data) => {
             // Brouillon Outlook (.eml) : destinataire, objet, texte et bon de commande PDF déjà joints
-            if (!ispag_open_mail(data, 'The purchase order PDF could not be attached. Open the email anyway?')) return;
-            updateStatus(achatId, data.next_status);
+            const opened = ispag_open_mail(data, 'The purchase order PDF could not be attached. Open the email anyway?');
+            if (!opened) return;
+            return opened.then(function (ok) { if (ok) return updateStatus(achatId, data.next_status); });
         }
     });
 }
@@ -258,8 +282,9 @@ function ispag_send_drawing_modification(achatId, btn) {
         type: 'drawing_modified',
         successCallback: (data) => {
             // Brouillon Outlook (.eml) avec le dernier fichier de chaque article en pièce jointe
-            if (!ispag_open_mail(data, 'No drawing modification file was found for the articles of this order. Open the email without attachment?')) return;
-            updateStatus(achatId, data.next_status);
+            const opened = ispag_open_mail(data, 'No drawing modification file was found for the articles of this order. Open the email without attachment?');
+            if (!opened) return;
+            return opened.then(function (ok) { if (ok) return updateStatus(achatId, data.next_status); });
         }
     });
 }
@@ -273,8 +298,9 @@ function ispag_send_drawing_validation(achatId, btn) {
         type: 'drawing_validated',
         successCallback: (data) => {
             // Brouillon Outlook (.eml) avec le dernier fichier de chaque article en pièce jointe
-            if (!ispag_open_mail(data, 'No drawing approval file was found for the articles of this order. Open the email without attachment?')) return;
-            updateStatus(achatId, data.next_status);
+            const opened = ispag_open_mail(data, 'No drawing approval file was found for the articles of this order. Open the email without attachment?');
+            if (!opened) return;
+            return opened.then(function (ok) { if (ok) return updateStatus(achatId, data.next_status); });
         }
     });
 }
