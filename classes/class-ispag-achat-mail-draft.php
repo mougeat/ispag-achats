@@ -4,6 +4,11 @@ defined('ABSPATH') || exit;
 /**
  * Brouillon d'e-mail (.eml) de la commande fournisseur, avec le bon de commande PDF en pièce jointe.
  *
+ * Pièces jointes selon le type de message :
+ *   - send_purchase_order : le bon de commande PDF ;
+ *   - drawing_modified    : le dernier fichier « Drawing modification » de chaque article de la commande ;
+ *   - drawing_validated   : le dernier fichier « Drawing approval » (validation) de chaque article de la commande.
+ *
  * Un lien mailto: ne peut pas joindre de fichier. On génère donc un fichier .eml marqué « X-Unsent: 1 » :
  * en double-cliquant dessus, Outlook (classique, Windows) ouvre un nouveau message prêt à envoyer, avec le
  * destinataire, l'objet, le texte du modèle et le PDF déjà joint.
@@ -11,6 +16,54 @@ defined('ABSPATH') || exit;
 class ISPAG_Achat_Mail_Draft {
 
     const ACTION = 'ispag_download_order_eml';
+
+    /** Types de message gérés : null = bon de commande PDF, sinon slug du type de document (achats_doc_types) à joindre. */
+    const TYPES = [
+        'send_purchase_order' => null,
+        'drawing_modified'    => 'drawingModification',
+        'drawing_validated'   => 'drawingApproval',
+    ];
+
+    public static function supports($type) {
+        return array_key_exists($type, self::TYPES);
+    }
+
+    /**
+     * Derniers documents d'un type (slug) pour chaque article de la commande : une ligne par article, le plus récent.
+     * Les documents d'article sont rattachés à l'article du projet (IdCommandeClient) dans achats_historique.Historique.
+     *
+     * @return array<int, array{path:string,name:string,mime:string}>
+     */
+    public static function latest_documents($achat_id, $slug) {
+        global $wpdb;
+        $articles = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT IdCommandeClient FROM {$wpdb->prefix}achats_articles_cmd_fournisseurs WHERE IdCommande = %d AND IdCommandeClient > 0",
+            $achat_id
+        ));
+        $files = [];
+        $seen  = [];
+        foreach ($articles as $article_id) {
+            $media_id = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT IdMedia FROM {$wpdb->prefix}achats_historique
+                 WHERE Historique = %s AND ClassCss = %s AND IdMedia > 0
+                 ORDER BY dateReadable DESC, Id DESC LIMIT 1",
+                (string) $article_id, $slug
+            ));
+            if (!$media_id || isset($seen[$media_id])) continue;
+            $path = get_attached_file($media_id);
+            if (!$path || !is_readable($path)) continue;
+            $seen[$media_id] = true;
+            $mime = get_post_mime_type($media_id) ?: 'application/octet-stream';
+            $files[] = ['path' => $path, 'name' => basename($path), 'mime' => $mime];
+        }
+        return $files;
+    }
+
+    /** Nombre de pièces jointes que le brouillon contiendra (pour avertir si aucune). */
+    public static function attachments_count($achat_id, $type) {
+        $slug = self::TYPES[$type] ?? null;
+        return $slug === null ? 1 : count(self::latest_documents($achat_id, $slug));
+    }
 
     public static function init() {
         add_action('wp_ajax_' . self::ACTION, [self::class, 'download']);
@@ -36,7 +89,7 @@ class ISPAG_Achat_Mail_Draft {
         if (!current_user_can('edit_supplier_order')) {
             wp_die('Not authorized', '', 403);
         }
-        if ($type !== 'send_purchase_order') {
+        if (!self::supports($type)) {
             wp_die('Unsupported message type', '', 400);
         }
 
@@ -45,15 +98,25 @@ class ISPAG_Achat_Mail_Draft {
             wp_die(esc_html($mail->get_error_message()));
         }
 
-        // Le PDF (mêmes données que le bouton « Print purchase order » ; enregistré dans les documents de la commande)
-        $_GET['poid'] = $achat_id;
-        $pdf = ISPAG_Achat_Generate_Purchase_Order_PDF::generate_purchase_order_pdf(true);
-        if (!is_array($pdf) || empty($pdf['content'])) {
-            wp_die('The purchase order PDF could not be generated.');
+        $slug        = self::TYPES[$type];
+        $attachments = [];
+        if ($slug === null) {
+            // Le PDF (mêmes données que le bouton « Print purchase order » ; enregistré dans les documents de la commande)
+            $_GET['poid'] = $achat_id;
+            $pdf = ISPAG_Achat_Generate_Purchase_Order_PDF::generate_purchase_order_pdf(true);
+            if (!is_array($pdf) || empty($pdf['content'])) {
+                wp_die('The purchase order PDF could not be generated.');
+            }
+            $attachments[] = ['content' => $pdf['content'], 'name' => $pdf['file_name'], 'mime' => 'application/pdf'];
+            $name = preg_replace('/\.pdf$/i', '', $pdf['file_name']) . '.eml';
+        } else {
+            foreach (self::latest_documents($achat_id, $slug) as $f) {
+                $attachments[] = ['content' => file_get_contents($f['path']), 'name' => $f['name'], 'mime' => $f['mime']];
+            }
+            $name = sanitize_file_name($mail['subject'] ?: $type) . '.eml';
         }
 
-        $eml  = self::build_eml($mail, $pdf['content'], $pdf['file_name']);
-        $name = preg_replace('/\.pdf$/i', '', $pdf['file_name']) . '.eml';
+        $eml = self::build_eml($mail, $attachments);
 
         while (ob_get_level()) { ob_end_clean(); }
         nocache_headers();
@@ -72,11 +135,10 @@ class ISPAG_Achat_Mail_Draft {
         return '=?UTF-8?B?' . base64_encode($text) . '?=';
     }
 
-    /** Message MIME : texte brut UTF-8 + PDF en pièce jointe. */
-    public static function build_eml(array $mail, $pdf_content, $pdf_name) {
+    /** Message MIME : texte brut UTF-8 + pièces jointes ([['content'=>…, 'name'=>…, 'mime'=>…], …]). */
+    public static function build_eml(array $mail, array $attachments) {
         $boundary = '=_ispag_' . md5(uniqid('', true));
         $text     = preg_replace("/\r\n|\r|\n/", "\r\n", (string) $mail['message']);
-        $pdf_name = preg_replace('/[^A-Za-z0-9._-]/', '_', $pdf_name);
 
         $h = [];
         $h[] = 'X-Unsent: 1'; // ouvre le message en mode rédaction dans Outlook
@@ -91,11 +153,15 @@ class ISPAG_Achat_Mail_Draft {
         $body .= "Content-Type: text/plain; charset=UTF-8\r\n";
         $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
         $body .= chunk_split(base64_encode($text), 76, "\r\n");
-        $body .= "--{$boundary}\r\n";
-        $body .= "Content-Type: application/pdf; name=\"{$pdf_name}\"\r\n";
-        $body .= "Content-Transfer-Encoding: base64\r\n";
-        $body .= "Content-Disposition: attachment; filename=\"{$pdf_name}\"\r\n\r\n";
-        $body .= chunk_split(base64_encode($pdf_content), 76, "\r\n");
+
+        foreach ($attachments as $att) {
+            $fname = self::encode_header($att['name']);
+            $body .= "--{$boundary}\r\n";
+            $body .= "Content-Type: {$att['mime']}; name=\"{$fname}\"\r\n";
+            $body .= "Content-Transfer-Encoding: base64\r\n";
+            $body .= "Content-Disposition: attachment; filename=\"{$fname}\"\r\n\r\n";
+            $body .= chunk_split(base64_encode((string) $att['content']), 76, "\r\n");
+        }
         $body .= "--{$boundary}--\r\n";
 
         return implode("\r\n", $h) . "\r\n\r\n" . $body;

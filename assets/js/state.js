@@ -197,6 +197,22 @@ function ispag_download_via_frame(url) {
     setTimeout(function () { frame.remove(); }, 60000);
 }
 
+/**
+ * Ouvre le message : brouillon Outlook (.eml, pièces jointes incluses) si le serveur en fournit un, sinon mailto.
+ * Retourne false si l'utilisateur renonce (aucun fichier à joindre) : le statut ne doit alors pas changer.
+ */
+function ispag_open_mail(data, noFileMessage) {
+    if (data.eml_url) {
+        if (data.attachments_count === 0 && !window.confirm(noFileMessage)) {
+            return false;
+        }
+        ispag_download_via_frame(data.eml_url);
+    } else {
+        send_mail(data);
+    }
+    return true;
+}
+
 function ispag_send_order(achatId, btn) {
     ispag_send_generic_ajax({
         achatId: achatId,
@@ -205,12 +221,8 @@ function ispag_send_order(achatId, btn) {
         sendingText: 'Sending the email...',
         type: 'send_purchase_order',
         successCallback: (data) => {
-            if (data.eml_url) {
-                // Brouillon Outlook (.eml) : destinataire, objet, texte et bon de commande PDF déjà joints
-                ispag_download_via_frame(data.eml_url);
-            } else {
-                send_mail(data);
-            }
+            // Brouillon Outlook (.eml) : destinataire, objet, texte et bon de commande PDF déjà joints
+            if (!ispag_open_mail(data, 'The purchase order PDF could not be attached. Open the email anyway?')) return;
             updateStatus(achatId, data.next_status);
         }
     });
@@ -224,8 +236,8 @@ function ispag_send_drawing_modification(achatId, btn) {
         sendingText: 'Sending the email...',
         type: 'drawing_modified',
         successCallback: (data) => {
-//            console.log(data);
-            send_mail(data);
+            // Brouillon Outlook (.eml) avec le dernier fichier de chaque article en pièce jointe
+            if (!ispag_open_mail(data, 'No drawing modification file was found for the articles of this order. Open the email without attachment?')) return;
             updateStatus(achatId, data.next_status);
         }
     });
@@ -239,8 +251,8 @@ function ispag_send_drawing_validation(achatId, btn) {
         sendingText: 'Sending the email...',
         type: 'drawing_validated',
         successCallback: (data) => {
-//            console.log(data);
-            send_mail(data);
+            // Brouillon Outlook (.eml) avec le dernier fichier de chaque article en pièce jointe
+            if (!ispag_open_mail(data, 'No drawing approval file was found for the articles of this order. Open the email without attachment?')) return;
             updateStatus(achatId, data.next_status);
         }
     });

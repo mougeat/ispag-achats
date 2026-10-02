@@ -180,9 +180,10 @@ class ISPAG_Achat_Status_Controller {
         if (is_wp_error($mail)) {
             wp_send_json_error(['message' => $mail->get_error_message()]);
         }
-        // La commande part en brouillon Outlook (.eml avec le bon de commande en pièce jointe) ; les autres messages en mailto
-        if ($message_type === 'send_purchase_order' && class_exists('ISPAG_Achat_Mail_Draft')) {
+        // Commande, modifications et validations de plans : brouillon Outlook (.eml) avec les pièces jointes ; les autres messages en mailto
+        if (class_exists('ISPAG_Achat_Mail_Draft') && ISPAG_Achat_Mail_Draft::supports($message_type)) {
             $mail['eml_url'] = ISPAG_Achat_Mail_Draft::download_url($achat_id, $message_type);
+            $mail['attachments_count'] = ISPAG_Achat_Mail_Draft::attachments_count($achat_id, $message_type);
         }
         wp_send_json_success($mail);
     }
