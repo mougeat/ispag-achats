@@ -95,7 +95,8 @@ class ISPAG_Achat_Mail_Templates {
             '{DELIVERY_CITY}'  => __('Delivery city', 'creation-reservoir'),
             '{DELIVERY_CONTACT}' => __('On-site contact', 'creation-reservoir'),
             '{DELIVERY_CONTACT_PHONE}' => __('On-site contact phone', 'creation-reservoir'),
-            '{RETURN_DATE}'    => __('Deadline to return the approved drawings (working days from sending, set in ISPAG Settings → Plan reminders)', 'creation-reservoir'),
+            '{RETURN_DATE}'    => __('Deadline to return the approved drawings (working days from sending, set in ISPAG Settings → Plan reminders); in a reminder, the date of the next reminder', 'creation-reservoir'),
+            '{ORDER_DATE}'     => __('Order date', 'creation-reservoir'),
             '{RETURN_DAYS}'    => __('Number of working days given to return the drawings', 'creation-reservoir'),
             '{SURVEY_LINK}'    => __('Satisfaction survey link', 'creation-reservoir'),
             '{IF_DRAWINGS}'    => __('Start of a text kept only if the order contains a type 1 item (drawings to approve) — close it with {/IF_DRAWINGS}', 'creation-reservoir'),
@@ -247,7 +248,7 @@ class ISPAG_Achat_Mail_Templates {
             'sampleProject' => [
                 '{PRENOM}' => 'Anna', '{NOM}' => 'Muller', '{PROJECT_NAME}' => 'Test project', '{PROJECT_NUMBER}' => 'KST300/21111',
                 '{PROJECT_URL}' => home_url('/project-detail/123'), '{PROJECT_LINK}' => 'Test project', '{PRODUCT_LIST}' => "Tanks\n- Energy accumulator 1500 liters",
-                '{DELIVERY_DATE}' => date_i18n('d.m.Y'), '{RETURN_DATE}' => date_i18n('d.m.Y', strtotime('+7 days')), '{RETURN_DAYS}' => '5', '{DELIVERY_ADRESS}' => 'Champs-Paccot 19', '{DELIVERY_NIP}' => '1627', '{DELIVERY_CITY}' => 'Vaulruz',
+                '{DELIVERY_DATE}' => date_i18n('d.m.Y'), '{RETURN_DATE}' => date_i18n('d.m.Y', strtotime('+7 days')), '{RETURN_DAYS}' => '5', '{ORDER_DATE}' => date_i18n('d.m.Y'), '{DELIVERY_ADRESS}' => 'Champs-Paccot 19', '{DELIVERY_NIP}' => '1627', '{DELIVERY_CITY}' => 'Vaulruz',
                 '{DELIVERY_CONTACT}' => 'John Doe', '{DELIVERY_CONTACT_PHONE}' => '+41 79 000 00 00', '{SURVEY_LINK}' => 'https://example.com/survey',
                 '{USER_NAME}' => wp_get_current_user()->display_name,
             ],
