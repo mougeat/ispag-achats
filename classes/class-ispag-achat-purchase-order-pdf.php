@@ -160,12 +160,17 @@ class ISPAG_Achat_Purchase_Order_PDF extends ISPAG_PDF_Generator {
 
     protected function drawTableHeader(array $columns) {
         $this->SetFont('Arial', 'B', 9);
-        $this->color(self::RED, 'fill');
-        $this->color([255, 255, 255]);
+        $this->color(self::INK);
         foreach ($columns as $col) {
-            $this->Cell($col['w'], 8, $this->cleanStr($col['label'] ?? ''), 0, 0, $col['align'] === 'L' ? 'L' : $col['align'], true);
+            $this->Cell($col['w'], 8, $this->cleanStr($col['label'] ?? ''), 0, 0, $col['align']);
         }
         $this->Ln();
+        // Filet rouge fin sous l'en-tête (au lieu d'un aplat rouge)
+        $y = $this->GetY();
+        $this->color(self::RED, 'draw');
+        $this->SetLineWidth(0.5);
+        $this->Line(self::MARGIN, $y, self::MARGIN + self::CONTENT, $y);
+        $this->SetLineWidth(0.2);
     }
 
     protected function drawTable(array $columns, array $rows) {
