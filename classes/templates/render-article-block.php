@@ -3,7 +3,7 @@
  * ISPAG Purchase Article Item View - Aligned with Project UI
  */
 $article_not_invoiced = null;
-$user_can_view_order = current_user_can('display_sales_prices'); // Harmonisation du nom de la variable
+$user_can_view_order = true; // Achats : les prix (et alertes de facturation) sont toujours visibles pour qui accède à la page
 
 // 1. Logique d'alertes (Identique au projet)
 // Alerte Facturation : Reçu mais pas encore facturé

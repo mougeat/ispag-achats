@@ -62,9 +62,8 @@ class ISPAG_Achat_Renderer {
                         echo '<button type="button" class="ispag-group-toggle" aria-expanded="true" title="' . esc_attr__('Collapse / expand', 'creation-reservoir') . '"><i class="fas fa-chevron-down"></i></button>';
                         echo '<h3 id="' . esc_attr($group_id) . '">' . $escaped_group . '</h3>';
                         echo '<span class="ispag-group-count">' . count($items) . '</span>';
-                        if (current_user_can('display_sales_prices')) {
-                            echo '<span class="ispag-group-total">' . number_format($group_total, 2) . ' ' . esc_html(get_option('wpcb_currency', 'CHF')) . '</span>';
-                        }
+                        // Achats : les prix s'affichent toujours (tout utilisateur qui accède à cette page est autorisé à les voir)
+                        echo '<span class="ispag-group-total">' . number_format($group_total, 2) . ' ' . esc_html(get_option('wpcb_currency', 'CHF')) . '</span>';
                         echo '<button type="button" class="ispag-btn-copy-group" data-target="' . esc_attr($group_id) . '" title="' . esc_attr__('Copy title', 'creation-reservoir') . '">📋</button>';
                     echo '</div>';
 
@@ -211,7 +210,7 @@ class ISPAG_Achat_Renderer {
         if (!$article) {
             return null;
         }
-        $show_prices = current_user_can('display_sales_prices');
+        $show_prices = true; // achats : prix toujours visibles
         $ts          = (int) ($article->TimestampDateLivraisonConfirme ?? 0);
 
         $documents = [];
