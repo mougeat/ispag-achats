@@ -72,9 +72,10 @@ class ISPAG_Achat_Purchase_Order_PDF extends ISPAG_PDF_Generator {
 
         $this->drawHeader();
         $bottom = $this->drawInfoCards();
-        $bottom = $this->drawDeliveryCard($bottom + 6);
         $this->SetY($bottom + 10);
         $this->drawTable($this->scaleColumns($table_header), $articles);
+        // Adresse de livraison en fin de document, sous le total
+        $this->drawDeliveryCard($this->GetY() + 10);
     }
 
     protected function drawHeader() {
@@ -162,7 +163,7 @@ class ISPAG_Achat_Purchase_Order_PDF extends ISPAG_PDF_Generator {
     /** Cadre « adresse de livraison » pleine largeur (adresse à gauche, contact sur place à droite). Retourne le bas du cadre. */
     protected function drawDeliveryCard(float $top): float {
         $d = $this->project->delivery ?? null;
-        if (!$d) return $top - 6;
+        if (!$d) return $top;
 
         $lines = [];
         foreach (['AdresseDeLivraison', 'DeliveryAdresse2', 'DeliveryAdresse3'] as $k) {
@@ -171,7 +172,7 @@ class ISPAG_Achat_Purchase_Order_PDF extends ISPAG_PDF_Generator {
         }
         $zip_city = trim(self::plain_text(($d->NIP ?? '') . ' ' . ($d->City ?? '')));
         if ($zip_city !== '') $lines[] = $zip_city;
-        if (!$lines) return $top - 6; // pas d'adresse : pas de cadre
+        if (!$lines) return $top; // pas d'adresse : pas de cadre
 
         $contact = array_filter([
             self::plain_text($d->PersonneContact ?? ''),
@@ -181,7 +182,10 @@ class ISPAG_Achat_Purchase_Order_PDF extends ISPAG_PDF_Generator {
         $colL = 100;
         $colR = self::CONTENT - $colL - 6;
         $h = 10 + max(count($lines), count($contact)) * 5.2 + 4;
-        if ($top + $h > $this->PageBreakTrigger) return $top - 6;
+        if ($top + $h > $this->PageBreakTrigger) {
+            $this->AddPage();
+            $top = 20;
+        }
 
         $this->color(self::CARD, 'fill');
         $this->Rect(self::MARGIN, $top, self::CONTENT, $h, 'F');
