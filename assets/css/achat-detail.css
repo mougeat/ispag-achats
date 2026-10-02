@@ -41,3 +41,4 @@
 .ispag-delivery-field input { width: 100%; box-sizing: border-box; font-size: 14px; color: #222; }
 .ispag-delivery-form-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
 .ispag-delivery-actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+.ispag-delivery-field .iti { width: 100%; }
