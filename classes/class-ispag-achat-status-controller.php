@@ -140,9 +140,7 @@ class ISPAG_Achat_Status_Controller {
 
         // Affichage du bouton avec les data nécessaires
         echo sprintf(
-            '<button class="ispag-btn achat-action-btn %s" style="background-color:%s" data-achat-id="%d" data-hook="%s"><span class="dashicons dashicons-migrate"></span> %s</button>',
-            esc_attr($etat->ClassCss),
-            esc_attr($etat->color),
+            '<button class="ispag-btn ispag-btn-secondary-outlined achat-action-btn" data-achat-id="%d" data-hook="%s"><span class="dashicons dashicons-migrate"></span> %s</button>',
             intval($achat_id),
             esc_attr($etat->JsHook),
             esc_html__($etat->ActionText, 'creation-reservoir')
