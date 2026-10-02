@@ -298,9 +298,12 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         $pdf = apply_filters('ispag_generate_purchase_order_pdf', null, $project_header, $project_data, $infos, $table_header, $articles, $title);
 
         if ($pdf) {
-            $title = sanitize_filename($title);
+            // Nom de fichier propre à la commande, avec extension et unique : avant, tous les bons de commande
+            // s'enregistraient sous le même nom « purchase-order » (sans .pdf) et s'écrasaient les uns les autres.
             $wp_upload_dir = wp_upload_dir();
-            $uploadedfile = trailingslashit($wp_upload_dir['path']) . $title;
+            $stored_name   = wp_unique_filename($wp_upload_dir['path'], sanitize_file_name($file_name . '.pdf'));
+            $title         = $stored_name;
+            $uploadedfile  = trailingslashit($wp_upload_dir['path']) . $stored_name;
             $pdf->Output($uploadedfile, 'F');
 
             self::$logger->log_user_action(
