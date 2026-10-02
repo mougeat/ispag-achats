@@ -36,7 +36,6 @@ return [
         'message'      => "Hello {FIRST_NAME},\n\n"
             . "The drawing for order {ORDER_NUMBER} (project \"{PROJECT_NAME}\") has been validated by our customer.\n"
             . "You can proceed with the production.\n\n"
-            . "Items:\n{PRODUCT_LIST}\n\n"
             . "Best regards,",
     ],
     [
@@ -46,7 +45,6 @@ return [
         'message'      => "Hello {FIRST_NAME},\n\n"
             . "Our customer requested modifications on the drawing for order {ORDER_NUMBER} (project \"{PROJECT_NAME}\").\n"
             . "Please find the requested changes attached and send us an updated drawing.\n\n"
-            . "Items:\n{PRODUCT_LIST}\n\n"
             . "Best regards,",
     ],
     [
@@ -66,13 +64,13 @@ return [
         'message_type' => 'drawing_validated',
         'lang'         => 'fr_FR',
         'subject'      => 'Plan validé - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Bonjour {FIRST_NAME},\n\nLe plan de la commande {ORDER_NUMBER} (projet « {PROJECT_NAME} ») a été validé par notre client.\nVous pouvez lancer la fabrication.\n\nArticles :\n{PRODUCT_LIST}\n\nMeilleures salutations,",
+        'message'      => "Bonjour {FIRST_NAME},\n\nLe plan de la commande {ORDER_NUMBER} (projet « {PROJECT_NAME} ») a été validé par notre client.\nVous pouvez lancer la fabrication.\n\nMeilleures salutations,",
     ],
     [
         'message_type' => 'drawing_modified',
         'lang'         => 'fr_FR',
         'subject'      => 'Modifications du plan - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Bonjour {FIRST_NAME},\n\nNotre client demande des modifications sur le plan de la commande {ORDER_NUMBER} (projet « {PROJECT_NAME} »).\nVous trouverez les modifications demandées en pièce jointe ; merci de nous envoyer un plan mis à jour.\n\nArticles :\n{PRODUCT_LIST}\n\nMeilleures salutations,",
+        'message'      => "Bonjour {FIRST_NAME},\n\nNotre client demande des modifications sur le plan de la commande {ORDER_NUMBER} (projet « {PROJECT_NAME} »).\nVous trouverez les modifications demandées en pièce jointe ; merci de nous envoyer un plan mis à jour.\n\nMeilleures salutations,",
     ],
     [
         'message_type' => 'send_purchase_order',
@@ -91,13 +89,13 @@ return [
         'message_type' => 'drawing_validated',
         'lang'         => 'de_DE',
         'subject'      => 'Zeichnung freigegeben - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Guten Tag {FIRST_NAME},\n\ndie Zeichnung zur Bestellung {ORDER_NUMBER} (Projekt „{PROJECT_NAME}“) wurde von unserem Kunden freigegeben.\nSie können mit der Fertigung beginnen.\n\nArtikel:\n{PRODUCT_LIST}\n\nFreundliche Grüsse",
+        'message'      => "Guten Tag {FIRST_NAME},\n\ndie Zeichnung zur Bestellung {ORDER_NUMBER} (Projekt „{PROJECT_NAME}“) wurde von unserem Kunden freigegeben.\nSie können mit der Fertigung beginnen.\n\nFreundliche Grüsse",
     ],
     [
         'message_type' => 'drawing_modified',
         'lang'         => 'de_DE',
         'subject'      => 'Zeichnungsänderungen - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Guten Tag {FIRST_NAME},\n\nunser Kunde wünscht Änderungen an der Zeichnung zur Bestellung {ORDER_NUMBER} (Projekt „{PROJECT_NAME}“).\nDie gewünschten Änderungen finden Sie im Anhang; bitte senden Sie uns eine aktualisierte Zeichnung.\n\nArtikel:\n{PRODUCT_LIST}\n\nFreundliche Grüsse",
+        'message'      => "Guten Tag {FIRST_NAME},\n\nunser Kunde wünscht Änderungen an der Zeichnung zur Bestellung {ORDER_NUMBER} (Projekt „{PROJECT_NAME}“).\nDie gewünschten Änderungen finden Sie im Anhang; bitte senden Sie uns eine aktualisierte Zeichnung.\n\nFreundliche Grüsse",
     ],
     [
         'message_type' => 'send_purchase_order',
@@ -116,12 +114,12 @@ return [
         'message_type' => 'drawing_validated',
         'lang'         => 'it_IT',
         'subject'      => 'Disegno approvato - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Buongiorno {FIRST_NAME},\n\nil disegno dell'ordine {ORDER_NUMBER} (progetto «{PROJECT_NAME}») è stato approvato dal nostro cliente.\nPotete avviare la produzione.\n\nArticoli:\n{PRODUCT_LIST}\n\nCordiali saluti,",
+        'message'      => "Buongiorno {FIRST_NAME},\n\nil disegno dell'ordine {ORDER_NUMBER} (progetto «{PROJECT_NAME}») è stato approvato dal nostro cliente.\nPotete avviare la produzione.\n\nCordiali saluti,",
     ],
     [
         'message_type' => 'drawing_modified',
         'lang'         => 'it_IT',
         'subject'      => 'Modifiche al disegno - {PROJECT_NAME} ({ORDER_NUMBER})',
-        'message'      => "Buongiorno {FIRST_NAME},\n\nil nostro cliente ha richiesto modifiche al disegno dell'ordine {ORDER_NUMBER} (progetto «{PROJECT_NAME}»).\nTrovate le modifiche richieste in allegato; vi preghiamo di inviarci un disegno aggiornato.\n\nArticoli:\n{PRODUCT_LIST}\n\nCordiali saluti,",
+        'message'      => "Buongiorno {FIRST_NAME},\n\nil nostro cliente ha richiesto modifiche al disegno dell'ordine {ORDER_NUMBER} (progetto «{PROJECT_NAME}»).\nTrovate le modifiche richieste in allegato; vi preghiamo di inviarci un disegno aggiornato.\n\nCordiali saluti,",
     ],
 ];
