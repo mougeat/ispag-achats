@@ -33,6 +33,7 @@ class ISPAG_Achat_Supplier_Repository {
         'currency'       => 'ispag_supplier_currency',
         'tva'            => 'ispag_supplier_tva',
         'address'        => 'ispag_company_adress',
+        'address_2'      => 'ispag_company_address_2',
         'postal_code'    => 'ispag_company_postal_code',
         'city'           => 'ispag_company_city',
         'country'        => 'ispag_company_country',
@@ -118,7 +119,10 @@ class ISPAG_Achat_Supplier_Repository {
 
         $by_key = [];
         foreach ($rows as $row) {
-            $by_key[$row->meta_key] = $row->meta_value; // la dernière occurrence gagne
+            // la dernière occurrence gagne, sans qu'un doublon vide n'écrase une valeur renseignée
+            if (!isset($by_key[$row->meta_key]) || trim((string) $row->meta_value) !== '') {
+                $by_key[$row->meta_key] = $row->meta_value;
+            }
         }
 
         $metas = [];
@@ -149,6 +153,7 @@ class ISPAG_Achat_Supplier_Repository {
             'currency' => $meta['currency'],
             'tva' => $meta['tva'],
             'address' => $meta['address'],
+            'address_2' => $meta['address_2'],
             'Postal code' => $meta['postal_code'],
             'city' => $meta['city'] ?: $supplier['city'],
             'country' => $meta['country'],

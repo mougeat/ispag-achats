@@ -196,6 +196,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             $infos = [
                 'nom_entreprise' => $supplier_info['name'],
                 'AdresseDeLivraison' => $supplier_info['address'],
+                'DeliveryAdresse2' => $supplier_info['address_2'] ?? '',
                 'Postal code' => $supplier_info['Postal code'],
                 'City' => $supplier_info['city'],
                 'country' => $supplier_info['country'],
