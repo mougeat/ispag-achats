@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
  */
 class ISPAG_Achats_Installer {
 
-    const DB_VERSION = '1.6.0';
+    const DB_VERSION = '1.7.0';
     const OPTION     = 'ispag_achats_db_version';
 
     /** Droits utilisés par ce plugin (voir grant_default_caps()). */
