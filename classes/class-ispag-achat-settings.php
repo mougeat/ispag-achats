@@ -12,10 +12,26 @@ defined('ABSPATH') || exit;
 class ISPAG_Achat_Settings {
 
     const OPTION = 'ispag_achats_transport_suppliers';
+    const OPT_TRANSPORT_RATE = 'ispag_achats_transport_per_1000l'; // montant du transport par tranche de 1000 L
+    const OPT_CUSTOMS_RATE   = 'wpcb_custom_fee';                   // taux de dédouanement (%), aussi réglable dans ISPAG Settings
+    const DEFAULT_TRANSPORT_RATE = 250.0;
+    const DEFAULT_CUSTOMS_RATE   = 10.0;
     const LEGACY_IDS = [1, 3, 395]; // anciens Id (achats_fournisseurs)
 
     public static function init() {
         add_action('admin_menu', [self::class, 'admin_menu']);
+    }
+
+    /** Montant du transport par tranche de 1000 L de cuves (dans la devise du site, CHF par défaut). */
+    public static function transport_rate(): float {
+        $v = get_option(self::OPT_TRANSPORT_RATE, '');
+        return ($v === '' || !is_numeric($v)) ? self::DEFAULT_TRANSPORT_RATE : (float) $v;
+    }
+
+    /** Taux de dédouanement en % du montant net (même option que ISPAG Settings → Customs clearance rate). */
+    public static function customs_rate(): float {
+        $v = get_option(self::OPT_CUSTOMS_RATE, '');
+        return ($v === '' || !is_numeric($v)) ? self::DEFAULT_CUSTOMS_RATE : (float) $v;
     }
 
     /** @return int[] Id (ispag_companies) des fournisseurs avec transport automatique. */
@@ -62,6 +78,12 @@ class ISPAG_Achat_Settings {
         if (!empty($_POST['ispag_achats_settings_nonce']) && wp_verify_nonce($_POST['ispag_achats_settings_nonce'], 'ispag_achats_settings')) {
             $ids = isset($_POST['transport_suppliers']) ? array_values(array_unique(array_map('absint', (array) $_POST['transport_suppliers']))) : [];
             update_option(self::OPTION, $ids, false);
+            if (isset($_POST['transport_rate']) && is_numeric(str_replace(',', '.', $_POST['transport_rate']))) {
+                update_option(self::OPT_TRANSPORT_RATE, max(0, (float) str_replace(',', '.', $_POST['transport_rate'])), false);
+            }
+            if (isset($_POST['customs_rate']) && is_numeric(str_replace(',', '.', $_POST['customs_rate']))) {
+                update_option(self::OPT_CUSTOMS_RATE, max(0, (float) str_replace(',', '.', $_POST['customs_rate'])));
+            }
             $saved_notice = true;
         }
 
@@ -75,8 +97,22 @@ class ISPAG_Achat_Settings {
             <?php endif; ?>
             <form method="post">
                 <?php wp_nonce_field('ispag_achats_settings', 'ispag_achats_settings_nonce'); ?>
+                <h2><?php esc_html_e('Automatic amounts', 'creation-reservoir'); ?></h2>
+                <table class="form-table" role="presentation"><tbody>
+                    <tr>
+                        <th scope="row"><label for="transport_rate"><?php esc_html_e('Transport per 1000 L of tanks', 'creation-reservoir'); ?></label></th>
+                        <td><input type="number" step="0.01" min="0" id="transport_rate" name="transport_rate" value="<?php echo esc_attr(self::transport_rate()); ?>" class="small-text"> <?php echo esc_html(get_option('wpcb_currency', 'CHF')); ?>
+                            <p class="description"><?php esc_html_e('Amount of the TRANS line, per started 1000 L, for the suppliers ticked below.', 'creation-reservoir'); ?></p></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="customs_rate"><?php esc_html_e('Customs clearance rate (%)', 'creation-reservoir'); ?></label></th>
+                        <td><input type="number" step="0.01" min="0" id="customs_rate" name="customs_rate" value="<?php echo esc_attr(self::customs_rate()); ?>" class="small-text"> %
+                            <p class="description"><?php esc_html_e('Percentage of the net total for the DED line (orders in EUR). This is the same setting as “Customs clearance rate” in ISPAG Settings.', 'creation-reservoir'); ?></p></td>
+                    </tr>
+                </tbody></table>
+
                 <h2><?php esc_html_e('Suppliers with automatic transport', 'creation-reservoir'); ?></h2>
-                <p class="description"><?php esc_html_e('For these suppliers, an order containing tanks offers to add the transport line (TRANS: 250 CHF per 1000 L). Tick the suppliers concerned.', 'creation-reservoir'); ?></p>
+                <p class="description"><?php esc_html_e('For these suppliers, an order containing tanks offers to add the transport line (TRANS line, see the amount above). Tick the suppliers concerned.', 'creation-reservoir'); ?></p>
                 <div style="max-height:420px; overflow:auto; background:#fff; border:1px solid #dcdcde; padding:10px 14px; max-width:520px;">
                     <?php foreach ($suppliers as $s): ?>
                         <label style="display:block; padding:2px 0;">

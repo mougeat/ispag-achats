@@ -394,20 +394,21 @@ class ISPAG_Achat_Renderer {
 
         // --- CALCUL TRANSPORT ---
         if (in_array($supplier_id, $target_suppliers) && $total_volume > 0) {
-            $theoretical_trans = ceil($total_volume / 1000) * 250;
+            $theoretical_trans = ceil($total_volume / 1000) * ISPAG_Achat_Settings::transport_rate();
             if (!$transport_found || abs($current_transport_price - $theoretical_trans) > 1.00) {
                 $msg = "Transport: " . number_format($total_volume, 0, '.', "'") . " L calculated.";
-                self::render_adjustment_notice($msg, "Apply transport ($theoretical_trans CHF)", 'TRANS', $theoretical_trans, $achat_id);
+                self::render_adjustment_notice($msg, "Apply transport (" . number_format($theoretical_trans, 2, '.', '') . " " . get_option('wpcb_currency', 'CHF') . ")", 'TRANS', $theoretical_trans, $achat_id);
             }
         }
 
         // --- CALCUL DÉDOUANEMENT (Basé sur le NET) ---
         if ($currency === 'EUR' && $total_amount_net_taxable > 0) {
-            // Calcul des 10% sur le montant net total
-            $theoretical_ded = round($total_amount_net_taxable * 0.10, 2);
+            // Taux de dédouanement (réglage) sur le montant net total
+            $customs_rate    = ISPAG_Achat_Settings::customs_rate();
+            $theoretical_ded = round($total_amount_net_taxable * $customs_rate / 100, 2);
             
             if (!$dedouanement_found || abs($current_dedouanement_price - $theoretical_ded) > 1.00) {
-                $msg = "Customs clearance (10%) on a net total of " . number_format($total_amount_net_taxable, 2) . " EUR.";
+                $msg = "Customs clearance (" . rtrim(rtrim(number_format($customs_rate, 2, '.', ''), '0'), '.') . "%) on a net total of " . number_format($total_amount_net_taxable, 2) . " EUR.";
                 self::render_adjustment_notice($msg, "Apply customs clearance ($theoretical_ded EUR)", 'DED', $theoretical_ded, $achat_id);
             }
         }
@@ -468,7 +469,7 @@ class ISPAG_Achat_Renderer {
             }
         } else {
             // CRÉATION
-            $description = ($type === 'TRANS') ? 'Frais de transport selon volume' : 'Customs clearance fees (10%)';
+            $description = ($type === 'TRANS') ? 'Frais de transport selon volume' : 'Customs clearance fees (' . rtrim(rtrim(number_format(ISPAG_Achat_Settings::customs_rate(), 2, '.', ''), '0'), '.') . '%)';
             
             $inserted = $wpdb->insert(
                 $table,
