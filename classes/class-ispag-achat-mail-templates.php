@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 class ISPAG_Achat_Mail_Templates {
 
     const FAMILY  = 'purchase_order';
+    const FAMILY_PROJECT = 'project_mail'; // e-mails clients d'étape de projet (envoyés par ISPAG Project Manager)
     const NONCE   = 'ispag_mail_templates';
     const DEFAULT_LANG = 'en_US';
 
@@ -23,8 +24,16 @@ class ISPAG_Achat_Mail_Templates {
 
     // ------------------------------------------------------------------ référentiels
 
-    /** Types de message gérés : clé (colonne message_type) => libellé. */
-    public static function types(): array {
+    /** Familles de modèles : clé (colonne message_family) => libellé. */
+    public static function families(): array {
+        return [
+            self::FAMILY         => __('Supplier orders', 'creation-reservoir'),
+            self::FAMILY_PROJECT => __('Project follow-up (customer)', 'creation-reservoir'),
+        ];
+    }
+
+    /** Types de message des commandes fournisseur : clé (colonne message_type) => libellé. */
+    private static function purchase_types(): array {
         return [
             'send_purchase_order'   => __('Purchase order', 'creation-reservoir'),
             'send_proposal_request' => __('Request for quotation (RFQ)', 'creation-reservoir'),
@@ -33,14 +42,62 @@ class ISPAG_Achat_Mail_Templates {
         ];
     }
 
+    /** Types d'e-mail client : un par étape du suivi de projet (SlugPhase => titre de l'étape). */
+    private static function project_types(): array {
+        global $wpdb;
+        $slug_table = $wpdb->prefix . 'achats_slug_phase';
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $slug_table)) !== $slug_table) return [];
+        $out = [];
+        foreach ((array) $wpdb->get_results($wpdb->prepare(
+            "SELECT SlugPhase, TitrePhase FROM {$slug_table}
+             WHERE Brevo_id > 0 OR SlugPhase IN (SELECT message_type FROM " . self::table() . " WHERE message_family = %s)
+             ORDER BY Ordre ASC",
+            self::FAMILY_PROJECT
+        )) as $r) {
+            $out[$r->SlugPhase] = $r->TitrePhase . ' (' . $r->SlugPhase . ')';
+        }
+        return $out;
+    }
+
+    /** Types par famille : [famille => [type => libellé]]. */
+    public static function types_by_family(): array {
+        return [self::FAMILY => self::purchase_types(), self::FAMILY_PROJECT => self::project_types()];
+    }
+
+    /** Tous les types, à plat (la clé d'un type est unique d'une famille à l'autre). */
+    public static function types(): array {
+        return self::purchase_types() + self::project_types();
+    }
+
     /** Langues proposées (code de locale => libellé) ; les langues déjà utilisées par un modèle sont ajoutées. */
     public static function languages(): array {
         $langs = ['en_US' => 'English', 'fr_FR' => 'Français', 'de_DE' => 'Deutsch', 'it_IT' => 'Italiano'];
         global $wpdb;
-        foreach ((array) $wpdb->get_col($wpdb->prepare("SELECT DISTINCT lang FROM " . self::table() . " WHERE message_family = %s", self::FAMILY)) as $l) {
+        foreach ((array) $wpdb->get_col($wpdb->prepare("SELECT DISTINCT lang FROM " . self::table() . " WHERE message_family IN (%s, %s)", self::FAMILY, self::FAMILY_PROJECT)) as $l) {
             if ($l !== '' && !isset($langs[$l])) $langs[$l] = $l;
         }
         return $langs;
+    }
+
+    /** Balises des e-mails clients d'étape (remplacées par ISPAG_Phase_Mail du plugin ISPAG Project Manager). */
+    public static function project_tags(): array {
+        return [
+            '{PRENOM}'         => __('Recipient first name', 'creation-reservoir'),
+            '{NOM}'            => __('Recipient last name', 'creation-reservoir'),
+            '{PROJECT_NAME}'   => __('Project name', 'creation-reservoir'),
+            '{PROJECT_NUMBER}' => __('Order number', 'creation-reservoir'),
+            '{PROJECT_URL}'    => __('Link to the project (address only)', 'creation-reservoir'),
+            '{PROJECT_LINK}'   => __('Link to the project (clickable, shows the project name)', 'creation-reservoir'),
+            '{PRODUCT_LIST}'   => __('List of items, grouped', 'creation-reservoir'),
+            '{DELIVERY_DATE}'  => __('Planned delivery date (or period)', 'creation-reservoir'),
+            '{DELIVERY_ADRESS}' => __('Delivery address', 'creation-reservoir'),
+            '{DELIVERY_NIP}'   => __('Delivery postal code', 'creation-reservoir'),
+            '{DELIVERY_CITY}'  => __('Delivery city', 'creation-reservoir'),
+            '{DELIVERY_CONTACT}' => __('On-site contact', 'creation-reservoir'),
+            '{DELIVERY_CONTACT_PHONE}' => __('On-site contact phone', 'creation-reservoir'),
+            '{SURVEY_LINK}'    => __('Satisfaction survey link', 'creation-reservoir'),
+            '{USER_NAME}'      => __('Name of the person who triggered the e-mail', 'creation-reservoir'),
+        ];
     }
 
     /** Balises disponibles : balise => description. */
@@ -89,8 +146,8 @@ class ISPAG_Achat_Mail_Templates {
     private static function all(): array {
         global $wpdb;
         return (array) $wpdb->get_results($wpdb->prepare(
-            "SELECT Id, lang, subject, message, message_type FROM " . self::table() . " WHERE message_family = %s ORDER BY message_type ASC, lang ASC",
-            self::FAMILY
+            "SELECT Id, lang, subject, message, message_type, message_family FROM " . self::table() . " WHERE message_family IN (%s, %s) ORDER BY message_family ASC, message_type ASC, lang ASC",
+            self::FAMILY, self::FAMILY_PROJECT
         ));
     }
 
@@ -108,12 +165,13 @@ class ISPAG_Achat_Mail_Templates {
         global $wpdb;
 
         $id      = absint($_POST['id'] ?? 0);
-        $type    = sanitize_key($_POST['message_type'] ?? '');
+        $family  = sanitize_key($_POST['message_family'] ?? self::FAMILY);
+        $type    = sanitize_text_field(wp_unslash($_POST['message_type'] ?? ''));
         $lang    = sanitize_text_field(wp_unslash($_POST['lang'] ?? ''));
         $subject = sanitize_text_field(wp_unslash($_POST['subject'] ?? ''));
         $message = sanitize_textarea_field(wp_unslash($_POST['message'] ?? ''));
 
-        if (!isset(self::types()[$type]) || !preg_match('/^[a-z]{2,3}(_[A-Z]{2})?$/', $lang)) {
+        if (!isset(self::families()[$family]) || !isset(self::types_by_family()[$family][$type]) || !preg_match('/^[a-z]{2,3}(_[A-Z]{2})?$/', $lang)) {
             wp_send_json_error(__('Invalid type or language', 'creation-reservoir'));
         }
         if ($subject === '' || trim($message) === '') {
@@ -123,16 +181,16 @@ class ISPAG_Achat_Mail_Templates {
         // Un seul modèle par type et par langue
         $dup = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT Id FROM " . self::table() . " WHERE message_family = %s AND message_type = %s AND lang = %s AND Id <> %d LIMIT 1",
-            self::FAMILY, $type, $lang, $id
+            $family, $type, $lang, $id
         ));
         if ($dup) {
             wp_send_json_error(__('A template already exists for this type and language', 'creation-reservoir'));
         }
 
-        $data = ['subject' => $subject, 'message' => $message, 'message_type' => $type, 'lang' => $lang, 'message_family' => self::FAMILY];
+        $data = ['subject' => $subject, 'message' => $message, 'message_type' => $type, 'lang' => $lang, 'message_family' => $family];
         if ($id) {
             // created_by renseigné = modèle modifié par un utilisateur : l'installateur ne le remplace plus jamais
-            $ok = $wpdb->update(self::table(), $data + ['created_by' => get_current_user_id()], ['Id' => $id, 'message_family' => self::FAMILY]) !== false;
+            $ok = $wpdb->update(self::table(), $data + ['created_by' => get_current_user_id()], ['Id' => $id, 'message_family' => $family]) !== false;
         } else {
             $ok = $wpdb->insert(self::table(), $data + [
                 'Brevo_id' => 0, 'prompt' => '', 'join_doc_typ' => '', 'selectionnable' => 1, 'created_by' => get_current_user_id(),
@@ -149,7 +207,10 @@ class ISPAG_Achat_Mail_Templates {
         global $wpdb;
         $id = absint($_POST['id'] ?? 0);
         if ($id) {
-            $wpdb->delete(self::table(), ['Id' => $id, 'message_family' => self::FAMILY]);
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM " . self::table() . " WHERE Id = %d AND message_family IN (%s, %s)",
+                $id, self::FAMILY, self::FAMILY_PROJECT
+            ));
         }
         wp_send_json_success(['html' => self::render_list()]);
     }
@@ -176,6 +237,14 @@ class ISPAG_Achat_Mail_Templates {
             'nonce'   => wp_create_nonce(self::NONCE),
             'confirmDelete' => __('Delete this template?', 'creation-reservoir'),
             'defaultLang'   => self::DEFAULT_LANG,
+            'typesByFamily' => self::types_by_family(),
+            'sampleProject' => [
+                '{PRENOM}' => 'Anna', '{NOM}' => 'Muller', '{PROJECT_NAME}' => 'Test project', '{PROJECT_NUMBER}' => 'KST300/21111',
+                '{PROJECT_URL}' => home_url('/project-detail/123'), '{PROJECT_LINK}' => 'Test project', '{PRODUCT_LIST}' => "Tanks\n- Energy accumulator 1500 liters",
+                '{DELIVERY_DATE}' => date_i18n('d.m.Y'), '{DELIVERY_ADRESS}' => 'Champs-Paccot 19', '{DELIVERY_NIP}' => '1627', '{DELIVERY_CITY}' => 'Vaulruz',
+                '{DELIVERY_CONTACT}' => 'John Doe', '{DELIVERY_CONTACT_PHONE}' => '+41 79 000 00 00', '{SURVEY_LINK}' => 'https://example.com/survey',
+                '{USER_NAME}' => wp_get_current_user()->display_name,
+            ],
             // valeurs d'exemple pour l'aperçu
             'sample' => [
                 '{FIRST_NAME}' => 'Anna', '{LAST_NAME}' => 'Muller', '{SUPPLIER_NAME}' => 'ACME GmbH',
@@ -205,17 +274,34 @@ class ISPAG_Achat_Mail_Templates {
             </div>
             <p class="ispag-mailtpl-help"><?php esc_html_e('One template per message type and language. If a supplier’s language has no template, the English one is used.', 'creation-reservoir'); ?></p>
 
+            <div class="ispag-mailtpl-filters">
+                <input type="search" id="ispag-mailtpl-search" placeholder="<?php esc_attr_e('Search a template (type, language, subject, text)…', 'creation-reservoir'); ?>" aria-label="<?php esc_attr_e('Search', 'creation-reservoir'); ?>">
+                <select id="ispag-mailtpl-family-filter" aria-label="<?php esc_attr_e('Family', 'creation-reservoir'); ?>">
+                    <option value=""><?php esc_html_e('All families', 'creation-reservoir'); ?></option>
+                    <?php foreach (self::families() as $k => $label): ?>
+                        <option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="ispag-mailtpl-count" aria-live="polite"></span>
+            </div>
+
             <div id="ispag-mailtpl-list"><?php echo self::render_list(); ?></div>
 
             <form id="ispag-mailtpl-form" hidden>
                 <h3 id="ispag-mailtpl-form-title"></h3>
                 <input type="hidden" name="id" value="0">
                 <div class="ispag-mailtpl-row">
-                    <label><span><?php esc_html_e('Message type', 'creation-reservoir'); ?></span>
-                        <select name="message_type">
-                            <?php foreach (self::types() as $k => $label): ?>
+                    <label><span><?php esc_html_e('Family', 'creation-reservoir'); ?></span>
+                        <select name="message_family">
+                            <?php foreach (self::families() as $k => $label): ?>
                                 <option value="<?php echo esc_attr($k); ?>"><?php echo esc_html($label); ?></option>
                             <?php endforeach; ?>
+                        </select></label>
+                    <label><span><?php esc_html_e('Message type', 'creation-reservoir'); ?></span>
+                        <select name="message_type">
+                            <?php foreach (self::types_by_family() as $fam => $types): foreach ($types as $k => $label): ?>
+                                <option value="<?php echo esc_attr($k); ?>" data-family="<?php echo esc_attr($fam); ?>"><?php echo esc_html($label); ?></option>
+                            <?php endforeach; endforeach; ?>
                         </select></label>
                     <label><span><?php esc_html_e('Language', 'creation-reservoir'); ?></span>
                         <select name="lang">
@@ -231,11 +317,13 @@ class ISPAG_Achat_Mail_Templates {
 
                 <div class="ispag-mailtpl-tags">
                     <strong><?php esc_html_e('Fields replaced when the email is sent — click to insert:', 'creation-reservoir'); ?></strong>
-                    <div>
-                        <?php foreach (self::tags() as $tag => $desc): ?>
-                            <button type="button" class="ispag-mailtpl-tag" data-tag="<?php echo esc_attr($tag); ?>" title="<?php echo esc_attr($desc); ?>"><?php echo esc_html($tag); ?></button>
-                        <?php endforeach; ?>
-                    </div>
+                    <?php foreach ([self::FAMILY => self::tags(), self::FAMILY_PROJECT => self::project_tags()] as $fam => $tags): ?>
+                        <div class="ispag-mailtpl-tagset" data-family="<?php echo esc_attr($fam); ?>">
+                            <?php foreach ($tags as $tag => $desc): ?>
+                                <button type="button" class="ispag-mailtpl-tag" data-tag="<?php echo esc_attr($tag); ?>" title="<?php echo esc_attr($desc); ?>"><?php echo esc_html($tag); ?></button>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
 
                 <div class="ispag-mailtpl-preview" hidden>
@@ -259,18 +347,20 @@ class ISPAG_Achat_Mail_Templates {
     /** Tableau des modèles (rechargé après chaque enregistrement / suppression). */
     private static function render_list(): string {
         $types = self::types();
+        $families = self::families();
         $rows  = self::all();
         ob_start();
         if (!$rows) {
             echo '<p class="ispag-mailtpl-empty">' . esc_html__('No template yet.', 'creation-reservoir') . '</p>';
         } else {
-            echo '<table class="ispag-mailtpl-table"><thead><tr><th>' . esc_html__('Type', 'creation-reservoir') . '</th><th>'
+            echo '<table class="ispag-mailtpl-table"><thead><tr><th>' . esc_html__('Family', 'creation-reservoir') . '</th><th>' . esc_html__('Type', 'creation-reservoir') . '</th><th>'
                 . esc_html__('Language', 'creation-reservoir') . '</th><th>' . esc_html__('Subject', 'creation-reservoir') . '</th><th></th></tr></thead><tbody>';
             foreach ($rows as $r) {
                 $label = $types[$r->message_type] ?? $r->message_type;
-                echo '<tr data-id="' . (int) $r->Id . '" data-type="' . esc_attr($r->message_type) . '" data-lang="' . esc_attr($r->lang) . '"'
-                    . ' data-subject="' . esc_attr($r->subject) . '" data-message="' . esc_attr($r->message) . '">'
-                    . '<td>' . esc_html($label) . '</td><td>' . esc_html($r->lang) . '</td><td>' . esc_html($r->subject) . '</td>'
+                $family_label = $families[$r->message_family] ?? $r->message_family;
+                echo '<tr data-id="' . (int) $r->Id . '" data-family="' . esc_attr($r->message_family) . '" data-type="' . esc_attr($r->message_type) . '" data-lang="' . esc_attr($r->lang) . '"'
+                    . ' data-subject="' . esc_attr($r->subject) . '" data-message="' . esc_attr($r->message) . '" data-search="' . esc_attr(wp_strip_all_tags($family_label . ' ' . $label . ' ' . $r->message_type . ' ' . $r->lang . ' ' . $r->subject . ' ' . $r->message)) . '">'
+                    . '<td>' . esc_html($family_label) . '</td><td>' . esc_html($label) . '</td><td>' . esc_html($r->lang) . '</td><td>' . esc_html($r->subject) . '</td>'
                     . '<td class="ispag-mailtpl-row-actions">'
                     . '<button type="button" class="button ispag-mailtpl-edit">✏️ ' . esc_html__('Edit', 'creation-reservoir') . '</button> '
                     . '<button type="button" class="button ispag-mailtpl-copy" title="' . esc_attr__('Duplicate (e.g. to translate)', 'creation-reservoir') . '">⧉</button> '
