@@ -13,7 +13,7 @@ class ISPAG_Achat_Settings {
 
     const OPTION = 'ispag_achats_transport_suppliers';
     const OPT_TRANSPORT_RATE = 'ispag_achats_transport_per_1000l'; // montant du transport par tranche de 1000 L
-    const OPT_CUSTOMS_RATE   = 'wpcb_custom_fee';                   // taux de dédouanement (%), aussi réglable dans ISPAG Settings
+    const OPT_CUSTOMS_RATE   = 'ispag_achats_customs_rate';         // taux de dédouanement des ACHATS (%) ; la vente a le sien : ISPAG Settings → wpcb_custom_fee
     const DEFAULT_TRANSPORT_RATE = 250.0;
     const DEFAULT_CUSTOMS_RATE   = 10.0;
     const LEGACY_IDS = [1, 3, 395]; // anciens Id (achats_fournisseurs)
@@ -28,7 +28,7 @@ class ISPAG_Achat_Settings {
         return ($v === '' || !is_numeric($v)) ? self::DEFAULT_TRANSPORT_RATE : (float) $v;
     }
 
-    /** Taux de dédouanement en % du montant net (même option que ISPAG Settings → Customs clearance rate). */
+    /** Taux de dédouanement des achats, en % du montant net (la vente a son propre taux dans ISPAG Settings). */
     public static function customs_rate(): float {
         $v = get_option(self::OPT_CUSTOMS_RATE, '');
         return ($v === '' || !is_numeric($v)) ? self::DEFAULT_CUSTOMS_RATE : (float) $v;
@@ -82,7 +82,7 @@ class ISPAG_Achat_Settings {
                 update_option(self::OPT_TRANSPORT_RATE, max(0, (float) str_replace(',', '.', $_POST['transport_rate'])), false);
             }
             if (isset($_POST['customs_rate']) && is_numeric(str_replace(',', '.', $_POST['customs_rate']))) {
-                update_option(self::OPT_CUSTOMS_RATE, max(0, (float) str_replace(',', '.', $_POST['customs_rate'])));
+                update_option(self::OPT_CUSTOMS_RATE, max(0, (float) str_replace(',', '.', $_POST['customs_rate'])), false);
             }
             $saved_notice = true;
         }
@@ -105,9 +105,9 @@ class ISPAG_Achat_Settings {
                             <p class="description"><?php esc_html_e('Amount of the TRANS line, per started 1000 L, for the suppliers ticked below.', 'creation-reservoir'); ?></p></td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="customs_rate"><?php esc_html_e('Customs clearance rate (%)', 'creation-reservoir'); ?></label></th>
+                        <th scope="row"><label for="customs_rate"><?php esc_html_e('Customs clearance rate on purchases (%)', 'creation-reservoir'); ?></label></th>
                         <td><input type="number" step="0.01" min="0" id="customs_rate" name="customs_rate" value="<?php echo esc_attr(self::customs_rate()); ?>" class="small-text"> %
-                            <p class="description"><?php esc_html_e('Percentage of the net total for the DED line (orders in EUR). This is the same setting as “Customs clearance rate” in ISPAG Settings.', 'creation-reservoir'); ?></p></td>
+                            <p class="description"><?php esc_html_e('Percentage of the net total for the DED line of purchase orders in EUR. The rate used for sales prices is separate: ISPAG Settings → Customs clearance rate on sales.', 'creation-reservoir'); ?></p></td>
                     </tr>
                 </tbody></table>
 
