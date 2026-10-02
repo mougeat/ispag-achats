@@ -68,11 +68,38 @@ class ISPAG_Achat_Status_Checker
             wp_schedule_event(time(), 'fifteenminutes', 'ispag_check_auto_status');
             self::$logger->log_user_action('achat_status_checker', 'cron_scheduled', ['action' => 'ispag_check_auto_status'], $user_id);
         }
-        if (!wp_next_scheduled('ispag_check_achats_interventions'))
+
+        // Notifications d'intervention : 2x par jour (8h00 et 20h00, heure du site)
+        $interventions_event = wp_get_scheduled_event('ispag_check_achats_interventions');
+        if ($interventions_event && $interventions_event->schedule !== 'twicedaily')
         {
-            wp_schedule_event(time(), 'hourly', 'ispag_check_achats_interventions');
+            // Ancienne planification (toutes les heures) : on la remplace
+            wp_unschedule_event($interventions_event->timestamp, 'ispag_check_achats_interventions');
+            $interventions_event = false;
+        }
+        if (!$interventions_event)
+        {
+            wp_schedule_event(self::next_intervention_run_timestamp(), 'twicedaily', 'ispag_check_achats_interventions');
             self::$logger->log_user_action('achat_status_checker', 'cron_scheduled', ['action' => 'ispag_check_achats_interventions'], $user_id);
         }
+    }
+
+    /**
+     * Prochain 08:00 ou 20:00 (fuseau du site), pour caler le cron "twicedaily" sur 8h / 20h.
+     */
+    private static function next_intervention_run_timestamp()
+    {
+        $tz  = wp_timezone();
+        $now = time();
+        foreach (['today 08:00', 'today 20:00', 'tomorrow 08:00'] as $when)
+        {
+            $ts = (new DateTimeImmutable($when, $tz))->getTimestamp();
+            if ($ts > $now)
+            {
+                return $ts;
+            }
+        }
+        return $now + HOUR_IN_SECONDS;
     }
 
     public static function activation_hook()
