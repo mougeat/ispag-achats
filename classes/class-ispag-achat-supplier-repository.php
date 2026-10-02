@@ -142,10 +142,12 @@ class ISPAG_Achat_Supplier_Repository {
             return null; // ou [] si tu préfères
         }
 
-        $meta = $this->get_supplier_metas($supplier['id']);
+        // La colonne s'appelle « Id » (majuscule) : $supplier['id'] n'existait pas, les metas (adresse, code postal, pays…) étaient donc cherchées pour la société 0
+        $company_id = (int) ($supplier['Id'] ?? $supplier['id'] ?? $supplier_id);
+        $meta = $this->get_supplier_metas($company_id);
 
         return [
-            'id' => $supplier['id'],
+            'id' => $company_id,
             'name' => $supplier['company_name'],
             'email' => $supplier['email'],
             'phone' => $supplier['phone'] ?: $meta['phone'],
