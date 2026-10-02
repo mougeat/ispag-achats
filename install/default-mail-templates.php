@@ -13,7 +13,6 @@ return [
         'subject'      => 'Purchase order {ORDER_NUMBER} - {PROJECT_NAME}',
         'message'      => "Hello {FIRST_NAME},\n\n"
             . "Please find attached our purchase order {ORDER_NUMBER} for the project \"{PROJECT_NAME}\".\n\n"
-            . "Items ordered:\n{PRODUCT_LIST}\n\n"
             . "Delivery address:\n{DELIVERY_ADDRESS}\n"
             . "Contact on site: {DELIVERY_CONTACT} {DELIVERY_PHONE}\n\n"
             . "Could you please confirm receipt of this order and send us your order confirmation with the delivery date?\n\n"
@@ -54,7 +53,7 @@ return [
         'message_type' => 'send_purchase_order',
         'lang'         => 'fr_FR',
         'subject'      => 'Commande {ORDER_NUMBER} - {PROJECT_NAME}',
-        'message'      => "Bonjour {FIRST_NAME},\n\nVeuillez trouver ci-joint notre commande {ORDER_NUMBER} pour le projet « {PROJECT_NAME} ».\n\nArticles commandés :\n{PRODUCT_LIST}\n\nAdresse de livraison :\n{DELIVERY_ADDRESS}\nContact sur place : {DELIVERY_CONTACT} {DELIVERY_PHONE}\n\nPourriez-vous nous confirmer la bonne réception de cette commande et nous envoyer votre confirmation de commande avec la date de livraison ?\n\nVous pouvez suivre cette commande ici : {PURCHASE_URL}\n\nMeilleures salutations,\n{USER_NAME}\n{COMPANY_NAME}",
+        'message'      => "Bonjour {FIRST_NAME},\n\nVeuillez trouver ci-joint notre commande {ORDER_NUMBER} pour le projet « {PROJECT_NAME} ».\n\nAdresse de livraison :\n{DELIVERY_ADDRESS}\nContact sur place : {DELIVERY_CONTACT} {DELIVERY_PHONE}\n\nPourriez-vous nous confirmer la bonne réception de cette commande et nous envoyer votre confirmation de commande avec la date de livraison ?\n\nVous pouvez suivre cette commande ici : {PURCHASE_URL}\n\nMeilleures salutations,\n{USER_NAME}\n{COMPANY_NAME}",
     ],
     [
         'message_type' => 'send_proposal_request',
@@ -78,7 +77,7 @@ return [
         'message_type' => 'send_purchase_order',
         'lang'         => 'de_DE',
         'subject'      => 'Bestellung {ORDER_NUMBER} - {PROJECT_NAME}',
-        'message'      => "Guten Tag {FIRST_NAME},\n\nanbei erhalten Sie unsere Bestellung {ORDER_NUMBER} für das Projekt „{PROJECT_NAME}“.\n\nBestellte Artikel:\n{PRODUCT_LIST}\n\nLieferadresse:\n{DELIVERY_ADDRESS}\nKontakt vor Ort: {DELIVERY_CONTACT} {DELIVERY_PHONE}\n\nBitte bestätigen Sie uns den Erhalt dieser Bestellung und senden Sie uns Ihre Auftragsbestätigung mit dem Liefertermin.\n\nSie können diese Bestellung hier verfolgen: {PURCHASE_URL}\n\nFreundliche Grüsse\n{USER_NAME}\n{COMPANY_NAME}",
+        'message'      => "Guten Tag {FIRST_NAME},\n\nanbei erhalten Sie unsere Bestellung {ORDER_NUMBER} für das Projekt „{PROJECT_NAME}“.\n\nLieferadresse:\n{DELIVERY_ADDRESS}\nKontakt vor Ort: {DELIVERY_CONTACT} {DELIVERY_PHONE}\n\nBitte bestätigen Sie uns den Erhalt dieser Bestellung und senden Sie uns Ihre Auftragsbestätigung mit dem Liefertermin.\n\nSie können diese Bestellung hier verfolgen: {PURCHASE_URL}\n\nFreundliche Grüsse\n{USER_NAME}\n{COMPANY_NAME}",
     ],
     [
         'message_type' => 'send_proposal_request',
@@ -102,7 +101,7 @@ return [
         'message_type' => 'send_purchase_order',
         'lang'         => 'it_IT',
         'subject'      => 'Ordine {ORDER_NUMBER} - {PROJECT_NAME}',
-        'message'      => "Buongiorno {FIRST_NAME},\n\nin allegato trovate il nostro ordine {ORDER_NUMBER} per il progetto «{PROJECT_NAME}».\n\nArticoli ordinati:\n{PRODUCT_LIST}\n\nIndirizzo di consegna:\n{DELIVERY_ADDRESS}\nReferente sul posto: {DELIVERY_CONTACT} {DELIVERY_PHONE}\n\nVi preghiamo di confermarci la ricezione di questo ordine e di inviarci la conferma d'ordine con la data di consegna.\n\nPotete seguire questo ordine qui: {PURCHASE_URL}\n\nCordiali saluti,\n{USER_NAME}\n{COMPANY_NAME}",
+        'message'      => "Buongiorno {FIRST_NAME},\n\nin allegato trovate il nostro ordine {ORDER_NUMBER} per il progetto «{PROJECT_NAME}».\n\nIndirizzo di consegna:\n{DELIVERY_ADDRESS}\nReferente sul posto: {DELIVERY_CONTACT} {DELIVERY_PHONE}\n\nVi preghiamo di confermarci la ricezione di questo ordine e di inviarci la conferma d'ordine con la data di consegna.\n\nPotete seguire questo ordine qui: {PURCHASE_URL}\n\nCordiali saluti,\n{USER_NAME}\n{COMPANY_NAME}",
     ],
     [
         'message_type' => 'send_proposal_request',

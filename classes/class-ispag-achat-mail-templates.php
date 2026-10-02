@@ -131,7 +131,8 @@ class ISPAG_Achat_Mail_Templates {
 
         $data = ['subject' => $subject, 'message' => $message, 'message_type' => $type, 'lang' => $lang, 'message_family' => self::FAMILY];
         if ($id) {
-            $ok = $wpdb->update(self::table(), $data, ['Id' => $id, 'message_family' => self::FAMILY]) !== false;
+            // created_by renseigné = modèle modifié par un utilisateur : l'installateur ne le remplace plus jamais
+            $ok = $wpdb->update(self::table(), $data + ['created_by' => get_current_user_id()], ['Id' => $id, 'message_family' => self::FAMILY]) !== false;
         } else {
             $ok = $wpdb->insert(self::table(), $data + [
                 'Brevo_id' => 0, 'prompt' => '', 'join_doc_typ' => '', 'selectionnable' => 1, 'created_by' => get_current_user_id(),
