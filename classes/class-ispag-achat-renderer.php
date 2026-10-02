@@ -125,6 +125,15 @@ class ISPAG_Achat_Renderer {
             $grouped[$group_name][] = $article;
         }
         
+        // Tri alphabétique des groupes (insensible à la casse), "sans groupe" en dernier
+        $no_group = __('No group', 'ispag-crm');
+        uksort($grouped, function ($a, $b) use ($no_group) {
+            if ($a === $b) return 0;
+            if ($a === $no_group) return 1;
+            if ($b === $no_group) return -1;
+            return strnatcasecmp(stripslashes($a), stripslashes($b));
+        });
+
         return $grouped;
     }
 
