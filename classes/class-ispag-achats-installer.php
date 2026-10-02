@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
  */
 class ISPAG_Achats_Installer {
 
-    const DB_VERSION = '1.3.0';
+    const DB_VERSION = '1.4.0';
     const OPTION     = 'ispag_achats_db_version';
 
     /** Droits utilisés par ce plugin (voir grant_default_caps()). */
@@ -98,7 +98,7 @@ class ISPAG_Achats_Installer {
     }
 
     /**
-     * Modèles d'e-mail par défaut (anglais) des commandes fournisseur (install/default-mail-templates.php).
+     * Modèles d'e-mail par défaut (anglais, français, allemand, italien) des commandes fournisseur (install/default-mail-templates.php).
      * Un modèle n'est ajouté que s'il n'existe pas déjà pour le même type et la même langue : les modèles existants
      * (ou modifiés depuis la page « Modèles d'e-mail ») ne sont jamais touchés.
      */
