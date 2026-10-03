@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * Gère les opérations de BDD et l'interface utilisateur pour les commandes d'achat ISPAG.
  * Utilise AJAX pour le traitement du formulaire, incluant la liaison aux projets clients/Hubspot.
@@ -8,7 +9,7 @@ class ISPAG_Achat_Commande_Manager {
 
     private $wpdb;
     private $table_commandes;      // wor9711_achats_commande_liste_fournisseurs
-    private $table_fournisseurs;   // wor9711_achats_fournisseurs
+    private $table_fournisseurs;   // wor9711_ispag_companies (isSupplier = 1)
     private $table_etats;          // wor9711_achats_etat_commandes_fournisseur
     private $table_projets;        // wor9711_achats_liste_commande (Projets Clients)
     private $text_domain = 'creation-reservoir';
@@ -29,7 +30,7 @@ class ISPAG_Achat_Commande_Manager {
 
         // Définir les noms de tables
         $this->table_commandes    = 'wor9711_achats_commande_liste_fournisseurs';
-        $this->table_fournisseurs = 'wor9711_achats_fournisseurs';
+        $this->table_fournisseurs = 'wor9711_ispag_companies';
         $this->table_etats        = 'wor9711_achats_etat_commandes_fournisseur';
         $this->table_projets      = 'wor9711_achats_liste_commande';
 
@@ -62,7 +63,6 @@ class ISPAG_Achat_Commande_Manager {
 
         // Enregistrement des hooks AJAX (connectés et déconnectés)
         add_action('wp_ajax_' . self::$instance->ajax_action, [self::$instance, 'handle_achat_ajax_submission']);
-        add_action('wp_ajax_nopriv_' . self::$instance->ajax_action, [self::$instance, 'handle_achat_ajax_submission']);
 
         // Enqueue des scripts et localisation des variables AJAX
         add_action('wp_enqueue_scripts', [self::$instance, 'enqueue_ajax_script']);
@@ -89,6 +89,7 @@ class ISPAG_Achat_Commande_Manager {
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('nouvelle_commande_action'),
             'action'  => $this->ajax_action,
+            'purchase_url' => trailingslashit(get_site_url()) . 'purchase/',
         ));
 
         $user_id = get_current_user_id();
@@ -116,7 +117,7 @@ class ISPAG_Achat_Commande_Manager {
      */
     private function get_liste_fournisseurs() {
         $sql = $this->wpdb->prepare(
-            "SELECT Id, Fournisseur FROM {$this->table_fournisseurs} WHERE isSupplier = %d ORDER BY Fournisseur ASC",
+            "SELECT id AS Id, company_name AS Fournisseur FROM {$this->table_fournisseurs} WHERE isSupplier = %d ORDER BY company_name ASC",
             1
         );
         $user_id = get_current_user_id();
@@ -325,7 +326,7 @@ class ISPAG_Achat_Commande_Manager {
 
         // 2. Vérification des permissions
         if (!current_user_can('view_supplier_order')) {
-            $this->logger->log('achat_commande_manager', 'ERROR: Permission refusée pour l\'utilisateur ' . $user_id, $user_id);
+            $this->logger->log('achat_commande_manager', 'ERROR: Permission denied pour l\'utilisateur ' . $user_id, $user_id);
             $this->send_json_error(esc_html__('Permission error. You do not have permission to perform this action.', $this->text_domain), 'permission');
         }
 

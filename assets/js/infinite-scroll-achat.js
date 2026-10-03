@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-    const COLS = 8;
+    const COLS = 7;
     const $list = $('#ispag-achats-list');
     if (!$list.length) return;
 
@@ -58,7 +58,7 @@ jQuery(document).ready(function($) {
             })
             .fail(function(err) {
                 if (err === 'abort' || id !== requestId) return; // remplacée par une requête plus récente
-                console.error('Erreur chargement achats :', err);
+                console.error('Error chargement achats :', err);
                 if (reset) $list.empty();
             })
             .always(function() {

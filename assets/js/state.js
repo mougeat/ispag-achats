@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(res => res.json())
             .then(data => {
-//                console.log(data);
+                    dropdown.innerHTML = ''; // sinon chaque clic ajoutait à nouveau tous les statuts
                     data.forEach(stat => {
                         const li = document.createElement('li');
                         li.textContent = stat.Etat;
@@ -89,7 +89,7 @@ $(document).on('click', '.achat-action-btn', function () {
 
 // async function ispag_send_rfq(achatId, btn) {
 //     btn.disabled = true;
-//     btn.innerText = "Envoi...";
+//     btn.innerText = "Sending...";
 
 //     try {
 //         const response = await fetch(ajaxurl, {
@@ -104,7 +104,7 @@ $(document).on('click', '.achat-action-btn', function () {
 //         const result = await response.json();
 
 //         if (!result.success) {
-//             alert("Erreur : " + result.message);
+//             alert("Error: " + result.message);
 //             return;
 //         }
 
@@ -130,7 +130,7 @@ async function ispag_send_generic_ajax({
     achatId, 
     btn, 
     action = 'ispag_prepare_rfq_mail', 
-    sendingText = 'Envoi...', 
+    sendingText = 'Sending...', 
     successCallback = null,
     type, 
 }) {
@@ -152,19 +152,20 @@ async function ispag_send_generic_ajax({
 
         const result = await response.json();
         if (!result.success) {
-            console.error('❌ Erreur PHP:', result.data.message);
-            alert("Erreur : " + result.data.message);
+            console.error('❌ Error PHP:', result.data.message);
+            alert("Error: " + result.data.message);
             return;
         }
 
         console.info('✅ Données reçues :', result.data);
         
         if (typeof successCallback === 'function') {
-            successCallback(result.data);
+            // Si le rappel renvoie une promesse (téléchargement du brouillon), le bouton reste désactivé jusqu'à sa fin
+            await successCallback(result.data);
         }
 
     } catch (e) {
-        console.error('🔥 Erreur Critique:', e);
+        console.error('🔥 Error Critique:', e);
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
@@ -177,7 +178,7 @@ function ispag_send_rfq(achatId, btn){
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'send_proposal_request',
         
         successCallback: (data) => {
@@ -188,17 +189,86 @@ function ispag_send_rfq(achatId, btn){
     });
 }
 
+// Télécharge un fichier sans quitter la page. Retourne une promesse résolue quand le serveur a terminé
+// (le PDF de la commande est alors enregistré) : on peut ensuite rafraîchir la liste des documents.
+function ispag_download_file(url) {
+    return fetch(url, { credentials: 'same-origin' })
+        .then(function (res) {
+            if (!res.ok) { throw new Error('HTTP ' + res.status); }
+            const m = /filename="?([^";]+)"?/i.exec(res.headers.get('Content-Disposition') || '');
+            const name = m ? m[1] : 'email.eml';
+            return res.blob().then(function (blob) { return { blob: blob, name: name }; });
+        })
+        .then(function (f) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(f.blob);
+            a.download = f.name;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 10000);
+        });
+}
+
+// Rafraîchit la liste des documents de la commande (le PDF ou les pièces jointes viennent d'y être ajoutés)
+function ispag_refresh_documents() {
+    $('.ispag-docu-card[data-entity-type="purchase"]').trigger('ispag:refresh-attachments');
+}
+
+/**
+ * Ouvre le message : brouillon Outlook (.eml, pièces jointes incluses) si le serveur en fournit un, sinon mailto.
+ * Retourne false si l'utilisateur renonce (aucun fichier à joindre), sinon une promesse (true = message créé) :
+ * le statut ne change que si le message a bien été créé.
+ */
+function ispag_open_mail(data, noFileMessage) {
+    if (data.eml_url) {
+        if (data.attachments_count === 0 && !window.confirm(noFileMessage)) {
+            return false;
+        }
+        // Première fois : on explique, d'office, comment ouvrir automatiquement le brouillon
+        if ($('#ispag-eml-help').attr('data-seen') !== '1') {
+            ispag_show_eml_help();
+        }
+        return ispag_download_file(data.eml_url).then(function () {
+            ispag_refresh_documents();
+            return true;
+        }).catch(function () {
+            alert('The email draft could not be created. Please try again.');
+            return false;
+        });
+    }
+    send_mail(data);
+    return Promise.resolve(true);
+}
+
+// Fenêtre d'aide « brouillon Outlook » : affichée au premier envoi, puis avec le bouton « i »
+function ispag_show_eml_help() {
+    $('#ispag-eml-help').prop('hidden', false);
+}
+function ispag_hide_eml_help() {
+    const $m = $('#ispag-eml-help');
+    $m.prop('hidden', true);
+    if ($m.attr('data-seen') !== '1') {
+        $m.attr('data-seen', '1');
+        $.post(ajaxurl, { action: 'ispag_eml_help_seen', nonce: $m.data('nonce') });
+    }
+}
+$(document).on('click', '.ispag-eml-help-btn', ispag_show_eml_help);
+$(document).on('click', '.ispag-eml-help__close', ispag_hide_eml_help);
+$(document).on('click', '#ispag-eml-help', function (e) { if (e.target === this) ispag_hide_eml_help(); });
+$(document).on('keydown', function (e) { if (e.key === 'Escape' && !$('#ispag-eml-help').prop('hidden')) ispag_hide_eml_help(); });
+
 function ispag_send_order(achatId, btn) {
     ispag_send_generic_ajax({
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'send_purchase_order',
         successCallback: (data) => {
-//            console.log(data);
-            send_mail(data);
-            updateStatus(achatId, data.next_status);
+            // Brouillon Outlook (.eml) : destinataire, objet, texte et bon de commande PDF déjà joints
+            const opened = ispag_open_mail(data, 'The purchase order PDF could not be attached. Open the email anyway?');
+            if (!opened) return;
+            return opened.then(function (ok) { if (ok) return updateStatus(achatId, data.next_status); });
         }
     });
 }
@@ -208,12 +278,13 @@ function ispag_send_drawing_modification(achatId, btn) {
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'drawing_modified',
         successCallback: (data) => {
-//            console.log(data);
-            send_mail(data);
-            updateStatus(achatId, data.next_status);
+            // Brouillon Outlook (.eml) avec le dernier fichier de chaque article en pièce jointe
+            const opened = ispag_open_mail(data, 'No drawing modification file was found for the articles of this order. Open the email without attachment?');
+            if (!opened) return;
+            return opened.then(function (ok) { if (ok) return updateStatus(achatId, data.next_status); });
         }
     });
 }
@@ -223,12 +294,13 @@ function ispag_send_drawing_validation(achatId, btn) {
         achatId: achatId,
         btn: btn,
         action: 'ispag_prepare_mail',
-        sendingText: 'Envoi de l\'email...',
+        sendingText: 'Sending the email...',
         type: 'drawing_validated',
         successCallback: (data) => {
-//            console.log(data);
-            send_mail(data);
-            updateStatus(achatId, data.next_status);
+            // Brouillon Outlook (.eml) avec le dernier fichier de chaque article en pièce jointe
+            const opened = ispag_open_mail(data, 'No drawing approval file was found for the articles of this order. Open the email without attachment?');
+            if (!opened) return;
+            return opened.then(function (ok) { if (ok) return updateStatus(achatId, data.next_status); });
         }
     });
 }
@@ -237,7 +309,7 @@ function ispag_send_drawing_validation(achatId, btn) {
 
  
 function updateStatus(achatId, Id){
-    fetch(ajaxurl, {
+    return fetch(ajaxurl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -245,8 +317,44 @@ function updateStatus(achatId, Id){
             achat_id: achatId,
             etat_id: Id
         })
-    }).then(() => 
-       location.reload()
-    // console.log('updated')
-    );
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (!res || !res.success) { throw new Error('update failed'); }
+        applyStatusChange(res.data);
+    })
+    .catch(() => {
+        // Repli : si la réponse n'est pas celle attendue, on recharge la page comme avant
+        location.reload();
+    });
+}
+
+/**
+ * Met à jour la page après un changement de statut, sans la recharger :
+ * bouton de statut, bouton d'action suivant, boutons du bas de l'onglet Articles, et onglet Suivi (rechargé en arrière-plan).
+ */
+function applyStatusChange(data) {
+    const $ = window.jQuery;
+    if (data.status) {
+        const btn = document.getElementById('achat-status-btn');
+        if (btn) {
+            btn.className = 'ispag-btn ' + (data.status.ClassCss || '');
+            btn.style.background = data.status.color || '';
+            btn.textContent = data.status.Etat + ' ⌄';
+        }
+    }
+    const dropdown = document.getElementById('achat-status-dropdown');
+    if (dropdown) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+
+    if ($) {
+        // boutons d'action du panneau de gauche (commande, ajout, bon de livraison, suppression) : dépendent du statut
+        if (typeof data.footer_html === 'string') { $('.ispag-action-buttons-secondary').html(data.footer_html); }
+        // onglet Suivi : à recharger (en arrière-plan si visible, sinon au prochain affichage)
+        const $suivi = $('#suivis[data-lazy-tab]');
+        if ($suivi.length) {
+            $suivi.data('lazyState', null);
+            if ($suivi.hasClass('active')) { $('.ispag-tabs-navigation .ispag-tab-btn[data-tab="suivis"]').trigger('click'); }
+            else { $suivi.html('<div class="ispag-skeleton-wrapper" aria-hidden="true"><span class="ispag-skeleton-line ispag-w-60"></span><span class="ispag-skeleton-line ispag-w-90"></span></div>'); }
+        }
+    }
 }

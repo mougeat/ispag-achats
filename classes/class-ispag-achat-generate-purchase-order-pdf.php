@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * Classe ISPAG_Achat_Generate_Purchase_Order_PDF
  *
@@ -20,6 +21,31 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
 
         add_action('wp_ajax_ispag_generate_purchase_order_pdf', [self::class, 'generate_purchase_order_pdf'], 10, 2);
         add_filter('ispag_print_purchase_order_btn', [self::class, 'print_purchase_order_btn'], 10, 2);
+        // Mise en page moderne du bon de commande (priorité 20 : remplace le gabarit « bulletin de livraison » du projet manager)
+        add_filter('ispag_generate_purchase_order_pdf', [self::class, 'build_pdf'], 20, 7);
+    }
+
+    /**
+     * Référence courte affichée dans le PDF : pour les articles sur mesure, le titre (très long) est déjà dans la description.
+     * Types : 1 = cuve (ASP), 2 = isolation (ISO), 5 = échangeur à plaques (EPT).
+     */
+    private static function pdf_ref($article) {
+        $short = [1 => 'ASP', 2 => 'ISO', 5 => 'EPT'];
+        return $short[(int) ($article->Type ?? 0)] ?? $article->RefSurMesure;
+    }
+
+    /** Construit le PDF avec la mise en page dédiée au bon de commande. */
+    public static function build_pdf($default, $project_header, $project_data, $infos, $table_header, $articles, $title) {
+        if (!class_exists('ISPAG_PDF_Generator')) {
+            $file = WP_PLUGIN_DIR . '/ispag-project-manager/classes/class-ispag-pdf-generator.php';
+            if (file_exists($file)) require_once $file;
+        }
+        if (!class_exists('ISPAG_PDF_Generator')) {
+            return $default;
+        }
+        $pdf = new ISPAG_Achat_Purchase_Order_PDF();
+        $pdf->generate_purchase_order($project_header, $project_data, $infos, $table_header, $articles, $title);
+        return $pdf;
     }
 
     /**
@@ -42,7 +68,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         if (!in_array($achat->EtatCommande, [1])) {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'Bouton non affiché : état de la commande non valide (EtatCommande != 1)',
+                'Button not displayed: invalid order status (EtatCommande != 1)',
                 $user_id
             );
             return;
@@ -76,7 +102,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
     /**
      * Génère le PDF de commande d'achat.
      */
-    public static function generate_purchase_order_pdf() {
+    public static function generate_purchase_order_pdf($return = false) {
         $user_id = get_current_user_id();
         self::$logger->log_user_action(
             'achat_generate_purchase_order_pdf',
@@ -88,10 +114,10 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         if (!current_user_can('edit_supplier_order')) {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'ERROR: Utilisateur non autorisé (edit_supplier_order requis)',
+                'ERROR: User not authorized (edit_supplier_order required)',
                 $user_id
             );
-            wp_die('Non autorisé');
+            wp_die('Not authorized');
         }
 
         global $wpdb;
@@ -131,6 +157,8 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         if (!empty($achat_id)) {
             $details_repo = new ISPAG_Achat_Details_Repository();
             $project_data = apply_filters('ispag_get_achat_by_id', null, $achat_id);
+            // Adresse de livraison (table des infos de commande, via l'ID d'achat) : affichée dans le PDF si renseignée
+            $project_data->delivery = $details_repo->get_infos_livraison($achat_id);
             $supplier_info = apply_filters('ispag_get_supplier_info', null, $project_data->IdFournisseur);
 
             self::$logger->log_db_change(
@@ -160,6 +188,14 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             $projectName = isset($parts[1]) ? trim($parts[1]) : '';
             $projectNum = trim($parts[0]);
 
+            // Nom du projet : celui du projet lié si disponible, sinon la partie après « - » de la référence d'achat
+            if (!empty($project_data->hubspot_deal_id)) {
+                $linked_project = apply_filters('ispag_get_project_by_deal_id', null, $project_data->hubspot_deal_id);
+                if (!empty($linked_project->ObjetCommande)) {
+                    $projectName = trim(stripslashes($linked_project->ObjetCommande));
+                }
+            }
+
             self::$logger->log_user_action(
                 'achat_generate_purchase_order_pdf',
                 'project_info_extracted',
@@ -170,6 +206,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             $infos = [
                 'nom_entreprise' => $supplier_info['name'],
                 'AdresseDeLivraison' => $supplier_info['address'],
+                'DeliveryAdresse2' => $supplier_info['address_2'] ?? '',
                 'Postal code' => $supplier_info['Postal code'],
                 'City' => $supplier_info['city'],
                 'country' => $supplier_info['country'],
@@ -184,17 +221,17 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             );
 
             // Préparation des en-têtes
-            $titre_project = __('Project', 'creation-reservoir');
+            $titre_project = __('Project name', 'creation-reservoir');
             $titre_ref = __('Order number', 'creation-reservoir');
             $titre_delivery_date = __('Order date', 'creation-reservoir');
 
             $table_header = [
                 ['label' => __('Ref', 'creation-reservoir'), 'key' => 'ref', 'width' => 20],
                 ['label' => __('Description', 'creation-reservoir'), 'key' => 'description', 'width' => 90],
-                ['label' => __('Unit price', 'creation-reservoir'), 'key' => 'unitPrice', 'width' => 25, 'align' => 'C'],
-                ['label' => __('Quantity', 'creation-reservoir'), 'key' => 'qty', 'width' => 15, 'align' => 'C'],
-                ['label' => __('Discount', 'creation-reservoir'), 'key' => 'discount', 'width' => 15, 'align' => 'C'],
-                ['label' => __('Total', 'creation-reservoir'), 'key' => 'total', 'width' => 25, 'align' => 'C'],
+                ['label' => __('Unit price', 'creation-reservoir'), 'key' => 'unitPrice', 'width' => 25, 'align' => 'R'],
+                ['label' => __('Qty', 'creation-reservoir'), 'key' => 'qty', 'width' => 15, 'align' => 'C'],
+                ['label' => __('Disc.', 'creation-reservoir'), 'key' => 'discount', 'width' => 15, 'align' => 'C'],
+                ['label' => __('Total', 'creation-reservoir'), 'key' => 'total', 'width' => 25, 'align' => 'R'],
             ];
 
             $project_header = [
@@ -224,8 +261,8 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
 
             foreach ($purchase_articles as $article) {
                 $articles[] = [
-                    'ref' => $article->RefSurMesure,
-                    'description' => $article->DescSurMesure,
+                    'ref' => self::pdf_ref($article),
+                    'description' => $article->DescSurMesure, // nettoyé (HTML/entités) par le gabarit PDF
                     'unitPrice' => number_format($article->UnitPrice, 2, '.', "'"),
                     'qty' => $article->Qty,
                     'discount' => $article->discount .'%',
@@ -242,10 +279,10 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         } else {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'ERROR: Aucun projet ou achat défini',
+                'ERROR: No project or purchase defined',
                 $user_id
             );
-            wp_die('Aucun projet ou achat de défini');
+            wp_die('No project or purchase defined');
         }
 
         $title = __('Purchase order', 'creation-reservoir');
@@ -262,9 +299,12 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         $pdf = apply_filters('ispag_generate_purchase_order_pdf', null, $project_header, $project_data, $infos, $table_header, $articles, $title);
 
         if ($pdf) {
-            $title = sanitize_filename($title);
+            // Nom de fichier propre à la commande, avec extension et unique : avant, tous les bons de commande
+            // s'enregistraient sous le même nom « purchase-order » (sans .pdf) et s'écrasaient les uns les autres.
             $wp_upload_dir = wp_upload_dir();
-            $uploadedfile = trailingslashit($wp_upload_dir['path']) . $title;
+            $stored_name   = wp_unique_filename($wp_upload_dir['path'], sanitize_file_name($file_name . '.pdf'));
+            $title         = $stored_name;
+            $uploadedfile  = trailingslashit($wp_upload_dir['path']) . $stored_name;
             $pdf->Output($uploadedfile, 'F');
 
             self::$logger->log_user_action(
@@ -301,7 +341,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
                     'Date'            => time(),
                     'dateReadable'    => current_time('mysql'),
                     'IdUser'          => $userId,
-                    'Historique'      => 'Ajout d\'une pièce jointe',
+                    'Historique'      => 'Adding an attachment',
                     'IdMedia'         => $attach_id,
                     'is_task'         => 0,
                     'is_done'         => 0,
@@ -333,6 +373,11 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
                 $user_id
             );
 
+            if ($return) {
+                // Utilisé par le brouillon Outlook : on renvoie le PDF (déjà enregistré dans la médiathèque et l'historique)
+                return ['content' => $pdf->Output('S'), 'file_name' => $file_name . '.pdf'];
+            }
+
             $pdf->Output('I', $file_name . '.pdf');
             self::$logger->log_user_action(
                 'achat_generate_purchase_order_pdf',
@@ -344,7 +389,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
         } else {
             self::$logger->log(
                 'achat_generate_purchase_order_pdf',
-                'ERROR: Échec de la génération du PDF',
+                'ERROR: PDF generation failed',
                 $user_id
             );
         }

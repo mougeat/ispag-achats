@@ -27,7 +27,7 @@ class ISPAG_Achat_Manager
 
         $this->table_achats = $wpdb->prefix . 'achats_commande_liste_fournisseurs';
         $this->table_articles = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
-        $this->table_fournisseurs = $wpdb->prefix . 'achats_fournisseurs';
+        $this->table_fournisseurs = $wpdb->prefix . 'ispag_companies';
 
         // $this->logger->log_user_action('achat_manager', 'class_constructed', [], $user_id);
     }
@@ -58,6 +58,46 @@ class ISPAG_Achat_Manager
         add_action('wp_ajax_ispag_bulk_achat_update_articles', [self::class, 'bulk_achat_update_articles']);
         add_action('wp_ajax_ispag_delete_achat', [self::class, 'delete_achat']);
         add_action('wp_ajax_ispag_save_confirmed_data', [self::class, 'ispag_save_confirmed_data_handler']);
+        add_action('wp_ajax_ispag_achat_load_tab', [self::class, 'ajax_load_tab']);
+    }
+
+    /**
+     * Rend le contenu d'un onglet secondaire de la page détail achat (chargé à la demande).
+     * Mêmes actions/fonctions qu'avant, seulement appelées à la demande au lieu du premier rendu.
+     */
+    public static function ajax_load_tab()
+    {
+        check_ajax_referer('ispag_achat_nonce', 'nonce');
+
+        if (!current_user_can('view_supplier_order'))
+        {
+            wp_send_json_error('forbidden', 403);
+        }
+
+        $achat_id = absint($_POST['achat_id'] ?? 0);
+        $tab = sanitize_key($_POST['tab'] ?? '');
+        if (!$achat_id || !in_array($tab, ['articles', 'details', 'suivis', 'documents'], true))
+        {
+            wp_send_json_error('bad_request', 400);
+        }
+
+        ob_start();
+        switch ($tab)
+        {
+            case 'articles':
+                do_action('ispag_achat_articles_tab', $achat_id);
+                break;
+            case 'details':
+                do_action('ispag_achat_details_tab', $achat_id);
+                break;
+            case 'suivis':
+                do_action('ispag_display_achat_suivi', $achat_id);
+                break;
+            case 'documents':
+                echo ISPAG_Achat_Renderer::render_documents_tab($achat_id);
+                break;
+        }
+        wp_send_json_success(['html' => ob_get_clean()]);
     }
 
     /** Évite de relocaliser/recharger les assets si plusieurs shortcodes sont sur la même page. */
@@ -75,6 +115,7 @@ class ISPAG_Achat_Manager
         global $wpdb;
 
         wp_enqueue_style('ispag-main-style');
+        wp_enqueue_style('ispag-achat-detail', plugin_dir_url(__FILE__) . '../assets/css/achat-detail.css', ['ispag-main-style'], filemtime(plugin_dir_path(__FILE__) . '../assets/css/achat-detail.css'));
 
         // Le socle skeleton vit dans le thème (generatepress-child). Dépendance seulement s'il est enregistré,
         // sinon un handle manquant empêcherait le chargement du script.
@@ -83,12 +124,12 @@ class ISPAG_Achat_Manager
             $scroll_deps[] = 'ispag-skeleton';
         }
 
-        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', $scroll_deps, false, true);
-        wp_enqueue_script('ispag-state-achats', plugin_dir_url(__FILE__) . '../assets/js/state.js', ['jquery'], false, true);
-        wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', ['jquery'], false, true);
-        wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', ['jquery'], false, true);
+        wp_enqueue_script('ispag-scroll-achats', plugin_dir_url(__FILE__) . '../assets/js/infinite-scroll-achat.js', $scroll_deps, filemtime(plugin_dir_path(__FILE__) . '../assets/js/infinite-scroll-achat.js'), true);
+        wp_enqueue_script('ispag-state-achats', plugin_dir_url(__FILE__) . '../assets/js/state.js', ['jquery'], filemtime(plugin_dir_path(__FILE__) . '../assets/js/state.js'), true);
+        wp_enqueue_script('ispag-details-achats', plugin_dir_url(__FILE__) . '../assets/js/details-achat.js', ['jquery'], filemtime(plugin_dir_path(__FILE__) . '../assets/js/details-achat.js'), true);
+        wp_enqueue_script('ispag-header-achats', plugin_dir_url(__FILE__) . '../assets/js/header.js', ['jquery'], filemtime(plugin_dir_path(__FILE__) . '../assets/js/header.js'), true);
 
-        wp_localize_script('ispag-scroll-achats', 'ajaxurl', admin_url('admin-ajax.php'));
+        wp_add_inline_script('ispag-scroll-achats', 'var ajaxurl = ' . wp_json_encode(admin_url('admin-ajax.php')) . ';', 'before');
 
         wp_localize_script('ispag-scroll-achats', 'ispagVars', [
             'ajaxurl' => admin_url('admin-ajax.php'),
@@ -96,10 +137,12 @@ class ISPAG_Achat_Manager
             'loading_text' => __('Loading', 'creation-reservoir'),
             'all_loaded_text' => __('All projects are loaded', 'creation-reservoir'),
             'security' => wp_create_nonce('ispag_achat_nonce'),
+            'bulk_nonce' => wp_create_nonce('ispag_bulk_update'),
+            'add_product_nonce' => ISPAG_Achat_Add_Product::nonce(),
         ]);
 
         $fournisseurs = $wpdb->get_results(
-            "SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC"
+            "SELECT id AS Id, company_name AS Fournisseur FROM {$wpdb->prefix}ispag_companies WHERE isSupplier = 1 ORDER BY company_name ASC"
         );
 
         $formatted_fournisseurs = array_map(function($f)
@@ -132,8 +175,8 @@ class ISPAG_Achat_Manager
             echo '<div class="ispag-alert ispag-alert-danger">
                         <i class="dashicons dashicons-lock"></i>
                         <strong>' . esc_html__('Restricted access', 'ispag-crm') . ' :</strong> ' .
-                        esc_html__('You do not have the necessary rights to view this order.', 'ispag-crm') . '<br/>
-                        <a href="' . home_url('/wp-login.php') . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
+                        esc_html__('You do not have the necessary rights to view this order.', 'ispag-crm') . (current_user_can('manage_options') ? ' <code>view_supplier_order</code> — <a href="' . esc_url(admin_url('admin.php?page=ispag-rights')) . '">ISPAG Rights</a>' : '') . '<br/>
+                        <a href="' . wp_login_url( get_permalink() ) . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
                     </div>';
             return ob_get_clean();
         }
@@ -152,23 +195,22 @@ class ISPAG_Achat_Manager
         ob_start();
         include plugin_dir_path(__FILE__) . 'templates/achats-filters.php';
 
-        echo '<div class="ispag-table-wrapper">';
+        echo '<div class="ispag-table-wrapper ispag-card">';
         echo '<table class="ispag-project-table">';
         echo '<thead><tr>
-                <th>#</th>
                 <th>' . __('Reference', 'creation-reservoir') . '</th>
                 <th>' . __('Order date', 'creation-reservoir') . '</th>
                 <th>' . __('Delivery date', 'creation-reservoir') . '</th>
                 <th>' . __('Supplier', 'creation-reservoir') . '</th>
                 <th>' . __('Order amount', 'creation-reservoir') . '</th>
-                <th>' . __('Confirmation de commande', 'creation-reservoir') . '</th>
+                <th>' . __('Order confirmation', 'creation-reservoir') . '</th>
                 <th>' . __('State', 'creation-reservoir') . '</th>
             </tr></thead>';
         echo '<tbody id="ispag-achats-list">'; 
-        echo self::render_skeleton_rows(8, 10);
+        echo self::render_skeleton_rows(7, 10);
         echo '</tbody>';
         echo '</table></div>';
-        // echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Chargement...</div>';
+        // echo '<div id="ispag-achats-loading" style="display: none; text-align: center; padding: 10px;">Loading...</div>';
 
         $logger->log_user_action('achat_manager', 'ispag_achats_shortcode_complete', [], $user_id);
         return ob_get_clean();
@@ -253,11 +295,11 @@ class ISPAG_Achat_Manager
         {
             $fournisseur_nom = $wpdb->get_var(
                 $wpdb->prepare(
-                    "SELECT Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d",
+                    "SELECT company_name FROM {$wpdb->prefix}ispag_companies WHERE id = %d",
                     $achat->IdFournisseur
                 )
             );
-            $logger->log_db_change('achat_manager', 'achats_fournisseurs', 'FETCH_FOURNISSEUR', ['achat_id' => $achat->Id, 'fournisseur_id' => $achat->IdFournisseur, 'fournisseur_nom' => $fournisseur_nom], $user_id);
+            $logger->log_db_change('achat_manager', 'ispag_companies', 'FETCH_FOURNISSEUR', ['achat_id' => $achat->Id, 'fournisseur_id' => $achat->IdFournisseur, 'fournisseur_nom' => $fournisseur_nom], $user_id);
         }
 
         $responsable_nom = isset($achat->responsable_nom) ? $achat->responsable_nom : '';
@@ -277,16 +319,17 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'render_achat_row_complete', ['achat_id' => $achat->Id], $user_id);
 
+        $badge_color = $bgcolor ?: '#ccc';
+
         return '
-            <tr>
-                <td style="background-color:#D1E7DD;">' . ($index + 1) . '</td>
-                <td><a href="' . esc_url(home_url('/purchase/' . $achat->Id)) . '" target="_blank" class="ispag_achat_link"><strong>' . esc_html(stripslashes($achat->RefCommande)) . '</strong></a></td>
-                <td>' . esc_html($date_creation) . '</td>
-                <td>' . esc_html($date_reception) . '</td>
-                <td><strong>' . esc_html($fournisseur_nom) . '</strong><br><small class="creator-name">' . __('by', 'creation-reservoir') . ' : ' . esc_html($responsable_nom) . '</small></td>
-                <td>' . number_format_i18n($achat->prix_net_total, 2) . '</td>
-                <td>' . esc_html($achat->ConfCmdFournisseur) . '</td>
-                <td><span class="ispag-state-badge ' . esc_attr($class_css) . '" style="background-color:' . esc_attr($bgcolor) . '; opacity: 0.8;">' . esc_html($etat_text) . '</span></td>
+            <tr class="project-row-item">
+                <td data-label="' . esc_attr__('Reference', 'creation-reservoir') . '" class="td-title"><strong><a href="' . esc_url(home_url('/purchase/' . $achat->Id)) . '" class="project-link ispag_achat_link">' . esc_html(stripslashes($achat->RefCommande)) . '</a></strong></td>
+                <td data-label="' . esc_attr__('Order date', 'creation-reservoir') . '">' . esc_html($date_creation) . '</td>
+                <td data-label="' . esc_attr__('Delivery date', 'creation-reservoir') . '">' . esc_html($date_reception) . '</td>
+                <td data-label="' . esc_attr__('Supplier', 'creation-reservoir') . '" class="td-contact"><span class="company-name">' . esc_html($fournisseur_nom) . '</span><br><small class="creator-name">' . __('by', 'creation-reservoir') . ' : ' . esc_html($responsable_nom) . '</small></td>
+                <td data-label="' . esc_attr__('Order amount', 'creation-reservoir') . '">' . number_format_i18n($achat->prix_net_total, 2) . '</td>
+                <td data-label="' . esc_attr__('Order confirmation', 'creation-reservoir') . '">' . esc_html($achat->ConfCmdFournisseur) . '</td>
+                <td data-label="' . esc_attr__('State', 'creation-reservoir') . '" class="td-step"><span class="ispag-next-step-badge step-badge ' . esc_attr($class_css) . '" style="color:' . esc_attr($badge_color) . '; border:1px solid ' . esc_attr($badge_color) . ';">' . esc_html($etat_text) . '</span></td>
             </tr>
         ';
     }
@@ -330,7 +373,7 @@ class ISPAG_Achat_Manager
                         <i class="dashicons dashicons-lock"></i>
                         <strong>' . esc_html__('Restricted access', 'ispag-crm') . ' :</strong> ' .
                          esc_html__('You do not have the necessary rights to view this order.', 'ispag-crm') . '<br/>
-                        <a href ="'. home_url('/wp-login.php') . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
+                        <a href ="'. wp_login_url( get_permalink() ) . '">' . esc_html__('To login page', 'ispag-crm') . '</a>
                     </div>';
         }
 
@@ -347,7 +390,7 @@ class ISPAG_Achat_Manager
         if (!$achat_id)
         {
             $logger->log('achat_manager', 'ERROR: Missing or invalid achat_id', $user_id);
-            echo '<div class="ispag-error-message">ID d\'achat manquant.</div>';
+            echo '<div class="ispag-error-message">Missing purchase ID.</div>';
             return;
         }
 
@@ -363,17 +406,17 @@ class ISPAG_Achat_Manager
         if (!$achat)
         {
             $logger->log('achat_manager', 'ERROR: Achat not found', $user_id);
-            return 'Achat introuvable.';
+            return esc_html__('Purchase not found.', 'creation-reservoir');
         }
 
-        $fournisseurs = $wpdb->get_results("SELECT Id, Fournisseur FROM {$wpdb->prefix}achats_fournisseurs WHERE isSupplier = 1 ORDER BY Fournisseur ASC");
-        $logger->log_db_change('achat_manager', 'achats_fournisseurs', 'SELECT_ALL', ['count' => count($fournisseurs)], $user_id);
+        $fournisseurs = $wpdb->get_results("SELECT id AS Id, company_name AS Fournisseur FROM {$wpdb->prefix}ispag_companies WHERE isSupplier = 1 ORDER BY company_name ASC");
+        $logger->log_db_change('achat_manager', 'ispag_companies', 'SELECT_ALL', ['count' => count($fournisseurs)], $user_id);
 
         include plugin_dir_path(__FILE__) . 'templates/achat-detail.php';
 
         $logger->log_user_action('achat_manager', 'ispag_achat_detail_shortcode_complete', ['achat_id' => $achat_id], $user_id);
 
-        $title = esc_html(stripslashes($achat->RefCommande ?? 'Achat sans titre'));
+        $title = esc_html(stripslashes($achat->RefCommande ?? 'Untitled purchase'));
         echo "<script>
             document.addEventListener('DOMContentLoaded', function() {
                 // Récupère le titre actuel de la page (ex: 'Mon Compte - Mon Site')
@@ -393,7 +436,7 @@ class ISPAG_Achat_Manager
         $logger = ISPAG_Logger::get_instance();
         $logger->log_user_action('achat_manager', 'bulk_selected_article_start', ['achat_id' => $achat_id], $user_id);
 
-        $can_manage_order = current_user_can('manage_order');
+        $can_manage_order = current_user_can('manage_order') || current_user_can('edit_supplier_order');
         if (!$can_manage_order)
         {
             $logger->log('achat_manager', 'ERROR: User cannot manage order', $user_id);
@@ -402,96 +445,25 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'bulk_actions_rendered', ['achat_id' => $achat_id], $user_id);
 
-        return '<div class="ispag-bulk-actions" style="border: 1px solid #ccc; padding: 1rem; margin: 1rem 0; display:none;">
-            <h4>'. __('Bulk update selected articles', 'creation-reservoir') . '</h4>
-            <input type="hidden" id="achat-id" value="'.$achat_id.'">
+        return '<div class="ispag-card ispag-bulk-actions" data-achat-id="' . esc_attr($achat_id) . '" style="display:none;">
+            <h5>' . esc_html__('Bulk update selected articles', 'creation-reservoir') . '</h5>
+            <input type="hidden" id="achat-id" value="' . esc_attr($achat_id) . '">
 
-            <label>' . __('Factory departure date', 'creation-reservoir') . ' :
+            <label>' . esc_html__('Factory departure date', 'creation-reservoir') . '
                 <input type="date" id="bulk-date-depart">
             </label>
 
-            <label>
-                📦 ' . __('Delivered on', 'creation-reservoir') .' :
+            <label>📦 ' . esc_html__('Delivered on', 'creation-reservoir') . '
                 <input type="date" id="bulk-livre-date">
             </label>
 
-            <label>
-                🧾 ' . __('Invoiced on', 'creation-reservoir') .' :
+            <label>🧾 ' . esc_html__('Invoiced on', 'creation-reservoir') . '
                 <input type="date" id="bulk-invoiced-date">
             </label>
 
-            <button id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . __('Apply changes', 'creation-reservoir') . '</button>
-        </div>
-        <script>
-            document.addEventListener(\'DOMContentLoaded\', function () {
-                const cb = document.getElementById(\'bulk-demande-ok\');
-                const db = document.getElementById(\'bulk-drawing-ok\');
-                if(cb) {
-                    cb.indeterminate = true;
-                    db.indeterminate = true;
-                }
-            });
-            document.querySelectorAll(\'.ispag-article-checkbox\').forEach(cb => {
-                cb.addEventListener(\'change\', () => {
-                    const bulkDiv = document.querySelector(\'.ispag-bulk-actions\');
-                    const anyChecked = [...document.querySelectorAll(\'.ispag-article-checkbox\')].some(cb => cb.checked);
-                    if (anyChecked) {
-                        bulkDiv.style.display = \'block\';
-                    } else {
-                        bulkDiv.style.display = \'none\';
-                    }
-                });
-            });
-
-            document.getElementById(\'apply-bulk-update\').addEventListener(\'click\', function () {
-                const selectedIds = [...document.querySelectorAll(\'.ispag-article-checkbox:checked\')].map(cb => cb.dataset.articleId);
-
-                if (selectedIds.length === 0) {
-                    alert("' . __('No article selected', 'creation-reservoir') . '");
-                    return;
-                }
-
-                const data = {
-                    action: \'ispag_bulk_achat_update_articles\',
-                    articles: selectedIds,
-                    achat_id: document.getElementById(\'achat-id\').value,
-                    date_depart: document.getElementById(\'bulk-date-depart\').value,
-                    livre_date: document.getElementById(\'bulk-livre-date\').value,
-                    invoiced_date: document.getElementById(\'bulk-invoiced-date\').value,
-                    _ajax_nonce: \'' . wp_create_nonce('ispag_bulk_update') . '\'
-                };
-
-                fetch(\'' . admin_url('admin-ajax.php') . '\', {
-                    method: \'POST\',
-                    headers: { \'Content-Type\': \'application/x-www-form-urlencoded\' },
-                    body: new URLSearchParams(data)
-                })
-                .then(res => res.json())
-                .then(response => {
-                    const msgBox = document.getElementById(\'ispag-bulk-message\');
-
-                    if (response.success) {
-                        msgBox.textContent = response.data.message;
-                        msgBox.style.display = \'block\';
-                        msgBox.style.backgroundColor = \'#d4edda\';
-                        msgBox.style.color = \'#155724\';
-                        msgBox.style.border = \'1px solid #c3e6cb\';
-
-                        setTimeout(() => {
-                            msgBox.style.display = \'none\';
-                            location.reload();
-                        }, 3000);
-                    } else {
-                        msgBox.textContent = response.data?.message || \'Erreur inconnue\';
-                        msgBox.style.display = \'block\';
-                        msgBox.style.backgroundColor = \'#f8d7da\';
-                        msgBox.style.color = \'#721c24\';
-                        msgBox.style.border = \'1px solid #f5c6cb\';
-                    }
-                });
-            });
-        </script>
-        ';
+            <button type="button" id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . esc_html__('Apply changes', 'creation-reservoir') . '</button>
+            <div id="ispag-bulk-message" class="bulk_message" style="display:none; margin-top:8px; padding:6px 10px; border-radius:6px;"></div>
+        </div>';
     }
 
     public static function bulk_achat_update_articles()
@@ -504,9 +476,9 @@ class ISPAG_Achat_Manager
         $date_depart_has_update = false;
 
         $article_ids = $_POST['articles'] ?? [];
-        $achat_id = $_POST['achat_id'] ?? [];
+        $achat_id = intval($_POST['achat_id'] ?? 0);
 
-        if (!current_user_can('manage_order') || empty($article_ids))
+        if (!(current_user_can('edit_supplier_order') || current_user_can('manage_order')) || empty($article_ids))
         {
             $logger->log('achat_manager', 'ERROR: Unauthorized or empty selection', $user_id);
             wp_send_json_error(['message' => __('Unauthorized or empty selection', 'creation-reservoir')]);
@@ -530,55 +502,61 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'articles_parsed', ['ids' => $ids], $user_id);
 
+        if (!$ids) {
+            wp_send_json_error(['message' => __('Unauthorized or empty selection', 'creation-reservoir')]);
+        }
         $in_clause = implode(',', $ids);
 
         $date_depart = $_POST['date_depart'] ?? null;
-        if ($date_depart)
+        $depart_ts   = $date_depart ? strtotime($date_depart) : false;
+        $livre_ts    = !empty($_POST['livre_date']) ? strtotime($_POST['livre_date']) : false;
+        $invoiced_ts = !empty($_POST['invoiced_date']) ? strtotime($_POST['invoiced_date']) : false;
+
+        if ($depart_ts)
         {
-            $timestamp = strtotime($date_depart);
-            if ($timestamp)
-            {
-                $updates[] = "TimestampDateLivraisonConfirme = '" . intval($timestamp) . "'";
-                $date_depart_has_update = true;
-                $logger->log_user_action('achat_manager', 'date_depart_added', ['timestamp' => $timestamp], $user_id);
-            }
+            $updates[] = 'TimestampDateLivraisonConfirme = ' . intval($depart_ts);
+            $date_depart_has_update = true;
+        }
+        if ($livre_ts)
+        {
+            // Reçu = quantité commandée (c'est une quantité) ; la date de livraison est la date confirmée, sauf date de départ saisie en même temps
+            $updates[] = 'Recu = Qty';
+            if (!$depart_ts) $updates[] = 'TimestampDateLivraisonConfirme = ' . intval($livre_ts);
+        }
+        if ($invoiced_ts)
+        {
+            $updates[] = 'Facture = Qty';
         }
 
-        if (!empty($_POST['livre_date']))
-        {
-            $timestamp = strtotime($_POST['livre_date']);
-            if ($timestamp)
-            {
-                $updates[] = "Recu = 1";
-                $logger->log_user_action('achat_manager', 'livre_date_added', ['timestamp' => $timestamp], $user_id);
-            }
-        }
-
-        if (!empty($_POST['invoiced_date']))
-        {
-            $timestamp = strtotime($_POST['invoiced_date']);
-            if ($timestamp)
-            {
-                $updates[] = "Facture = 1";
-                $logger->log_user_action('achat_manager', 'invoiced_date_added', ['timestamp' => $timestamp], $user_id);
-            }
-        }
-
+        $affected = 0;
         if (!empty($updates))
         {
-            $query = "UPDATE {$wpdb->prefix}achats_articles_cmd_fournisseurs SET " . implode(', ', $updates) . " WHERE id IN ($in_clause)";
+            $query = "UPDATE {$wpdb->prefix}achats_articles_cmd_fournisseurs SET " . implode(', ', $updates) . " WHERE Id IN ($in_clause)";
             $result = $wpdb->query($query);
             $logger->log_db_change('achat_manager', 'achats_articles_cmd_fournisseurs', 'BULK_UPDATE', ['query' => $query, 'result' => $result], $user_id);
+            if ($result === false) {
+                wp_send_json_error(['message' => __('Database error: nothing was saved', 'creation-reservoir')]);
+            }
+            $affected = (int) $result;
 
-            if ($date_depart_has_update && $date_depart)
+            if ($date_depart_has_update && $depart_ts)
             {
-                do_action('ispag_update_delivery_date_from_purchase', null, $achat_id, $ids, $timestamp);
+                do_action('ispag_update_delivery_date_from_purchase', null, $achat_id, $ids, $depart_ts);
                 $logger->log_user_action('achat_manager', 'delivery_date_update_triggered', ['achat_id' => $achat_id], $user_id);
             }
+
+            // Transport / dédouanement livrés avec le reste, avancement automatique du statut de la commande
+            if ($achat_id) {
+                do_action('ispag_check_auto_status_for_achat', (int) $achat_id);
+            }
+        }
+        else
+        {
+            wp_send_json_error(['message' => __('Nothing to apply: fill in at least one date', 'creation-reservoir')]);
         }
 
         $logger->log_user_action('achat_manager', 'bulk_achat_update_articles_complete', [], $user_id);
-        wp_send_json_success(['message' => __('Bulk update applied successfully', 'creation-reservoir')]);
+        wp_send_json_success(['message' => __('Bulk update applied successfully', 'creation-reservoir'), 'updated' => $affected]);
     }
 
     public static function handle_inline_edit($updated, $args)
@@ -603,11 +581,11 @@ class ISPAG_Achat_Manager
         if ($args['field'] == 'Fournisseur')
         {
             $supplier_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT Id FROM {$wpdb->prefix}achats_fournisseurs WHERE Fournisseur = %s",
+                "SELECT id FROM {$wpdb->prefix}ispag_companies WHERE company_name = %s AND isSupplier = 1",
                 $args['value']
             ));
 
-            $logger->log_db_change('achat_manager', 'achats_fournisseurs', 'FETCH_SUPPLIER_ID', ['supplier_name' => $args['value'], 'supplier_id' => $supplier_id], $user_id);
+            $logger->log_db_change('achat_manager', 'ispag_companies', 'FETCH_SUPPLIER_ID', ['supplier_name' => $args['value'], 'supplier_id' => $supplier_id], $user_id);
 
             if (!$supplier_id)
             {
@@ -662,13 +640,13 @@ class ISPAG_Achat_Manager
         if (empty($article_id) || empty($purchase_id))
         {
             $logger->log('achat_manager', 'ERROR: Missing required data (article_id or purchase_id)', $user_id);
-            wp_send_json_error('Données obligatoires manquantes (ID article ou ID achat).');
+            wp_send_json_error('Required data missing (article ID or purchase ID).');
         }
 
         if (empty($post_datas))
         {
             $logger->log('achat_manager', 'ERROR: No data to save', $user_id);
-            wp_send_json_error('Aucune donnée à enregistrer.');
+            wp_send_json_error('No data to save.');
         }
 
         $logger->log_user_action('achat_manager', 'data_validation_passed', [], $user_id);
@@ -720,13 +698,13 @@ class ISPAG_Achat_Manager
         {
             $logger->log_user_action('achat_manager', 'save_confirmed_data_success', [], $user_id);
             wp_send_json_success([
-                'message' => 'Données mises à jour avec succès.',
+                'message' => 'Data updated successfully.',
                 'purchase_update' => $res_purchase
             ]);
         }
         else
         {
-            $error_msg = isset($res_tank['message']) ? $res_tank['message'] : 'Erreur lors de la mise à jour technique.';
+            $error_msg = isset($res_tank['message']) ? $res_tank['message'] : 'Error during the technical update.';
             $logger->log('achat_manager', 'ERROR: Save failed - ' . $error_msg, $user_id);
             wp_send_json_error($error_msg);
         }
@@ -736,7 +714,7 @@ class ISPAG_Achat_Manager
         global $wpdb;
 
         $table_purchase = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
-        $table_project  = 'wor9711_achats_details_commande';
+        $table_project  = $wpdb->prefix . 'achats_details_commande';
 
         $data = [
             'RefSurMesure'                   => sanitize_text_field($post_data['article_title'] ?? ''),
@@ -765,17 +743,17 @@ class ISPAG_Achat_Manager
             $inserted = $wpdb->insert($table_purchase, $data);
 
             if ($inserted === false) {
-                return ['success' => false, 'message' => 'Erreur lors de l\'insertion'];
+                return ['success' => false, 'message' => 'Error while inserting'];
             }
 
-            return ['success' => true, 'message' => 'Création OK'];
+            return ['success' => true, 'message' => 'Creation OK'];
         }
 
         // ── Mise à jour de la table achat ─────────────────────────────────────
         $updated = $wpdb->update($table_purchase, $data, ['Id' => $article_id]);
 
         if ($updated === false) {
-            return ['success' => false, 'message' => 'Erreur à la mise à jour'];
+            return ['success' => false, 'message' => 'Update error'];
         }
 
         // ── Récupération de IdCommandeClient ──────────────────────────────────
@@ -793,7 +771,13 @@ class ISPAG_Achat_Manager
             );
         }
 
-        return ['success' => true, 'message' => 'Mise à jour OK'];
+        // Transport / dédouanement livrés avec le reste, avancement automatique du statut de la commande
+        $achat_of_article = (int) $wpdb->get_var($wpdb->prepare("SELECT IdCommande FROM {$table_purchase} WHERE Id = %d", $article_id));
+        if ($achat_of_article) {
+            do_action('ispag_check_auto_status_for_achat', $achat_of_article);
+        }
+
+        return ['success' => true, 'message' => 'Update OK'];
     }
 
     public function set_article_as_delivered($html, $ids, $date)
@@ -861,7 +845,7 @@ class ISPAG_Achat_Manager
         if ($deleted === false)
         {
             $logger->log('achat_manager', 'ERROR: Failed to delete achat - ' . $wpdb->last_error, $user_id);
-            wp_send_json_error('Échec suppression');
+            wp_send_json_error('Deletion failed');
         }
 
         $logger->log_user_action('achat_manager', 'delete_achat_complete', ['achat_id' => $achat_id], $user_id);
@@ -874,7 +858,6 @@ class ISPAG_Achat_Manager
 // ----------------------------------------------------------------------------
 
 add_action('wp_ajax_ispag_load_more_achats', 'ispag_load_more_achats');
-add_action('wp_ajax_nopriv_ispag_load_more_achats', 'ispag_load_more_achats');
 
 function ispag_load_more_achats()
 {
@@ -918,7 +901,6 @@ function ispag_load_more_achats()
     wp_send_json_success(['html' => $html, 'has_more' => $has_more]);
 }
 add_action('wp_ajax_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
-add_action('wp_ajax_nopriv_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
 
 function ajax_filter_achats_custom_tables()
 {
@@ -991,11 +973,11 @@ function ajax_filter_achats_custom_tables()
         $ids_placeholder = implode(',', array_fill(0, count($paginated_ids), '%d'));
         
         $sql = "
-            SELECT clf.*, f.Fournisseur AS fournisseur_nom, u.display_name AS responsable_nom,
+            SELECT clf.*, f.company_name AS fournisseur_nom, u.display_name AS responsable_nom,
                    SUM(IFNULL((af.UnitPrice - af.discount) * af.Qty, 0)) AS prix_net_total
             FROM {$wpdb->prefix}achats_commande_liste_fournisseurs clf
             LEFT JOIN {$wpdb->prefix}achats_articles_cmd_fournisseurs af ON clf.Id = af.IdCommande
-            LEFT JOIN {$wpdb->prefix}achats_fournisseurs f ON clf.IdFournisseur = f.Id
+            LEFT JOIN {$wpdb->prefix}ispag_companies f ON clf.IdFournisseur = f.id
             LEFT JOIN {$wpdb->users} u ON clf.created_by = u.ID
             WHERE clf.Id IN ($ids_placeholder)
             GROUP BY clf.Id
@@ -1027,7 +1009,7 @@ function ajax_filter_achats_custom_tables()
 
     if ($html === '' && $page === 1)
     {
-        $html = '<tr class="ispag-empty-row"><td colspan="8" style="text-align:center;padding:24px;">' . esc_html__('No purchase found', 'creation-reservoir') . '</td></tr>';
+        $html = '<tr class="ispag-empty-row"><td colspan="7" style="text-align:center;padding:24px;">' . esc_html__('No purchase found', 'creation-reservoir') . '</td></tr>';
     }
 
     $logger->log_user_action('achat_manager', 'ajax_filter_achats_custom_tables_complete', [], $user_id);

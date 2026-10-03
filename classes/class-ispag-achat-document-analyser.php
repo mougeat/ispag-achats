@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * Classe ISPAG_Achat_Document_Analyser
  *
@@ -46,7 +47,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
             return null;
         }
 
-        require_once WP_PLUGIN_DIR . '/ispag-project-manager/libs/pdfparser/autoload.php';
+        require_once ispag_project_manager_dir() . 'libs/pdfparser/autoload.php';
 
         $keywords = [
             'Durchmesser', 'Gesamthöhe', 'Volumen', 'Betriebsdruck',
@@ -88,7 +89,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
                 }
             }
         } catch (Exception $e) {
-            self::$logger->log('achat_document_analyser', 'ERROR: Erreur lors de l\'analyse du PDF - ' . $e->getMessage(), $user_id);
+            self::$logger->log('achat_document_analyser', 'ERROR: Error lors de l\'analyse du PDF - ' . $e->getMessage(), $user_id);
         }
 
         self::$logger->log('achat_document_analyser', 'WARNING: Aucun mot-clé trouvé dans le PDF', $user_id);
@@ -122,7 +123,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
         if (empty($raw_response)) {
             self::$logger->log('achat_document_analyser', 'ERROR: Extraction des données échouée ou format invalide', $user_id);
-            wp_send_json_error('Extraction des données échouée ou format invalide.');
+            wp_send_json_error('Data extraction failed or invalid format.');
         }
 
         self::$logger->log_user_action(
@@ -185,14 +186,14 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
         if (empty($raw_response)) {
             self::$logger->log('achat_document_analyser', 'ERROR: Extraction des données de facture échouée', $user_id);
-            wp_send_json_error('Extraction des données échouée ou format invalide.');
+            wp_send_json_error('Data extraction failed or invalid format.');
         }
 
         $data_extracted = is_string($raw_response) ? json_decode($raw_response, true) : $raw_response;
 
         if (!$data_extracted) {
             self::$logger->log('achat_document_analyser', 'ERROR: Format JSON invalide pour les données de facture', $user_id);
-            wp_send_json_error('Le format JSON extrait est invalide.');
+            wp_send_json_error('The extracted JSON format is invalid.');
         }
 
         self::$logger->log_user_action(
@@ -204,7 +205,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
         // --- MISE À JOUR DE LA BASE DE DONNÉES ---
         if (!empty($purchaseId)) {
-            $table_name = 'wor9711_achats_commande_liste_fournisseurs';
+            $table_name = $wpdb->prefix . 'achats_commande_liste_fournisseurs';
 
             $current_data = $wpdb->get_row($wpdb->prepare(
                 "SELECT delivery_number, invoice_number FROM $table_name WHERE id = %d",
@@ -303,7 +304,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
                 if ($updated === false) {
                     self::$logger->log('achat_document_analyser', 'ERROR: Échec de la mise à jour de la base de données - ' . $wpdb->last_error, $user_id);
-                    wp_send_json_error('Erreur lors de la mise à jour de la base de données.');
+                    wp_send_json_error('Error while updating the database.');
                 } else {
                     self::$logger->log_db_change(
                         'achat_document_analyser',
@@ -519,7 +520,7 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
 
                 $datas_to_confirm[] = [
                     'tank_id' => $existing_tank['Id'],
-                    'titre' => $new_tank['titre'] ?? "Réservoir {$best_match_idx}",
+                    'titre' => $new_tank['titre'] ?? "Tank {$best_match_idx}",
                     'fields' => $comparison,
                 ];
             }
@@ -532,13 +533,13 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
                 }
                 $datas_to_confirm[] = [
                     'tank_id' => 'new',
-                    'titre' => $new_tank['titre'] ?? 'Nouveau réservoir',
+                    'titre' => $new_tank['titre'] ?? 'New tank',
                     'fields' => $fields,
                 ];
                 self::$logger->log_user_action(
                     'achat_document_analyser',
                     'new_tank_detected',
-                    ['titre' => $new_tank['titre'] ?? 'Nouveau réservoir'],
+                    ['titre' => $new_tank['titre'] ?? 'New tank'],
                     $user_id
                 );
             }

@@ -9,6 +9,25 @@ class ISPAG_Achat_Article_Repository {
     protected $table_price_history;
     protected static $instance = null;
 
+    /**
+     * HTML de l'image d'un article : SVG en ligne, <img> ou, si l'image est absente, introuvable (404)
+     * ou égale au placeholder par défaut, l'icône neutre (identique à celle du plugin projets).
+     */
+    public static function image_html($content, $class = '', $icon_size = 40, $img_style = '') {
+        wp_enqueue_style('dashicons');
+        $content = str_replace('../../', '', trim((string) $content));
+        $icon = '<span class="dashicons dashicons-format-image ispag-image-fallback" style="font-size:' . (int) $icon_size . 'px;width:auto;height:auto;color:#ccc;"></span>';
+
+        if ($content === '' || preg_match('#/placeholder\.webp(\?.*)?$#i', $content)) {
+            return $icon;
+        }
+        if (strpos($content, '<svg') === 0) {
+            return $content;
+        }
+        $onerror = "this.onerror=null;this.outerHTML=" . esc_attr(wp_json_encode($icon)) . ";";
+        return '<img src="' . esc_attr($content) . '" alt="image"' . ($class !== '' ? ' class="' . esc_attr($class) . '"' : '') . ($img_style !== '' ? ' style="' . esc_attr($img_style) . '"' : '') . ' onerror="' . $onerror . '">';
+    }
+
     public function __construct() {
         global $wpdb;
         $this->wpdb                = $wpdb;
@@ -145,7 +164,9 @@ class ISPAG_Achat_Article_Repository {
                 case 5: // Échangeur à plaques sur mesure — prix hors historique catalogue
                     $article->RefSurMesure  = apply_filters('ispag_get_plate_exchanger_title',       $article->RefSurMesure,  $article->IdCommandeClient);
                     $article->DescSurMesure = apply_filters('ispag_get_plate_exchanger_description', $article->DescSurMesure, $article->IdCommandeClient, true);
-                    $article->image         = wp_get_attachment_url(12289);
+                    // Image du type de prestation (échangeur), plus une image générique figée sur un Id de média
+                    $type_img = class_exists('ISPAG_Article_Repository') ? ISPAG_Article_Repository::type_image((int) $article->Type) : '';
+                    if ($type_img) $article->image = $type_img;
                     break;
 
                 default: // Article standard catalogue — prix issu de l'historique (ph)

@@ -58,7 +58,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     var newOrderId = response.data.id;
                     var message = '✅ ' + response.data.message + 
-                                  '<br>Redirection vers les détails de la commande dans 1 seconde...';
+                                  '<br>Redirecting to the order details in 1 second...';
 
                     messageArea.html(message).addClass('ispag-notice success');
                     
@@ -70,18 +70,19 @@ jQuery(document).ready(function($) {
 
                     // Redirection après 1 seconde (1000 millisecondes)
                     setTimeout(function() {
-                        var redirectUrl = 'https://app.ispag-asp.ch/purchase/' + newOrderId;
+                        // adresse du site courant (et non celle de la production) : fournie par le serveur
+                        var redirectUrl = ((typeof ispagAjax !== 'undefined' && ispagAjax.purchase_url) ? ispagAjax.purchase_url : '/purchase/') + newOrderId;
                         window.location.href = redirectUrl;
                     }, 1000);
 
                 } else {
-                    // Erreur : Affiche le message rouge
+                    // Error: Affiche le message rouge
                     messageArea.html('❌ ' + response.data.message)
                                .addClass('ispag-notice error');
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                // Erreur de connexion ou autre problème HTTP/JS
+                // Error de connexion ou autre problème HTTP/JS
                 messageArea.html('❌ An unknown network or server error occurred. Please check logs.')
                            .addClass('ispag-notice error');
                 console.error("AJAX Error:", textStatus, errorThrown, jqXHR.responseText);

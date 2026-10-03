@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * ISPAG Article Purchase Edit Modal View - Modernized V2
  * Alignée sur la version Projet 2.1.8
@@ -27,13 +28,7 @@ $can_view_prices = $user_can_view_order;
         <div class="ispag-modal-left visual-container" id="modal_img">
             <div class="image-wrapper">
                 <?php
-                $content = trim($article->image);
-                if (strpos($content, '<svg') === 0) {
-                    echo $content;
-                } else {
-                    $src = htmlspecialchars($content, ENT_QUOTES);
-                    echo '<img src="' . $src . '" alt="image" class="responsive-svg">';
-                }
+                echo ISPAG_Achat_Article_Repository::image_html($article->image, 'responsive-svg', 50);
                 ?>
             </div>
         </div>

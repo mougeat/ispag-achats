@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 // Dans ton plugin achats
 // require_once WP_PLUGIN_DIR . '/ispag-project-manager/classes/class-ispag-document-manager.php';
 
@@ -106,7 +107,7 @@
 //             }
 
 //         } catch (Exception $e) {
-// // \1('❌ [DEBUG ACHAT] Erreur analyse PDF achats : ' . $e->getMessage());
+// // \1('❌ [DEBUG ACHAT] Error analyse PDF achats : ' . $e->getMessage());
 //         }
 //     }
 
@@ -137,7 +138,7 @@
 //                 'needs_confirmation'    => true
 //             ]);
 //         } else {
-//             wp_send_json_error('Extraction des données échouée.');
+//             wp_send_json_error('Data extraction failed.');
 //         }
 //     }
 

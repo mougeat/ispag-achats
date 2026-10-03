@@ -1,0 +1,59 @@
+/* Fiche achat (3 colonnes) : la colonne centrale défile, sinon le bas des onglets (Suivi, Documents…) est coupé */
+.ispag-achat-detail .ispag-main-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 40px;
+    -webkit-overflow-scrolling: touch;
+}
+.ispag-achat-detail .ispag-tabs .tab-content {
+    overflow: visible;
+}
+@media (max-width: 1024px) {
+    .ispag-achat-detail .ispag-main-content {
+        overflow-y: visible;
+    }
+}
+
+/* ==========================================================================
+   Blocs articles : ligne-carte compacte
+   ========================================================================== */
+.ispag-achat-detail .ispag-article-group-wrapper { margin-bottom: 24px; }
+.ispag-achat-detail .ispag-article-group-header {
+    display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb;
+}
+.ispag-achat-detail .ispag-article-group-header h3 { margin: 0; font-size: 1.1em; font-weight: 600; flex: 0 1 auto; }
+.ispag-article-group-wrapper.is-collapsed .ispag-article-card-container { display: none; }
+
+/* Panneau de gauche : boutons groupés par famille, séparés par un trait fin */
+.ispag-achat-detail .ispag-project-btn-card .ispag-btn-group { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.ispag-achat-detail .ispag-project-btn-card .ispag-btn-sep { border: 0; border-top: 1px solid #e5e7eb; margin: 10px 0; }
+
+/* Détails achat : bloc livraison (lecture + formulaire d'édition) */
+.ispag-achat-detail #ispag-delivery-box [hidden] { display: none !important; }
+.ispag-delivery-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ispag-delivery-head h3 { flex: 1 1 auto; }
+.ispag-delivery-address { font-style: normal; line-height: 1.6; margin: 4px 0 8px; }
+.ispag-delivery-contact { margin: 0 0 4px; color: #444; }
+.ispag-delivery-empty { color: #888; font-style: italic; }
+.ispag-delivery-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 6px 0 4px; }
+.ispag-delivery-field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #666; }
+.ispag-delivery-field.is-wide { grid-column: 1 / -1; }
+.ispag-delivery-field input { width: 100%; box-sizing: border-box; font-size: 14px; color: #222; }
+.ispag-delivery-form-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+.ispag-delivery-actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+.ispag-delivery-field .iti { width: 100%; }
+
+/* Aide « brouillon Outlook (.eml) » : bouton i + fenêtre */
+.ispag-btn-row { display: inline-flex; align-items: center; gap: 8px; }
+.ispag-eml-help-btn {
+    width: 22px; height: 22px; padding: 0; border-radius: 50%; border: 1px solid #1d4ed8; background: #fff; color: #1d4ed8;
+    font: italic 700 13px/1 Georgia, serif; cursor: pointer; flex: 0 0 auto;
+}
+.ispag-eml-help-btn:hover { background: #1d4ed8; color: #fff; }
+.ispag-eml-help { position: fixed; inset: 0; z-index: 100000; background: rgba(0, 0, 0, .45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ispag-eml-help[hidden] { display: none; }
+.ispag-eml-help__box { background: #fff; border-radius: 12px; max-width: 520px; width: 100%; padding: 22px 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, .25); max-height: 90vh; overflow-y: auto; }
+.ispag-eml-help__box h3 { margin: 0 0 10px; }
+.ispag-eml-help__box ol { margin: 6px 0 12px 20px; }
+.ispag-eml-help__small { color: #666; font-size: 13px; }
+.ispag-eml-help__actions { display: flex; justify-content: flex-end; margin-top: 14px; }

@@ -8,6 +8,8 @@ class ISPAG_Achat_Renderer {
     public static function init() {
         add_action('ispag_achat_articles_tab', [self::class, 'render_articles_tab'], 10, 1);
         add_filter('ispag_render_purchase_article_modal', [self::class, 'render_article_modal'], 10, 2);
+        add_filter('ispag_purchase_article_view_data', [self::class, 'article_view_data'], 10, 2);
+        add_action('wp_ajax_ispag_achat_supplier_cards', [self::class, 'ajax_supplier_cards']);
         add_filter('ispag_render_purchase_article_modal_form', [self::class, 'render_article_modal_form'], 10, 3);
         add_filter('ispag_render_article_block', [self::class, 'reload_article_row'], 10, 2);
         add_action('wp_ajax_ispag_apply_purchase_adjustment', [self::class, 'ajax_apply_adjustment']);
@@ -15,7 +17,7 @@ class ISPAG_Achat_Renderer {
     
     public static function render_articles_tab($achat_id) {
         if (empty($achat_id) || !is_numeric($achat_id)) {
-            echo '<div class="ispag-notice warning"><p>Aucun article trouvé.</p></div>';
+            echo '<div class="ispag-notice warning"><p>No article found.</p></div>';
             return;
         }
 
@@ -30,10 +32,6 @@ class ISPAG_Achat_Renderer {
             echo '<div class="ispag-empty-state">';
                 echo '<span class="dashicons dashicons-cart"></span>';
                 echo '<div class="ispag-notice warning"><p>' . __('No items were found for this supplier order.', 'creation-reservoir') . '</p></div>';
-                echo '<div class="ispag-actions-group">';
-                    echo self::get_add_article_btn($achat_id);
-                    echo self::get_delete_purchase_btn($achat_id);
-                echo '</div>';
             echo '</div>';
             // echo self::display_modal();
             // echo ISPAG_Detail_Page::display_modal();
@@ -48,11 +46,7 @@ class ISPAG_Achat_Renderer {
                         <input type="checkbox" id="select-all-articles" class="ispag-article-checkbox">
                         <label for="select-all-articles">' .  __('Select all', 'creation-reservoir') . '</label>
                     </div>';
-                
-                echo '<div class="ispag-buttons-right">';
-                    echo apply_filters('ispag_print_purchase_order_btn', null, $achat_id); 
-                    echo ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
-                echo '</div>';
+
             echo '</div>';
 
             echo '<div class="ispag-achat-articles-list">';
@@ -60,10 +54,18 @@ class ISPAG_Achat_Renderer {
                 $escaped_group = esc_html(stripslashes($group_name));
                 $group_id = 'group-title-' . md5($group_name);
                 
-                echo '<div class="ispag-article-group-wrapper" style="margin-bottom: 30px;">';
+                $group_total = 0;
+                foreach ($items as $it) {
+                    $group_total += isset($it->total_price) ? (float) $it->total_price : (float) $it->UnitPriceNet * (int) $it->Qty;
+                }
+                echo '<div class="ispag-article-group-wrapper">';
                     echo '<div class="ispag-article-group-header">';
-                        echo '<h3 id="' . esc_attr($group_id) . '"><span class="dashicons dashicons-category"></span> ' . $escaped_group . '</h3>';
-                        echo '<button class="ispag-btn-copy-group" data-target="' . esc_attr($group_id) . '" title="Copier le titre">📋</button>';
+                        echo '<button type="button" class="ispag-group-toggle" aria-expanded="true" title="' . esc_attr__('Collapse / expand', 'creation-reservoir') . '"><i class="fas fa-chevron-down"></i></button>';
+                        echo '<h3 id="' . esc_attr($group_id) . '">' . $escaped_group . '</h3>';
+                        echo '<span class="ispag-group-count">' . count($items) . '</span>';
+                        // Achats : les prix s'affichent toujours (tout utilisateur qui accède à cette page est autorisé à les voir)
+                        echo '<span class="ispag-group-total">' . number_format($group_total, 2) . ' ' . esc_html(get_option('wpcb_currency', 'CHF')) . '</span>';
+                        echo '<button type="button" class="ispag-btn-copy-group" data-target="' . esc_attr($group_id) . '" title="' . esc_attr__('Copy title', 'creation-reservoir') . '">📋</button>';
                     echo '</div>';
 
                     // Conteneur pour tous les articles de ce groupe
@@ -77,23 +79,68 @@ class ISPAG_Achat_Renderer {
                     echo '</div>'; // .ispag-article-card-container
                 echo '</div>'; // .ispag-article-group-wrapper
             }
-            echo apply_filters('ispag_bulk_selected_article', '', $achat_id);
-            echo '</div>';
-
-            // Barre d'actions flottante ou fixe en bas
-            echo '<div class="ispag-achat-footer-actions">';
-                
-                echo '<div class="ispag-action-buttons-secondary">';
-                    echo self::get_add_article_btn($achat_id);
-                    echo self::get_delivery_btn($achat_id);
-                    echo self::get_delete_purchase_btn($achat_id);
-                echo '</div>';
+            // Les actions groupées (bulk) sont affichées dans la colonne de gauche de la fiche
             echo '</div>';
 
         echo '</div>'; // .ispag-achat-modern-container
         
         // echo self::display_modal();
         // echo ISPAG_Detail_Page::display_modal();
+    }
+
+    /** Onglet Documents : uniquement la liste (la zone de dépôt est dans la colonne de droite de la fiche). */
+    public static function render_documents_tab($achat_id) {
+        if (!class_exists('ISPAG_Attachments_Repository') || !class_exists('ISPAG_Attachments_Card_Renderer')) {
+            return '<p>Error: The document management classes are not loaded.</p>';
+        }
+        global $wpdb;
+        $renderer = new ISPAG_Attachments_Card_Renderer(new ISPAG_Attachments_Repository($wpdb));
+
+        return '<div class="ispag-card ispag-docu-card" data-view="list" data-entity-type="purchase" data-entity-id="' . esc_attr($achat_id) . '">'
+            . $renderer->render_doc_list('purchase', $achat_id, -1, true)
+            . '</div>';
+    }
+
+    /** Carte « Add attachments » (zone de dépôt) de la colonne de droite. */
+    public static function render_upload_card($achat_id) {
+        if (!class_exists('ISPAG_Attachments_Doc_Types_Repository') || !class_exists('ISPAG_Attachments_Modal_Renderer')) {
+            return '';
+        }
+        global $wpdb;
+        $modal_renderer = new ISPAG_Attachments_Modal_Renderer(new ISPAG_Attachments_Doc_Types_Repository($wpdb));
+
+        return '<div class="ispag-card ispag-company-card"><h5>' . esc_html__('Add attachments', 'ispag-crm') . '</h5>'
+            . $modal_renderer->render_dropzone('purchase', $achat_id, 'ispag-upload-modal-dropzone')
+            . '</div>';
+    }
+
+    /**
+     * Boutons d'action du panneau de gauche (sous « To project » / « To purchase list »), groupés par famille
+     * de fonction et séparés par un trait fin. Dépendent du statut (rafraîchis par state.js).
+     */
+    public static function footer_buttons_html($achat_id) {
+        ob_start();
+        ISPAG_Achat_Status_Controller::render_action_button_for_achat($achat_id);
+        $action_btn = ob_get_clean();
+
+        // Bouton « i » : explique comment ouvrir automatiquement le brouillon Outlook (.eml) des envois par e-mail
+        $info_btn = '';
+        if (preg_match('/data-hook="(ispag_send_order|ispag_send_drawing_modification|ispag_send_drawing_validation)"/', $action_btn)) {
+            $info_btn = '<button type="button" class="ispag-eml-help-btn" title="' . esc_attr__('How to open the email draft automatically', 'creation-reservoir')
+                . '" aria-label="' . esc_attr__('Help: email draft', 'creation-reservoir') . '">i</button>';
+        }
+
+        $groups = [
+            apply_filters('ispag_print_purchase_order_btn', null, $achat_id) . ($action_btn !== '' ? '<span class="ispag-btn-row">' . $action_btn . $info_btn . '</span>' : ''), // commande (Print, Send order…)
+            self::get_add_article_btn($achat_id) . self::get_delivery_btn($achat_id), // articles
+            self::get_delete_purchase_btn($achat_id),                                  // suppression
+        ];
+        $html = '';
+        foreach ($groups as $group) {
+            if (trim((string) $group) === '') continue;
+            $html .= '<hr class="ispag-btn-sep"><div class="ispag-btn-group">' . $group . '</div>';
+        }
+        return $html;
     }
 
     /**
@@ -104,7 +151,7 @@ class ISPAG_Achat_Renderer {
         
         foreach ($articles as $article) {
             // On définit un nom par défaut si le groupe est vide
-            $group_name = !empty($article->Groupe) ? $article->Groupe : __('Sans groupe', 'ispag-crm');
+            $group_name = !empty($article->Groupe) ? $article->Groupe : __('No group', 'ispag-crm');
             
             if (!isset($grouped[$group_name])) {
                 $grouped[$group_name] = [];
@@ -113,6 +160,15 @@ class ISPAG_Achat_Renderer {
             $grouped[$group_name][] = $article;
         }
         
+        // Tri alphabétique des groupes (insensible à la casse), "sans groupe" en dernier
+        $no_group = __('No group', 'ispag-crm');
+        uksort($grouped, function ($a, $b) use ($no_group) {
+            if ($a === $b) return 0;
+            if ($a === $no_group) return 1;
+            if ($b === $no_group) return -1;
+            return strnatcasecmp(stripslashes($a), stripslashes($b));
+        });
+
         return $grouped;
     }
 
@@ -148,20 +204,97 @@ class ISPAG_Achat_Renderer {
         include plugin_dir_path(__FILE__) . 'templates/render-article-block.php'; 
     }
 
-    public static function render_article_modal($html, $article_id){
-        $repo = new ISPAG_Achat_Article_Repository();
+    /** Données normalisées pour la modale d'affichage commune (ISPAG_Article_View du Project Manager). */
+    public static function article_view_data($data, $article_id){
+        $repo    = new ISPAG_Achat_Article_Repository();
         $article = $repo->get_article_by_id(null, $article_id);
-        // $article = apply_filters('ispag_get_article_by_id', null, $article_id);
-
-        $standard_titles = apply_filters('ispag_get_standard_titles_by_type', $article->Type);
-        $user_can_edit_order = current_user_can('edit_supplier_order');
-        $user_can_view_order = current_user_can('view_supplier_order');
-
         if (!$article) {
+            return null;
+        }
+        $show_prices = true; // achats : prix toujours visibles
+        $ts          = (int) ($article->TimestampDateLivraisonConfirme ?? 0);
+
+        $documents = [];
+        foreach ((array) ($article->documents ?? []) as $doc) {
+            $documents[] = ['label' => __($doc['label'], 'creation-reservoir'), 'url' => $doc['url']];
+        }
+
+        return [
+            'title'       => stripslashes((string) $article->RefSurMesure),
+            'subtitle'    => '',
+            'image_html'  => ISPAG_Achat_Article_Repository::image_html($article->image, '', 50, 'display:block; max-width:100%; height:auto; margin:auto;'),
+            'description' => $article->DescSurMesure ?? '',
+            'qty'         => (int) $article->Qty,
+            'unit_net'    => $show_prices ? (float) $article->UnitPriceNet : null,
+            'discount'    => (float) ($article->discount ?? 0),
+            'total'       => $show_prices ? (float) ($article->total_price ?? ((float) $article->UnitPriceNet * (int) $article->Qty)) : null,
+            'currency'    => get_option('wpcb_currency', 'CHF'),
+            'info'        => [
+                [__('Factory departure', 'creation-reservoir'), $ts ? date('d.m.Y', $ts) : '-'],
+            ],
+            'steps'       => [
+                [__('Drawing approved', 'creation-reservoir'), (int) ($article->DrawingApproved ?? 0) === 1],
+                [__('Received / Delivered', 'creation-reservoir'), !empty($article->Recu)],
+                [__('Invoiced', 'creation-reservoir'), !empty($article->Facture)],
+            ],
+            'documents'   => $documents,
+            'is_staff'    => current_user_can('manage_order'),
+        ];
+    }
+
+    /** Carte « Supplier » (colonne de droite de la fiche achat). */
+    public static function render_supplier_card($supplier_row) {
+        ob_start();
+        ?>
+            <div class="ispag-card ispag-supplier-card" style="font-size:14px;">
+                <h5><?php _e('Supplier', 'creation-reservoir'); ?></h5>
+                <?php if ($supplier_row): ?>
+                    <p style="margin:5px 0;"><strong><?php echo esc_html($supplier_row->Fournisseur); ?></strong></p>
+                    <?php
+                    $addr = array_filter([trim((string) $supplier_row->SupplierAdresse), trim(trim((string) $supplier_row->CodePostal) . ' ' . trim((string) $supplier_row->Ville)), trim((string) $supplier_row->Pays)]);
+                    if ($addr): ?><p style="margin:5px 0;"><?php echo esc_html(implode(', ', $addr)); ?></p><?php endif; ?>
+                    <?php if (!empty(trim((string) $supplier_row->NumTel)) && trim($supplier_row->NumTel) !== '-'): ?>
+                        <p style="margin:5px 0;"><?php _e('Phone number', 'creation-reservoir'); ?>: <a href="tel:<?php echo esc_attr($supplier_row->NumTel); ?>"><?php echo esc_html($supplier_row->NumTel); ?></a></p>
+                    <?php endif; ?>
+                    <?php if (!empty(trim((string) $supplier_row->Mail)) && trim($supplier_row->Mail) !== '-'): ?>
+                        <p style="margin:5px 0;"><?php _e('Email', 'creation-reservoir'); ?>: <a href="mailto:<?php echo esc_attr(trim($supplier_row->Mail)); ?>"><?php echo esc_html(trim($supplier_row->Mail)); ?></a></p>
+                    <?php endif; ?>
+                    <?php if (!empty($supplier_row->compagnyDomain)): ?>
+                        <p style="margin:5px 0;"><?php _e('Website', 'creation-reservoir'); ?>: <a href="<?php echo esc_url('https://' . preg_replace('#^https?://#i', '', trim($supplier_row->compagnyDomain))); ?>" target="_blank" rel="noopener"><?php echo esc_html($supplier_row->compagnyDomain); ?></a></p>
+                    <?php endif; ?>
+                    <p style="margin:5px 0;"><?php _e('Currency', 'creation-reservoir'); ?>: <?php echo esc_html($supplier_row->Monnaie ?: '—'); ?> · <?php _e('Delivery time', 'creation-reservoir'); ?>: <?php echo (int) $supplier_row->deliveryDays; ?> <?php _e('days', 'creation-reservoir'); ?></p>
+                <?php else: ?>
+                    <p class="ispag-no-company"><?php _e('No supplier selected.', 'creation-reservoir'); ?></p>
+                <?php endif; ?>
+            </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /** AJAX : cartes fournisseur + contacts d'une commande (après changement de fournisseur, sans recharger la page). */
+    public static function ajax_supplier_cards() {
+        if (!current_user_can('view_supplier_order') && !current_user_can('manage_order')) {
+            wp_send_json_error('forbidden', 403);
+        }
+        global $wpdb;
+        $achat_id = absint($_POST['achat_id'] ?? 0);
+        $supplier_id = (int) $wpdb->get_var($wpdb->prepare("SELECT IdFournisseur FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d", $achat_id));
+        $supplier_row = $supplier_id ? ISPAG_Achat_Supplier_Repository::get_supplier_row($supplier_id) : null;
+        $can_edit = current_user_can('edit_supplier_order');
+        wp_send_json_success([
+            'supplier_id'   => $supplier_id,
+            'supplier_html' => self::render_supplier_card($supplier_row),
+            'contacts_html' => ISPAG_Achat_Supplier_Contacts::render_card($supplier_row, $can_edit),
+        ]);
+    }
+
+    public static function render_article_modal($html, $article_id){
+        $data = self::article_view_data(null, $article_id);
+        if (!$data || !class_exists('ISPAG_Article_View')) {
             echo '<p>' . __('Article not found', 'creation-reservoir')  . '</p>';
             wp_die();
         }
-        include plugin_dir_path(__FILE__) . 'templates/modal-display-datas.php';
+        echo ISPAG_Article_View::body($data);
         return;
     }
 
@@ -198,7 +331,7 @@ class ISPAG_Achat_Renderer {
         if(!in_array($achat->EtatCommande, $array_etat)){
             return;
         }
-        return '<button id="generate-pdf" class="ispag-btn ispag-btn-secondary-outlined" style="margin-top: 1rem;">
+        return '<button id="generate-pdf" class="ispag-btn ispag-btn-secondary-outlined" >
                 📄 ' .  __('Delivery note', 'creation-reservoir') . '
             </button>
             <script>
@@ -238,7 +371,10 @@ class ISPAG_Achat_Renderer {
         // if (!in_array($achat->EtatCommande, [1, 2, 6, 10])) {
         //     return;
         // }
-        return '<button id="ispag-add-article" data-poid="' . esc_attr($achat_id) .'"  source="purchase" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir'). '</button>';
+        $poid = esc_attr($achat_id);
+        // Bouton visible : choix « article standard du fournisseur » ou « article manuel » ; le bouton d'origine (formulaire manuel) reste en coulisse
+        return '<button type="button" id="ispag-achat-add-product" data-achat-id="' . $poid . '" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir') . '</button>'
+            . '<button id="ispag-add-article" data-poid="' . $poid . '"  source="purchase" class="ispag-btn ispag-btn-secondary-outlined" style="display:none;"></button>';
     }
 
     private static function display_purchase_adjustments($achat_id, $grouped_articles) {
@@ -257,7 +393,8 @@ class ISPAG_Achat_Renderer {
 
         $supplier_id = intval($achat->IdFournisseur);
         $currency = strtoupper($achat->Devise ?? 'CHF');
-        $target_suppliers = [1, 3, 395]; 
+        // Fournisseurs avec transport automatique : réglage (ISPAG Settings → Purchase settings), Id de ispag_companies
+        $target_suppliers = ISPAG_Achat_Settings::transport_supplier_ids();
         
         $transport_found = false;
         $dedouanement_found = false;
@@ -289,8 +426,9 @@ class ISPAG_Achat_Renderer {
                         if (!empty($art->technical_volume)) {
                             $total_volume += (floatval($art->technical_volume) * $qty);
                         } 
-                        elseif (preg_match('/(\d+)\s*litres/i', $art->RefSurMesure, $matches)) {
-                            $total_volume += floatval($matches[1]) * $qty;
+                        elseif (preg_match('/(\d[\d\s\'.]*)\s*(?:litres?|liters?)\b/iu', (string) $art->RefSurMesure, $matches)) {
+                            // « 1250 litres », « 1 500 liters »… (titre selon la langue active)
+                            $total_volume += floatval(preg_replace('/\D/', '', $matches[1])) * $qty;
                         }
                     }
                     
@@ -306,21 +444,22 @@ class ISPAG_Achat_Renderer {
 
         // --- CALCUL TRANSPORT ---
         if (in_array($supplier_id, $target_suppliers) && $total_volume > 0) {
-            $theoretical_trans = ceil($total_volume / 1000) * 250;
+            $theoretical_trans = ceil($total_volume / 1000) * ISPAG_Achat_Settings::transport_rate();
             if (!$transport_found || abs($current_transport_price - $theoretical_trans) > 1.00) {
-                $msg = "Transport : " . number_format($total_volume, 0, '.', "'") . " L calculés.";
-                self::render_adjustment_notice($msg, "Appliquer Transport ($theoretical_trans CHF)", 'TRANS', $theoretical_trans, $achat_id);
+                $msg = "Transport: " . number_format($total_volume, 0, '.', "'") . " L calculated.";
+                self::render_adjustment_notice($msg, "Apply transport (" . number_format($theoretical_trans, 2, '.', '') . " " . get_option('wpcb_currency', 'CHF') . ")", 'TRANS', $theoretical_trans, $achat_id);
             }
         }
 
         // --- CALCUL DÉDOUANEMENT (Basé sur le NET) ---
         if ($currency === 'EUR' && $total_amount_net_taxable > 0) {
-            // Calcul des 10% sur le montant net total
-            $theoretical_ded = round($total_amount_net_taxable * 0.10, 2);
+            // Taux de dédouanement (réglage) sur le montant net total
+            $customs_rate    = ISPAG_Achat_Settings::customs_rate();
+            $theoretical_ded = round($total_amount_net_taxable * $customs_rate / 100, 2);
             
             if (!$dedouanement_found || abs($current_dedouanement_price - $theoretical_ded) > 1.00) {
-                $msg = "Dédouanement (10%) sur un total net de " . number_format($total_amount_net_taxable, 2) . " EUR.";
-                self::render_adjustment_notice($msg, "Appliquer Dédouanement ($theoretical_ded EUR)", 'DED', $theoretical_ded, $achat_id);
+                $msg = "Customs clearance (" . rtrim(rtrim(number_format($customs_rate, 2, '.', ''), '0'), '.') . "%) on a net total of " . number_format($total_amount_net_taxable, 2) . " EUR.";
+                self::render_adjustment_notice($msg, "Apply customs clearance ($theoretical_ded EUR)", 'DED', $theoretical_ded, $achat_id);
             }
         }
     }
@@ -352,7 +491,7 @@ class ISPAG_Achat_Renderer {
         $table    = $wpdb->prefix . 'achats_articles_cmd_fournisseurs'; // À vérifier selon votre table réelle
 
         if (!$achat_id || !$amount) {
-            wp_send_json_error('Données invalides.');
+            wp_send_json_error('Invalid data.');
         }
 
         // 1. Vérifier si l'article existe déjà dans cette commande
@@ -376,11 +515,11 @@ class ISPAG_Achat_Renderer {
             );
             
             if ($updated !== false) {
-                wp_send_json_success('Article mis à jour.');
+                wp_send_json_success('Article updated.');
             }
         } else {
             // CRÉATION
-            $description = ($type === 'TRANS') ? 'Frais de transport selon volume' : 'Frais de dédouanement (10%)';
+            $description = ($type === 'TRANS') ? 'Transport costs based on volume' : 'Customs clearance fees (' . rtrim(rtrim(number_format(ISPAG_Achat_Settings::customs_rate(), 2, '.', ''), '0'), '.') . '%)';
             
             $inserted = $wpdb->insert(
                 $table,
@@ -391,14 +530,14 @@ class ISPAG_Achat_Renderer {
                     'Qty'           => 1,
                     'UnitPrice'     => $amount
                 ],
-                ['%d', '%s', '%s', '%d', '%f', '%d', '%s']
+                ['%d', '%s', '%s', '%d', '%f']
             );
 
             if ($inserted) {
-                wp_send_json_success('Article ajouté.');
+                wp_send_json_success('Article added.');
             }
         }
 
-        wp_send_json_error('Erreur lors de l\'enregistrement en base de données.');
+        wp_send_json_error('Error while saving to the database.');
     }
 }

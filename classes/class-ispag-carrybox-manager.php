@@ -1,8 +1,9 @@
 <?php
+defined('ABSPATH') || exit;
 
 class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
 
-    protected $id_carrybox = 444; // À vérifier dans ta table wor9711_achats_fournisseurs
+    protected $id_carrybox = 444; // ID dans wor9711_ispag_companies (id) : à remapper après migration
 
     public function __construct($deal_id) {
         parent::__construct($deal_id);
@@ -23,7 +24,7 @@ class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
         
         if (!$deal_id || !current_user_can('manage_order')) {
             ob_end_clean();
-            wp_send_json_error(['message' => 'Accès refusé ou Deal ID manquant']);
+            wp_send_json_error(['message' => 'Access denied or missing Deal ID']);
         }
 
         try {
@@ -70,7 +71,7 @@ class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
         );
 
         $achat_id = $this->wpdb->insert_id;
-        if (!$achat_id) throw new Exception("Erreur création entête commande.");
+        if (!$achat_id) throw new Exception("Error while creating the order header.");
 
         // 4. AJOUT DE L'ARTICLE DE LIVRAISON (SANS PRIX)
         // On insère une ligne dans la table des détails articles fournisseurs
@@ -92,7 +93,7 @@ class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
         $this->set_delivery_address($achat_id, $project);
 
         return [
-            'message'  => 'Commande Carry Box créée avec article logistique.',
+            'message'  => 'Carry Box order created with logistics article.',
             'achat_id' => $achat_id
         ];
     }

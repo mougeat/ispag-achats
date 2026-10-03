@@ -10,15 +10,15 @@ jQuery(document).ready(function($) {
             achat_id: $btn.data('achat')
         };
 
-        $btn.prop('disabled', true).text('Application...');
+        $btn.prop('disabled', true).text('Applying...');
 
         $.post(ispag_fournisseurs.ajaxurl, data, function(response) {
             if (response.success) {
                 // On recharge l'onglet ou la page pour voir le changement
                 location.reload(); 
             } else {
-                alert('Erreur : ' + response.data);
-                $btn.prop('disabled', false).text('Réessayer');
+                alert('Error: ' + response.data);
+                $btn.prop('disabled', false).text('Retry');
             }
         });
     });

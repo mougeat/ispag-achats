@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 
 class ISPAG_Achat_Status_Controller {
     private $wpdb;
@@ -75,7 +76,19 @@ class ISPAG_Achat_Status_Controller {
 
         do_action('ispag_save_status_changes', $achat_id, $slug, $etat_id);
 
-        wp_send_json_success(['updated' => $updated]);
+        // De quoi mettre à jour la page sans la recharger : nouveau statut + boutons qui en dépendent
+        $current = $this->get_current_status($achat_id);
+        ob_start();
+        self::render_action_button_for_achat($achat_id);
+        $action_html = ob_get_clean();
+        $footer_html = class_exists('ISPAG_Achat_Renderer') ? ISPAG_Achat_Renderer::footer_buttons_html($achat_id) : '';
+
+        wp_send_json_success([
+            'updated'     => $updated,
+            'status'      => $current ? ['Id' => (int) $current->Id, 'Etat' => __($current->Etat, 'creation-reservoir'), 'ClassCss' => $current->ClassCss, 'color' => $current->color] : null,
+            'action_html' => $action_html,
+            'footer_html' => $footer_html,
+        ]);
     }
 
     public function get_current_status($achat_id) {
@@ -128,9 +141,7 @@ class ISPAG_Achat_Status_Controller {
 
         // Affichage du bouton avec les data nécessaires
         echo sprintf(
-            '<button class="ispag-btn achat-action-btn %s" style="background-color:%s" data-achat-id="%d" data-hook="%s"><span class="dashicons dashicons-migrate"></span> %s</button>',
-            esc_attr($etat->ClassCss),
-            esc_attr($etat->color),
+            '<button class="ispag-btn ispag-btn-secondary-outlined achat-action-btn" data-achat-id="%d" data-hook="%s"><span class="dashicons dashicons-migrate"></span> %s</button>',
             intval($achat_id),
             esc_attr($etat->JsHook),
             esc_html__($etat->ActionText, 'creation-reservoir')
@@ -143,7 +154,7 @@ class ISPAG_Achat_Status_Controller {
             $action_type = sanitize_text_field($_POST['type'] ?? '');
 
             if (!$achat_id || !$action_type) {
-                wp_send_json_error(['message' => 'Paramètres manquants (ID ou Type).']);
+                wp_send_json_error(['message' => 'Missing parameters (ID or Type).']);
             }
 
             self::prepare_mail($achat_id, $action_type);
@@ -151,7 +162,7 @@ class ISPAG_Achat_Status_Controller {
         } catch (Throwable $e) {
             // Renvoie l'erreur PHP réelle au format JSON pour que ton JS ne crash pas
             wp_send_json_error([
-                'message' => 'Erreur PHP Fatale : ' . $e->getMessage(),
+                'message' => 'Fatal PHP error: ' . $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine()
             ]);
@@ -166,11 +177,29 @@ class ISPAG_Achat_Status_Controller {
      * @return void
      */
     public static function prepare_mail($achat_id = null, $message_type = null ) {
+        $mail = self::build_mail($achat_id, $message_type);
+        if (is_wp_error($mail)) {
+            wp_send_json_error(['message' => $mail->get_error_message()]);
+        }
+        // Commande, modifications et validations de plans : brouillon Outlook (.eml) avec les pièces jointes ; les autres messages en mailto
+        if (class_exists('ISPAG_Achat_Mail_Draft') && ISPAG_Achat_Mail_Draft::supports($message_type)) {
+            $mail['eml_url'] = ISPAG_Achat_Mail_Draft::download_url($achat_id, $message_type);
+            $mail['attachments_count'] = ISPAG_Achat_Mail_Draft::attachments_count($achat_id, $message_type);
+        }
+        wp_send_json_success($mail);
+    }
+
+    /**
+     * Prépare le mail (destinataire, objet, texte avec balises remplacées) d'un type de message pour une commande.
+     *
+     * @return array|WP_Error
+     */
+    public static function build_mail($achat_id = null, $message_type = null ) {
         global $wpdb;
 
         // $achat_id = intval($_POST['achat_id']);
         if (!$achat_id) {
-            wp_send_json_error(['message' => 'ID de commande manquant.']);
+            return new WP_Error('mail', 'ID de commande manquant.');
         }
 
         // 1. Récupérer IdFournisseur et EtatCommande
@@ -178,16 +207,29 @@ class ISPAG_Achat_Status_Controller {
             SELECT IdFournisseur, hubspot_deal_id FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d
         ", $achat_id));
         if (!$achat){
-            wp_send_json_error(['message' => 'Commande non trouvée.']);
+            return new WP_Error('mail', 'Order not found.');
         }
 
         // 2. Récupérer infos fournisseur
+        $meta_table = $wpdb->prefix . 'ispag_companies_meta';
+        $get_meta = function ($key) use ($wpdb, $meta_table, $achat) {
+            return $wpdb->get_var($wpdb->prepare(
+                "SELECT meta_value FROM {$meta_table} WHERE company_id = %d AND meta_key = %s ORDER BY meta_id DESC LIMIT 1",
+                $achat->IdFournisseur,
+                $key
+            ));
+        };
         $fournisseur = $wpdb->get_row($wpdb->prepare("
-            SELECT IdContactCommande, IdContactPlan, Langue FROM {$wpdb->prefix}achats_fournisseurs WHERE Id = %d
+            SELECT id FROM {$wpdb->prefix}ispag_companies WHERE id = %d
         ", $achat->IdFournisseur));
+        if ($fournisseur) {
+            $fournisseur->IdContactCommande = $get_meta('ispag_supplier_contact_order');
+            $fournisseur->IdContactPlan     = $get_meta('ispag_supplier_contact_plan');
+            $fournisseur->Langue            = $get_meta('ispag_supplier_lang');
+        }
 
         if (!$fournisseur) {
-            wp_send_json_error(['message' => 'Fournisseur introuvable.']);
+            return new WP_Error('mail', 'Supplier not found.');
         }
 
         
@@ -209,19 +251,15 @@ class ISPAG_Achat_Status_Controller {
         // 3. Récupérer contact user
         $user = get_user_by('ID', $contact_id);
         if (!$user) {
-            wp_send_json_error(['message' => 'Contact utilisateur introuvable.']);
+            return new WP_Error('mail', 'Contact utilisateur introuvable.');
         }
         $email_contact = $user->user_email;
 
-        // 4. Récupérer le template
-        $template = $wpdb->get_row($wpdb->prepare("
-            SELECT subject, message FROM {$wpdb->prefix}achats_template_mail 
-            WHERE lang = %s AND message_family = 'purchase_order' AND message_type = %s
-            LIMIT 1
-        ", $lang, $message_type));
+        // 4. Récupérer le template (langue du fournisseur, à défaut le modèle anglais par défaut)
+        $template = ISPAG_Achat_Mail_Templates::get_template($message_type, $lang);
 
         if (!$template) {
-            wp_send_json_error(['message' => 'Template non trouvé pour la langue : ' . $lang]);
+            return new WP_Error('mail', 'Template not found for type "' . $message_type . '" (language: ' . $lang . '). Create it in the Email templates page.');
         }
 
         // 5. Remplacer les tags
@@ -237,8 +275,8 @@ class ISPAG_Achat_Status_Controller {
         $current_status = $instance->get_current_status($achat_id);
         $next_status = $instance->get_next_status($current_status->Id);
 
-        // 6. Réponse avec mailto
-        wp_send_json_success([
+        // 6. Données du mail
+        return [
             'current_status' => $current_status->Id,
             'next_status' => $next_status,
             'achat_id' => $achat_id,
@@ -246,7 +284,7 @@ class ISPAG_Achat_Status_Controller {
             'message' => $message,
             'email_contact' => $email_contact,
             'email_copy' => ' ' // à adapter
-        ]);
+        ];
     }
 
     
@@ -301,19 +339,44 @@ class ISPAG_Achat_Status_Controller {
         // // 4. Récupérer projet
         // $project = (new ISPAG_Projet_Repository())->get_project_by_deal_id($achat->hubspot_deal_id);
 
-        // 5. Remplacer les balises
+        // 5. Remplacer les balises : {TAG} (voir ISPAG_Achat_Mail_Templates::tags()) + anciennes balises sans accolades
+        $ref_parts    = explode(' - ', (string) $achat->RefCommande, 2);
+        $order_number = trim($ref_parts[0]);
+        $project_name = isset($ref_parts[1]) ? trim($ref_parts[1]) : '';
+        $delivery     = (new ISPAG_Achat_Details_Repository())->get_infos_livraison($achat_id);
+        $d = function ($k) use ($delivery) { return trim(stripslashes((string) ($delivery->$k ?? ''))); };
+        $zip_city = trim($d('NIP') . ' ' . $d('City'));
+        $delivery_block = implode("\n", array_filter([$d('AdresseDeLivraison'), $d('DeliveryAdresse2'), $d('DeliveryAdresse3'), $zip_city]));
+        $sender = wp_get_current_user();
+
         $replacements = [
+            '{FIRST_NAME}'       => $user->first_name,
+            '{LAST_NAME}'        => $user->last_name,
+            '{SUPPLIER_NAME}'    => (string) ($achat->Fournisseur ?? ''),
+            '{ORDER_NUMBER}'     => $order_number,
+            '{PROJECT_NAME}'     => $project_name,
+            '{ORDER_REF}'        => stripslashes((string) $achat->RefCommande),
+            '{ORDER_DATE}'       => !empty($achat->TimestampDateCreation) ? date_i18n('d.m.Y', (int) $achat->TimestampDateCreation) : date_i18n('d.m.Y'),
+            '{PRODUCT_LIST}'     => $product_list,
+            '{DELIVERY_ADDRESS}' => $delivery_block,
+            '{DELIVERY_CONTACT}' => $d('PersonneContact'),
+            '{DELIVERY_PHONE}'   => $d('num_tel_contact'),
+            '{PURCHASE_URL}'     => (string) $achat->purchase_url,
+            '{USER_NAME}'        => $sender->display_name,
+            '{COMPANY_NAME}'     => (string) get_option('wpcb_companyName'),
+
+            // Anciennes balises (modèles existants)
             'PRENOM'   => $user->first_name,
             'NOM'   => $user->last_name,
             'PROJECT_NAME'   => $achat->RefCommande,
             'PURCHASE_LINK'  => '<a href="' . $achat->purchase_url . '">ici</a>',
             'PRODUCT_LIST'   => $product_list,
-            'DELIVERY_ADRESS' => '',
-            'DELIVERY_ADRESS2' => '',
-            'DELIVERY_NIP' => '',
-            'DELIVERY_CITY' => '',
-            'DELIVERY_CONTACT' => '',
-            'DELIVERY_CONTACT_PHONE' => '',
+            'DELIVERY_ADRESS' => $d('AdresseDeLivraison'),
+            'DELIVERY_ADRESS2' => $d('DeliveryAdresse2'),
+            'DELIVERY_NIP' => $d('NIP'),
+            'DELIVERY_CITY' => $d('City'),
+            'DELIVERY_CONTACT' => $d('PersonneContact'),
+            'DELIVERY_CONTACT_PHONE' => $d('num_tel_contact'),
             'DELIVERY_DATE' => '',
         ];
 
