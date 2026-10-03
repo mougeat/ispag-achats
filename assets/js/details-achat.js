@@ -1,3 +1,4 @@
+window.ispagT = window.ispagT || function (s) { return s; }; // traductions des textes JS (voir includes/js-strings.php)
 // --- COPIE DEPUIS LE PROJET ---
 jQuery(document).on('click', '.ispag-btn-copy-from-project', function () {
     handleAddressUpdate(jQuery(this), 'ispag_copy_project_address');
@@ -27,11 +28,11 @@ function handleAddressUpdate(btn, actionName) {
             // On remplace tout le bloc par le nouveau HTML généré par PHP
             jQuery('#ispag-delivery-box').replaceWith(response.data.html);
         } else {
-            alert('Error: ' + (response.data || 'Inconnue'));
+            alert(ispagT('Error: ') + (response.data || 'Inconnue'));
             btn.prop('disabled', false).html(originalText);
         }
     }).fail(() => {
-        alert('Network error');
+        alert(ispagT('Network error'));
         btn.prop('disabled', false).html(originalText);
     });
 }
@@ -57,7 +58,7 @@ jQuery(document).on('click', '.ispag-delete-achat', async function () {
             // alert('Achat supprimé');
             window.close();
         } else {
-            alert('Error: ' + response.data);
+            alert(ispagT('Error: ') + response.data);
         }
     });
 });
@@ -213,7 +214,7 @@ jQuery(function ($) {
             const $r = $m.find('.ispag-add-results').html('<p style="color:#888;">Loading…</p>');
             $.post(ajaxurl, { action: 'ispag_achat_supplier_std_articles', achat_id: achatId, q: q, nonce: (window.ispagVars || {}).add_product_nonce }, function (resp) {
                 if (!resp || !resp.success) {
-                    const msg = resp && resp.data && resp.data.message ? resp.data.message : 'Error';
+                    const msg = resp && resp.data && resp.data.message ? resp.data.message : ispagT('Error');
                     $r.html('<p style="color:#b32d2e;">' + esc(msg) + '</p>');
                     return;
                 }
@@ -270,7 +271,7 @@ jQuery(function ($) {
         const $bulk = $(this).closest('.ispag-bulk-actions');
         const $msg = $('#ispag-bulk-message');
         const ids = $('.ispag-article .ispag-article-checkbox:checked').map(function () { return $(this).data('article-id'); }).get();
-        if (!ids.length) { alert('No article selected'); return; }
+        if (!ids.length) { alert(ispagT('No article selected')); return; }
 
         const $btn = $(this).prop('disabled', true);
         $.post(ajaxurl, {
@@ -293,7 +294,7 @@ jQuery(function ($) {
                 $(document).trigger('ispag:achat-articles-changed');
             }
         }).fail(function () {
-            $msg.text('Network error').css({ display: 'block', background: '#f8d7da', color: '#721c24' });
+            $msg.text(ispagT('Network error')).css({ display: 'block', background: '#f8d7da', color: '#721c24' });
         }).always(function () { $btn.prop('disabled', false); });
     });
 
@@ -331,7 +332,7 @@ jQuery(function ($) {
             $.post(ajaxurl, { action: 'ispag_achat_search_contacts', nonce: (window.ispagVars || {}).nonce, supplier_id: supplierId, q: q }).done(function (r) {
                 $res.empty();
                 const list = (r && r.success && r.data.results) || [];
-                if (!list.length) { $res.append($('<div>').css({ color: '#999', padding: '4px' }).text('No contact found for this supplier.')); return; }
+                if (!list.length) { $res.append($('<div>').css({ color: '#999', padding: '4px' }).text(ispagT('No contact found for this supplier.'))); return; }
                 list.forEach(function (c) {
                     $('<div class="ispag-sc-result" role="button" tabindex="0">').css({ cursor: 'pointer', padding: '4px', borderBottom: '1px solid #f0f0f0' })
                         .attr('data-user-id', c.id).text(c.name + (c.mail ? ' — ' + c.mail : '')).appendTo($res);
@@ -349,8 +350,8 @@ jQuery(function ($) {
             role: $row.data('role'),
             user_id: userId
         }).done(function (r) {
-            if (r && r.success) { $row.replaceWith(r.data.html); } else { $row.css('opacity', 1); alert('Save failed.'); }
-        }).fail(function () { $row.css('opacity', 1); alert('Network error'); });
+            if (r && r.success) { $row.replaceWith(r.data.html); } else { $row.css('opacity', 1); alert(ispagT('Save failed.')); }
+        }).fail(function () { $row.css('opacity', 1); alert(ispagT('Network error')); });
     }
     $(document).on('click', '.ispag-sc-result', function () { scSave($(this).closest('.ispag-supplier-contact'), $(this).data('user-id')); });
     $(document).on('click', '.ispag-sc-clear', function () { scSave($(this).closest('.ispag-supplier-contact'), 0); });
@@ -456,7 +457,7 @@ jQuery(function ($) {
             }
         }).fail(function () {
             $btn.prop('disabled', false);
-            $status.text('❌ Network error');
+            $status.text(ispagT('❌ Network error'));
         });
     });
 })(jQuery);

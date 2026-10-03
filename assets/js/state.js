@@ -1,3 +1,4 @@
+window.ispagT = window.ispagT || function (s) { return s; }; // traductions des textes JS (voir includes/js-strings.php)
 document.addEventListener('DOMContentLoaded', function () {
     const wrapper = document.getElementById('achat-status-wrapper');
     if (!wrapper) return;
@@ -153,7 +154,7 @@ async function ispag_send_generic_ajax({
         const result = await response.json();
         if (!result.success) {
             console.error('❌ Error PHP:', result.data.message);
-            alert("Error: " + result.data.message);
+            alert(ispagT("Error: ") + result.data.message);
             return;
         }
 
@@ -232,7 +233,7 @@ function ispag_open_mail(data, noFileMessage) {
             ispag_refresh_documents();
             return true;
         }).catch(function () {
-            alert('The email draft could not be created. Please try again.');
+            alert(ispagT('The email draft could not be created. Please try again.'));
             return false;
         });
     }
