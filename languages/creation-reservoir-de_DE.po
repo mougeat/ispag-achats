@@ -1,0 +1,822 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: ispag-achats\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: de_DE\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: creation-reservoir\n"
+
+#: classes/class-ispag-achat-add-product.php:23
+msgid "Access denied."
+msgstr "Zugriff verweigert."
+
+#: classes/class-ispag-achat-add-product.php:30
+msgid "Select a supplier first."
+msgstr "Wählen Sie zuerst einen Lieferanten aus."
+
+#: classes/class-ispag-achat-add-product.php:80
+msgid "This article is not sold by the supplier of the order."
+msgstr "Dieser Artikel wird nicht vom Lieferanten der Bestellung verkauft."
+
+#: classes/class-ispag-achat-add-product.php:93
+msgid "Database error"
+msgstr "Datenbankfehler"
+
+#: classes/class-ispag-achat-details-renderer.php:109
+msgid "Save"
+msgstr "Speichern"
+
+#: classes/class-ispag-achat-details-renderer.php:110
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: classes/class-ispag-achat-details-renderer.php:121
+msgid "Copy from project"
+msgstr "Aus dem Projekt kopieren"
+
+#: classes/class-ispag-achat-details-renderer.php:160
+msgid "Error while saving"
+msgstr "Fehler beim Speichern"
+
+#: classes/class-ispag-achat-details-renderer.php:39
+msgid "Project informations"
+msgstr "Projektinformationen"
+
+#: classes/class-ispag-achat-details-renderer.php:49
+msgid "Adress"
+msgstr "Adresse"
+
+#: classes/class-ispag-achat-details-renderer.php:50
+msgid "Complement"
+msgstr "Zusatz"
+
+#: classes/class-ispag-achat-details-renderer.php:51
+msgid "Project Info"
+msgstr "Projektinfos"
+
+#: classes/class-ispag-achat-details-renderer.php:52
+msgid "Postal code"
+msgstr "Postleitzahl"
+
+#: classes/class-ispag-achat-details-renderer.php:53
+msgid "City"
+msgstr "Ort"
+
+#: classes/class-ispag-achat-details-renderer.php:54
+msgid "Contact"
+msgstr "Kontakt"
+
+#: classes/class-ispag-achat-details-renderer.php:55
+msgid "Phone number"
+msgstr "Telefonnummer"
+
+#: classes/class-ispag-achat-details-renderer.php:76
+msgid "Delivery"
+msgstr "Lieferung"
+
+#: classes/class-ispag-achat-details-renderer.php:78
+msgid "Edit"
+msgstr "Bearbeiten"
+
+#: classes/class-ispag-achat-details-renderer.php:94
+msgid "No delivery address yet."
+msgstr "Noch keine Lieferadresse."
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:224
+msgid "Project name"
+msgstr "Projektname"
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:225
+msgid "Order number"
+msgstr "Bestellnummer"
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:229
+msgid "Ref"
+msgstr "Ref."
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:230
+msgid "Description"
+msgstr "Beschreibung"
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:231
+msgid "Unit price"
+msgstr "Einzelpreis"
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:232
+msgid "Qty"
+msgstr "Menge"
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:233
+msgid "Disc."
+msgstr "Rab."
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:288
+msgid "Purchase order"
+msgstr "Bestellung"
+
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:85
+msgid "Print purchase order"
+msgstr "Bestellung drucken"
+
+#: classes/class-ispag-achat-mail-draft.php:100
+msgid "Want it to open by itself next time?"
+msgstr "Soll sich die Datei beim nächsten Mal von selbst öffnen?"
+
+#: classes/class-ispag-achat-mail-draft.php:101
+msgid "Do this once:"
+msgstr "Einmalig auszuführen:"
+
+#: classes/class-ispag-achat-mail-draft.php:103
+msgid "In your browser, find the downloaded file (download bar, or the download arrow at the top right)."
+msgstr "Suchen Sie in Ihrem Browser die heruntergeladene Datei (Download-Leiste oder Download-Pfeil oben rechts)."
+
+#: classes/class-ispag-achat-mail-draft.php:104
+msgid "Click the “…” (or “⋮”) next to the file."
+msgstr "Klicken Sie neben der Datei auf «…» (oder «⋮»)."
+
+#: classes/class-ispag-achat-mail-draft.php:105
+msgid "Choose “Always open files of this type”."
+msgstr "Wählen Sie «Dateien dieses Typs immer öffnen»."
+
+#: classes/class-ispag-achat-mail-draft.php:107
+msgid "If the file does not open in Outlook: right-click it, choose “Open with”, select Outlook and tick “Always use this app”."
+msgstr "Falls sich die Datei nicht in Outlook öffnet: Rechtsklick, «Öffnen mit», Outlook auswählen und «Immer diese App verwenden» aktivieren."
+
+#: classes/class-ispag-achat-mail-draft.php:108
+msgid "You can read this again at any time with the “i” button next to the send button."
+msgstr "Sie können dies jederzeit über die Schaltfläche «i» neben der Senden-Schaltfläche erneut lesen."
+
+#: classes/class-ispag-achat-mail-draft.php:110
+msgid "Got it"
+msgstr "Verstanden"
+
+#: classes/class-ispag-achat-mail-draft.php:98
+msgid "Your email is ready"
+msgstr "Ihre E-Mail ist bereit"
+
+#: classes/class-ispag-achat-mail-draft.php:99
+msgid "A small file ending in “.eml” has just been downloaded. Open it: your email appears in Outlook with the recipient, the text and the attachments already filled in."
+msgstr "Eine kleine Datei mit der Endung «.eml» wurde soeben heruntergeladen. Öffnen Sie sie: Ihre E-Mail erscheint in Outlook mit Empfänger, Text und Anhängen bereits ausgefüllt."
+
+#: classes/class-ispag-achat-mail-templates.php:101
+msgid "Number of working days given to return the drawings"
+msgstr "Anzahl Arbeitstage für die Rücksendung der Zeichnungen"
+
+#: classes/class-ispag-achat-mail-templates.php:102
+msgid "Satisfaction survey link"
+msgstr "Link zur Zufriedenheitsumfrage"
+
+#: classes/class-ispag-achat-mail-templates.php:103
+msgid "Start of a text kept only if the order contains a type 1 item (drawings to approve) — close it with {/IF_DRAWINGS}"
+msgstr "Beginn eines Textes, der nur beibehalten wird, wenn die Bestellung einen Artikel vom Typ 1 enthält (zu genehmigende Zeichnungen) — schliessen mit {/IF_DRAWINGS}"
+
+#: classes/class-ispag-achat-mail-templates.php:104
+msgid "End of the \"with drawings\" text"
+msgstr "Ende des Textes «mit Zeichnungen»"
+
+#: classes/class-ispag-achat-mail-templates.php:105
+msgid "Start of a text kept only if the order has no type 1 item — close it with {/IF_NO_DRAWINGS}"
+msgstr "Beginn eines Textes, der nur beibehalten wird, wenn die Bestellung keinen Artikel vom Typ 1 enthält — schliessen mit {/IF_NO_DRAWINGS}"
+
+#: classes/class-ispag-achat-mail-templates.php:106
+msgid "End of the \"without drawings\" text"
+msgstr "Ende des Textes «ohne Zeichnungen»"
+
+#: classes/class-ispag-achat-mail-templates.php:107
+msgid "Start of a text kept only if a document is attached to the e-mail — close it with {/IF_ATTACHMENTS}"
+msgstr "Beginn eines Textes, der nur beibehalten wird, wenn der E-Mail ein Dokument beigefügt ist — schliessen mit {/IF_ATTACHMENTS}"
+
+#: classes/class-ispag-achat-mail-templates.php:108
+msgid "End of the \"with attachments\" text"
+msgstr "Ende des Textes «mit Anhängen»"
+
+#: classes/class-ispag-achat-mail-templates.php:109
+msgid "Start of a text kept only if no document is attached — close it with {/IF_NO_ATTACHMENTS}"
+msgstr "Beginn eines Textes, der nur beibehalten wird, wenn kein Dokument beigefügt ist — schliessen mit {/IF_NO_ATTACHMENTS}"
+
+#: classes/class-ispag-achat-mail-templates.php:110
+msgid "End of the \"without attachments\" text"
+msgstr "Ende des Textes «ohne Anhänge»"
+
+#: classes/class-ispag-achat-mail-templates.php:111
+msgid "Name of the person who triggered the e-mail"
+msgstr "Name der Person, die die E-Mail ausgelöst hat"
+
+#: classes/class-ispag-achat-mail-templates.php:120
+msgid "Supplier name"
+msgstr "Name des Lieferanten"
+
+#: classes/class-ispag-achat-mail-templates.php:123
+msgid "Full order reference (number - project)"
+msgstr "Vollständige Bestellreferenz (Nummer - Projekt)"
+
+#: classes/class-ispag-achat-mail-templates.php:126
+msgid "Delivery address (full block)"
+msgstr "Lieferadresse (vollständiger Block)"
+
+#: classes/class-ispag-achat-mail-templates.php:127
+msgid "Contact on site"
+msgstr "Kontaktperson vor Ort"
+
+#: classes/class-ispag-achat-mail-templates.php:128
+msgid "Contact phone number"
+msgstr "Telefonnummer der Kontaktperson"
+
+#: classes/class-ispag-achat-mail-templates.php:129
+msgid "Link to the order"
+msgstr "Link zur Bestellung"
+
+#: classes/class-ispag-achat-mail-templates.php:130
+msgid "Sender name"
+msgstr "Name des Absenders"
+
+#: classes/class-ispag-achat-mail-templates.php:131
+msgid "Your company name"
+msgstr "Name Ihres Unternehmens"
+
+#: classes/class-ispag-achat-mail-templates.php:187
+msgid "Invalid type or language"
+msgstr "Ungültiger Typ oder ungültige Sprache"
+
+#: classes/class-ispag-achat-mail-templates.php:190
+msgid "Subject and message are required"
+msgstr "Betreff und Nachricht sind erforderlich"
+
+#: classes/class-ispag-achat-mail-templates.php:199
+msgid "A template already exists for this type and language"
+msgstr "Für diesen Typ und diese Sprache existiert bereits eine Vorlage"
+
+#: classes/class-ispag-achat-mail-templates.php:233
+msgid "Email templates"
+msgstr "E-Mail-Vorlagen"
+
+#: classes/class-ispag-achat-mail-templates.php:250
+msgid "Delete this template?"
+msgstr "Diese Vorlage löschen?"
+
+#: classes/class-ispag-achat-mail-templates.php:285
+msgid "New template"
+msgstr "Neue Vorlage"
+
+#: classes/class-ispag-achat-mail-templates.php:287
+msgid "One template per message type and language. If a supplier’s language has no template, the English one is used."
+msgstr "Eine Vorlage pro Nachrichtentyp und Sprache. Hat die Sprache eines Lieferanten keine Vorlage, wird die englische verwendet."
+
+#: classes/class-ispag-achat-mail-templates.php:290
+msgid "Search"
+msgstr "Suchen"
+
+#: classes/class-ispag-achat-mail-templates.php:290
+msgid "Search a template (type, language, subject, text)…"
+msgstr "Vorlage suchen (Typ, Sprache, Betreff, Text)…"
+
+#: classes/class-ispag-achat-mail-templates.php:291
+msgid "Family"
+msgstr "Familie"
+
+#: classes/class-ispag-achat-mail-templates.php:292
+msgid "All families"
+msgstr "Alle Familien"
+
+#: classes/class-ispag-achat-mail-templates.php:30
+msgid "Supplier orders"
+msgstr "Lieferantenbestellungen"
+
+#: classes/class-ispag-achat-mail-templates.php:31
+msgid "Project follow-up (customer)"
+msgstr "Projektverfolgung (Kunde)"
+
+#: classes/class-ispag-achat-mail-templates.php:312
+msgid "Message type"
+msgstr "Nachrichtentyp"
+
+#: classes/class-ispag-achat-mail-templates.php:318
+msgid "Language"
+msgstr "Sprache"
+
+#: classes/class-ispag-achat-mail-templates.php:325
+msgid "Subject"
+msgstr "Betreff"
+
+#: classes/class-ispag-achat-mail-templates.php:327
+msgid "Message"
+msgstr "Nachricht"
+
+#: classes/class-ispag-achat-mail-templates.php:331
+msgid "Fields replaced when the email is sent — click to insert:"
+msgstr "Beim Versand der E-Mail ersetzte Felder — zum Einfügen anklicken:"
+
+#: classes/class-ispag-achat-mail-templates.php:342
+msgid "Preview (sample data)"
+msgstr "Vorschau (Beispieldaten)"
+
+#: classes/class-ispag-achat-mail-templates.php:349
+msgid "Preview"
+msgstr "Vorschau"
+
+#: classes/class-ispag-achat-mail-templates.php:366
+msgid "No template yet."
+msgstr "Noch keine Vorlage."
+
+#: classes/class-ispag-achat-mail-templates.php:368
+msgid "Type"
+msgstr "Typ"
+
+#: classes/class-ispag-achat-mail-templates.php:378
+msgid "Duplicate (e.g. to translate)"
+msgstr "Duplizieren (z. B. zum Übersetzen)"
+
+#: classes/class-ispag-achat-mail-templates.php:39
+msgid "Request for quotation (RFQ)"
+msgstr "Offertanfrage (RFQ)"
+
+#: classes/class-ispag-achat-mail-templates.php:40
+msgid "Drawing validation"
+msgstr "Zeichnungsfreigabe"
+
+#: classes/class-ispag-achat-mail-templates.php:41
+msgid "Drawing modifications"
+msgstr "Zeichnungsänderungen"
+
+#: classes/class-ispag-achat-mail-templates.php:85
+msgid "Recipient first name"
+msgstr "Vorname des Empfängers"
+
+#: classes/class-ispag-achat-mail-templates.php:86
+msgid "Recipient last name"
+msgstr "Nachname des Empfängers"
+
+#: classes/class-ispag-achat-mail-templates.php:89
+msgid "Link to the project (address only)"
+msgstr "Link zum Projekt (nur Adresse)"
+
+#: classes/class-ispag-achat-mail-templates.php:90
+msgid "Link to the project (clickable: \"view the project\" in the recipient language)"
+msgstr "Link zum Projekt (anklickbar: «Projekt ansehen» in der Sprache des Empfängers)"
+
+#: classes/class-ispag-achat-mail-templates.php:91
+msgid "List of items, grouped"
+msgstr "Artikelliste, gruppiert"
+
+#: classes/class-ispag-achat-mail-templates.php:92
+msgid "Items not delivered yet that have a delivery date, grouped, with their planned delivery"
+msgstr "Noch nicht gelieferte Artikel mit Lieferdatum, gruppiert, mit ihrer geplanten Lieferung"
+
+#: classes/class-ispag-achat-mail-templates.php:93
+msgid "Planned delivery date (or period)"
+msgstr "Geplantes Lieferdatum (oder -zeitraum)"
+
+#: classes/class-ispag-achat-mail-templates.php:95
+msgid "Delivery postal code"
+msgstr "Postleitzahl der Lieferung"
+
+#: classes/class-ispag-achat-mail-templates.php:96
+msgid "Delivery city"
+msgstr "Lieferort"
+
+#: classes/class-ispag-achat-mail-templates.php:97
+msgid "On-site contact"
+msgstr "Kontaktperson vor Ort"
+
+#: classes/class-ispag-achat-mail-templates.php:98
+msgid "On-site contact phone"
+msgstr "Telefon der Kontaktperson vor Ort"
+
+#: classes/class-ispag-achat-mail-templates.php:99
+msgid "Deadline to return the approved drawings (working days from sending, set in ISPAG Settings → Plan reminders); in a reminder, the date of the next reminder"
+msgstr "Frist für die Rücksendung der genehmigten Zeichnungen (Arbeitstage ab Versand, festgelegt in ISPAG-Einstellungen → Zeichnungserinnerungen); in einer Erinnerung das Datum der nächsten Erinnerung"
+
+#: classes/class-ispag-achat-manager.php:1012
+msgid "No purchase found"
+msgstr "Kein Einkauf gefunden"
+
+#: classes/class-ispag-achat-manager.php:137
+msgid "Loading"
+msgstr "Wird geladen"
+
+#: classes/class-ispag-achat-manager.php:138
+msgid "All projects are loaded"
+msgstr "Alle Projekte sind geladen"
+
+#: classes/class-ispag-achat-manager.php:201
+msgid "Reference"
+msgstr "Referenz"
+
+#: classes/class-ispag-achat-manager.php:202
+msgid "Order date"
+msgstr "Bestelldatum"
+
+#: classes/class-ispag-achat-manager.php:203
+msgid "Delivery date"
+msgstr "Lieferdatum"
+
+#: classes/class-ispag-achat-manager.php:204
+msgid "Supplier"
+msgstr "Lieferant"
+
+#: classes/class-ispag-achat-manager.php:205
+msgid "Order amount"
+msgstr "Bestellbetrag"
+
+#: classes/class-ispag-achat-manager.php:206
+msgid "Order confirmation"
+msgstr "Auftragsbestätigung"
+
+#: classes/class-ispag-achat-manager.php:207
+msgid "State"
+msgstr "Status"
+
+#: classes/class-ispag-achat-manager.php:316
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: classes/class-ispag-achat-manager.php:329
+msgid "by"
+msgstr "von"
+
+#: classes/class-ispag-achat-manager.php:409
+msgid "Purchase not found."
+msgstr "Einkauf nicht gefunden."
+
+#: classes/class-ispag-achat-manager.php:449
+msgid "Bulk update selected articles"
+msgstr "Ausgewählte Artikel aktualisieren"
+
+#: classes/class-ispag-achat-manager.php:452
+msgid "Factory departure date"
+msgstr "Datum Abgang ab Werk"
+
+#: classes/class-ispag-achat-manager.php:456
+msgid "Delivered on"
+msgstr "Geliefert am"
+
+#: classes/class-ispag-achat-manager.php:460
+msgid "Invoiced on"
+msgstr "Verrechnet am"
+
+#: classes/class-ispag-achat-manager.php:464
+msgid "Apply changes"
+msgstr "Änderungen anwenden"
+
+#: classes/class-ispag-achat-manager.php:484
+msgid "Unauthorized or empty selection"
+msgstr "Auswahl nicht zulässig oder leer"
+
+#: classes/class-ispag-achat-manager.php:538
+msgid "Database error: nothing was saved"
+msgstr "Datenbankfehler: Es wurde nichts gespeichert"
+
+#: classes/class-ispag-achat-manager.php:555
+msgid "Nothing to apply: fill in at least one date"
+msgstr "Nichts anzuwenden: Geben Sie mindestens ein Datum an"
+
+#: classes/class-ispag-achat-manager.php:559
+msgid "Bulk update applied successfully"
+msgstr "Sammelaktualisierung erfolgreich angewendet"
+
+#: classes/class-ispag-achat-purchase-order-pdf.php:198
+msgid "Delivery address"
+msgstr "Lieferadresse"
+
+#: classes/class-ispag-achat-purchase-order-pdf.php:302
+msgid "Total"
+msgstr "Total"
+
+#: classes/class-ispag-achat-renderer.php:129
+msgid "How to open the email draft automatically"
+msgstr "So öffnen Sie den E-Mail-Entwurf automatisch"
+
+#: classes/class-ispag-achat-renderer.php:130
+msgid "Help: email draft"
+msgstr "Hilfe: E-Mail-Entwurf"
+
+#: classes/class-ispag-achat-renderer.php:193
+msgid "Invoiced"
+msgstr "Verrechnet"
+
+#: classes/class-ispag-achat-renderer.php:193
+msgid "Not invoiced"
+msgstr "Nicht verrechnet"
+
+#: classes/class-ispag-achat-renderer.php:233
+msgid "Factory departure"
+msgstr "Abgang ab Werk"
+
+#: classes/class-ispag-achat-renderer.php:236
+msgid "Drawing approved"
+msgstr "Zeichnung genehmigt"
+
+#: classes/class-ispag-achat-renderer.php:237
+msgid "Received / Delivered"
+msgstr "Erhalten / Geliefert"
+
+#: classes/class-ispag-achat-renderer.php:260
+msgid "Email"
+msgstr "E-Mail"
+
+#: classes/class-ispag-achat-renderer.php:263
+msgid "Website"
+msgstr "Website"
+
+#: classes/class-ispag-achat-renderer.php:265
+msgid "Currency"
+msgstr "Währung"
+
+#: classes/class-ispag-achat-renderer.php:265
+msgid "Delivery time"
+msgstr "Lieferzeit"
+
+#: classes/class-ispag-achat-renderer.php:265
+msgid "days"
+msgstr "Tage"
+
+#: classes/class-ispag-achat-renderer.php:267
+msgid "No supplier selected."
+msgstr "Kein Lieferant ausgewählt."
+
+#: classes/class-ispag-achat-renderer.php:294
+msgid "Article not found"
+msgstr "Artikel nicht gefunden"
+
+#: classes/class-ispag-achat-renderer.php:335
+msgid "Delivery note"
+msgstr "Lieferschein"
+
+#: classes/class-ispag-achat-renderer.php:34
+msgid "No items were found for this supplier order."
+msgstr "Für diese Lieferantenbestellung wurden keine Artikel gefunden."
+
+#: classes/class-ispag-achat-renderer.php:343
+msgid "No items selected"
+msgstr "Keine Artikel ausgewählt"
+
+#: classes/class-ispag-achat-renderer.php:365
+msgid "Delete"
+msgstr "Löschen"
+
+#: classes/class-ispag-achat-renderer.php:376
+msgid "Add product"
+msgstr "Produkt hinzufügen"
+
+#: classes/class-ispag-achat-renderer.php:47
+msgid "Select all"
+msgstr "Alle auswählen"
+
+#: classes/class-ispag-achat-renderer.php:63
+msgid "Collapse / expand"
+msgstr "Einklappen / Ausklappen"
+
+#: classes/class-ispag-achat-renderer.php:68
+msgid "Copy title"
+msgstr "Titel kopieren"
+
+#: classes/class-ispag-achat-settings.php:100
+msgid "Automatic amounts"
+msgstr "Automatische Beträge"
+
+#: classes/class-ispag-achat-settings.php:103
+msgid "Transport per 1000 L of tanks"
+msgstr "Transport pro 1000 L Behälter"
+
+#: classes/class-ispag-achat-settings.php:105
+msgid "Amount of the TRANS line, per started 1000 L, for the suppliers ticked below."
+msgstr "Betrag der Zeile TRANS pro angefangene 1000 L für die unten angekreuzten Lieferanten."
+
+#: classes/class-ispag-achat-settings.php:108
+msgid "Customs clearance rate on purchases (%)"
+msgstr "Verzollungssatz auf Einkäufe (%)"
+
+#: classes/class-ispag-achat-settings.php:110
+msgid "Percentage of the net total for the DED line of purchase orders in EUR. The rate used for sales prices is separate: ISPAG Settings → Customs clearance rate on sales."
+msgstr "Prozentsatz des Nettototals für die Zeile DED von Bestellungen in EUR. Der für Verkaufspreise verwendete Satz ist separat: ISPAG-Einstellungen → Verzollungssatz auf Verkäufe."
+
+#: classes/class-ispag-achat-settings.php:114
+msgid "Suppliers with automatic transport"
+msgstr "Lieferanten mit automatischem Transport"
+
+#: classes/class-ispag-achat-settings.php:115
+msgid "For these suppliers, an order containing tanks offers to add the transport line (TRANS line, see the amount above). Tick the suppliers concerned."
+msgstr "Für diese Lieferanten wird bei einer Bestellung mit Behältern vorgeschlagen, die Transportzeile hinzuzufügen (Zeile TRANS, siehe Betrag oben). Kreuzen Sie die betroffenen Lieferanten an."
+
+#: classes/class-ispag-achat-settings.php:63
+msgid "Purchase settings"
+msgstr "Einkaufseinstellungen"
+
+#: classes/class-ispag-achat-settings.php:73
+msgid "Not authorized"
+msgstr "Nicht autorisiert"
+
+#: classes/class-ispag-achat-settings.php:96
+msgid "Settings saved."
+msgstr "Einstellungen gespeichert."
+
+#: classes/class-ispag-achat-status-render.php:167
+msgid "No steps defined."
+msgstr "Keine Schritte definiert."
+
+#: classes/class-ispag-achat-status-render.php:176
+msgid "Request for quotation"
+msgstr "Offertanfrage"
+
+#: classes/class-ispag-achat-status-render.php:177
+msgid "Order"
+msgstr "Bestellung"
+
+#: classes/class-ispag-achat-status-render.php:178
+msgid "Other"
+msgstr "Andere"
+
+#: classes/class-ispag-achat-status-render.php:223
+msgid "Automatic step"
+msgstr "Automatischer Schritt"
+
+#: classes/class-ispag-achat-status-render.php:232
+msgid "Done"
+msgstr "Erledigt"
+
+#: classes/class-ispag-achat-status-render.php:232
+msgid "Pending"
+msgstr "Ausstehend"
+
+#: classes/class-ispag-achat-supplier-contacts.php:13
+msgid "Order / quotation contact"
+msgstr "Kontakt Bestellung / Offerte"
+
+#: classes/class-ispag-achat-supplier-contacts.php:14
+msgid "Drawing contact"
+msgstr "Kontakt Zeichnungen"
+
+#: classes/class-ispag-achat-supplier-contacts.php:15
+msgid "Billing contact"
+msgstr "Kontakt Rechnungsstellung"
+
+#: classes/class-ispag-achat-supplier-contacts.php:16
+msgid "Delivery contact"
+msgstr "Kontakt Lieferung"
+
+#: classes/class-ispag-achat-supplier-contacts.php:48
+msgid "Change"
+msgstr "Ändern"
+
+#: classes/class-ispag-achat-supplier-contacts.php:59
+msgid "Contacts"
+msgstr "Kontakte"
+
+#: classes/class-ispag-carrybox-manager.php:85
+msgid "Logistics and storage - Carry Box"
+msgstr "Logistik und Lagerung - Carry Box"
+
+#: classes/templates/achat-detail.php:105
+msgid "To project"
+msgstr "Zum Projekt"
+
+#: classes/templates/achat-detail.php:106
+msgid "To purchase list"
+msgstr "Zur Einkaufsliste"
+
+#: classes/templates/achat-detail.php:124
+msgid "Articles"
+msgstr "Artikel"
+
+#: classes/templates/achat-detail.php:125
+msgid "Details"
+msgstr "Details"
+
+#: classes/templates/achat-detail.php:126
+msgid "Follow up"
+msgstr "Nachverfolgung"
+
+#: classes/templates/achat-detail.php:127
+msgid "Document flow"
+msgstr "Dokumentenfluss"
+
+#: classes/templates/achat-detail.php:142
+msgid "Display / Mask panel"
+msgstr "Panel ein- / ausblenden"
+
+#: classes/templates/achat-detail.php:143
+msgid "Mask panel"
+msgstr "Panel ausblenden"
+
+#: classes/templates/achat-detail.php:164
+msgid "Project"
+msgstr "Projekt"
+
+#: classes/templates/achat-detail.php:165
+msgid "Open the project"
+msgstr "Projekt öffnen"
+
+#: classes/templates/achat-detail.php:166
+msgid "Deal ID"
+msgstr "Deal-ID"
+
+#: classes/templates/achat-detail.php:50
+msgid "Date"
+msgstr "Datum"
+
+#: classes/templates/achat-detail.php:85
+msgid "Status"
+msgstr "Status"
+
+#: classes/templates/achat-detail.php:93
+msgid "Managed by"
+msgstr "Verwaltet von"
+
+#: classes/templates/modal-display-datas-form.php:103
+msgid "Pricing details restricted"
+msgstr "Preisdetails eingeschränkt"
+
+#: classes/templates/modal-display-datas-form.php:114
+msgid "Status Tracking"
+msgstr "Statusverfolgung"
+
+#: classes/templates/modal-display-datas-form.php:139
+msgid "Classification"
+msgstr "Klassifizierung"
+
+#: classes/templates/modal-display-datas-form.php:142
+msgid "Drawing No"
+msgstr "Zeichnungs-Nr."
+
+#: classes/templates/modal-display-datas-form.php:50
+msgid "Title"
+msgstr "Titel"
+
+#: classes/templates/modal-display-datas-form.php:78
+msgid "Logistics"
+msgstr "Logistik"
+
+#: classes/templates/modal-display-datas-form.php:86
+msgid "Quantity"
+msgstr "Menge"
+
+#: classes/templates/modal-display-datas-form.php:92
+msgid "Pricing"
+msgstr "Preisgestaltung"
+
+#: classes/templates/modal-display-datas-form.php:95
+msgid "Gross unit price"
+msgstr "Brutto-Einzelpreis"
+
+#: classes/templates/modal-display-datas-form.php:99
+msgid "Discount"
+msgstr "Rabatt"
+
+#: classes/templates/render-article-block.php:100
+msgid "See product"
+msgstr "Produkt ansehen"
+
+#: classes/templates/render-article-block.php:109
+msgid "Edit product"
+msgstr "Produkt bearbeiten"
+
+#: classes/templates/render-article-block.php:127
+msgid "More actions"
+msgstr "Weitere Aktionen"
+
+#: classes/templates/render-article-block.php:133
+msgid "Display price calculation"
+msgstr "Preiskalkulation anzeigen"
+
+#: classes/templates/render-article-block.php:31
+msgid "Select"
+msgstr "Auswählen"
+
+#: classes/templates/render-article-block.php:48
+msgid "Standard"
+msgstr "Standard"
+
+#: classes/templates/render-article-block.php:48
+msgid "Standard article"
+msgstr "Standardartikel"
+
+#: classes/templates/render-article-block.php:52
+msgid "Delivered"
+msgstr "Geliefert"
+
+#: classes/templates/render-article-block.php:54
+msgid "Late"
+msgstr "Verspätet"
+
+#: classes/templates/render-article-block.php:66
+msgid "Drawing to be approved"
+msgstr "Zeichnung zu genehmigen"
+
+#: classes/templates/render-article-block.php:68
+msgid "Check drawing for validation"
+msgstr "Zeichnung zur Freigabe prüfen"
+
+#: classes/templates/render-article-block.php:68
+msgid "Drawing"
+msgstr "Zeichnung"
+
+#: classes/templates/render-article-block.php:78
+msgid "Delivery ETA"
+msgstr "Voraussichtliche Lieferung"
+
+#: classes/templates/render-article-block.php:84
+msgid "pcs"
+msgstr "Stk."
