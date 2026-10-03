@@ -335,7 +335,8 @@ class ISPAG_Achat_Status_Checker
                     self::$logger->log_user_action('achat_status_checker', 'rule_4_not_triggered', ['achat_id' => $achat_id], $user_id);
                     return false;
                 },
-                'can_jump_from_any' => false,
+                // Une commande passée dont tout est livré passe en « Matériel reçu » même sans confirmation de commande (voir auto_status_checker)
+                'can_jump_from_any' => true,
             ],
 
             // Étape 5 : Facture validée
@@ -447,7 +448,9 @@ class ISPAG_Achat_Status_Checker
 
             self::$logger->log_user_action('achat_status_checker', 'checking_jump_rules', ['achat_id' => $achat->Id], $user_id);
 
-            foreach ($registry as $status_id => $rule)
+            // « Matériel reçu » est jugé en premier : si tout est livré, la commande y va directement (sans passer par la confirmation)
+            $jump_rules = isset($registry[4]) ? [4 => $registry[4]] + $registry : $registry;
+            foreach ($jump_rules as $status_id => $rule)
             {
                 if (!isset($rule['can_jump_from_any']) || !$rule['can_jump_from_any']) continue;
                 if (!isset($etats_db[$status_id]) || (int)$etats_db[$status_id]->is_automatic === 0) continue;
@@ -455,8 +458,15 @@ class ISPAG_Achat_Status_Checker
                 $resolved = $rule['resolver']($achat->Id);
                 if ($resolved !== false && $resolved !== $current_status)
                 {
-                    if (in_array($resolved, [12, 14, 15, 16, 3]))
+                    if (in_array($resolved, [12, 14, 15, 16, 3, 4]))
                     {
+                        // Livraison complète : seulement pour une commande déjà passée au fournisseur (étape « Commande envoyée » ou suivante)
+                        if ($resolved === 4 && isset($etats_db[2]) && $current_ordre < (int)$etats_db[2]->ordre)
+                        {
+                            self::$logger->log_user_action('achat_status_checker', 'jump_to_received_rejected', ['achat_id' => $achat->Id, 'reason' => 'order not placed yet', 'current_status' => $current_status], $user_id);
+                            continue;
+                        }
+
                         if (in_array($resolved, $liste_plans) && !in_array($current_status, $liste_plans))
                         {
                             self::$logger->log_user_action('achat_status_checker', 'jump_to_plan_rejected', ['achat_id' => $achat->Id, 'resolved' => $resolved, 'current_status' => $current_status], $user_id);
