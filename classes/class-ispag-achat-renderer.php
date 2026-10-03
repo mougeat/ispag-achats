@@ -469,7 +469,7 @@ class ISPAG_Achat_Renderer {
             }
         } else {
             // CRÉATION
-            $description = ($type === 'TRANS') ? 'Frais de transport selon volume' : 'Customs clearance fees (' . rtrim(rtrim(number_format(ISPAG_Achat_Settings::customs_rate(), 2, '.', ''), '0'), '.') . '%)';
+            $description = ($type === 'TRANS') ? 'Transport costs based on volume' : 'Customs clearance fees (' . rtrim(rtrim(number_format(ISPAG_Achat_Settings::customs_rate(), 2, '.', ''), '0'), '.') . '%)';
             
             $inserted = $wpdb->insert(
                 $table,
@@ -480,7 +480,7 @@ class ISPAG_Achat_Renderer {
                     'Qty'           => 1,
                     'UnitPrice'     => $amount
                 ],
-                ['%d', '%s', '%s', '%d', '%f', '%d', '%s']
+                ['%d', '%s', '%s', '%d', '%f']
             );
 
             if ($inserted) {

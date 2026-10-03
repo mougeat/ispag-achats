@@ -362,6 +362,45 @@ class ISPAG_Achat_Status_Checker
     }
 
     // ------------------------------------------------------------------
+    // TRANSPORT / DÉDOUANEMENT
+    // ------------------------------------------------------------------
+
+    /**
+     * Quand tous les articles d'une commande sont livrés, les lignes « TRANS » (transport) et « DED » (dédouanement)
+     * passent en « livré » à la date de la dernière livraison.
+     */
+    public static function sync_adjustment_articles_delivery($achat_id)
+    {
+        global $wpdb;
+        $achat_id = (int) $achat_id;
+        if (!$achat_id) return;
+        $t = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT Id, RefSurMesure, Qty, Recu, TimestampDateLivraisonConfirme FROM {$t} WHERE IdCommande = %d AND (archive IS NULL OR archive = 0)",
+            $achat_id
+        ));
+        if (!$rows) return;
+
+        $adjust = [];
+        $last   = 0;
+        foreach ($rows as $r) {
+            if (in_array(strtoupper(trim((string) $r->RefSurMesure)), ['TRANS', 'DED'], true)) {
+                $adjust[] = $r;
+                continue;
+            }
+            if ((int) $r->Recu <= 0) return; // un article pas encore livré : rien à faire
+            $last = max($last, (int) $r->TimestampDateLivraisonConfirme);
+        }
+        if (!$adjust || $last === 0) $last = $last ?: time();
+
+        foreach ($adjust as $r) {
+            if ((int) $r->Recu > 0) continue;
+            $wpdb->update($t, ['Recu' => max(1, (int) $r->Qty), 'TimestampDateLivraisonConfirme' => $last], ['Id' => (int) $r->Id]);
+        }
+    }
+
+    // ------------------------------------------------------------------
     // ORCHESTRATEUR
     // ------------------------------------------------------------------
 
@@ -390,6 +429,9 @@ class ISPAG_Achat_Status_Checker
 
         foreach ($achats as $achat)
         {
+            // Transport et dédouanement passent en « livré » quand tous les articles le sont (avant de juger l'étape « matériel reçu »)
+            self::sync_adjustment_articles_delivery((int) $achat->Id);
+
             $current_status = (int)$achat->EtatCommande;
             self::$logger->log_user_action('achat_status_checker', 'processing_order', ['achat_id' => $achat->Id, 'current_status' => $current_status], $user_id);
 
@@ -454,20 +496,20 @@ class ISPAG_Achat_Status_Checker
                     $next_slug = $ordered_etats[$j + 1]->ClassCss;
                     $next_ordre = (int)$ordered_etats[$j + 1]->ordre;
 
+                    // Statut suivant sans règle automatique (étape manuelle) : on passe au suivant
                     if (!isset($registry[$next_id]) || (int)$ordered_etats[$j]->is_automatic === 0) continue;
 
-                    $resolved = $registry[$current_id]['resolver']($achat->Id);
+                    // C'est la règle du statut SUIVANT qui dit si la commande peut y avancer (et non celle du statut courant)
+                    $resolved = $registry[$next_id]['resolver']($achat->Id);
 
-                    if ($resolved !== false && $resolved === $next_id)
+                    if ($resolved !== false && $resolved === $next_id && $next_ordre > $current_ordre)
                     {
-                        if ($next_ordre > $current_ordre)
-                        {
-                            self::$logger->log_user_action('achat_status_checker', 'sequential_progress_allowed', ['achat_id' => $achat->Id, 'from' => $current_status, 'to' => $next_id], $user_id);
-                            self::update_auto_status($achat->Id, $next_slug, $next_id);
-                            $status_updated = true;
-                            break 2;
-                        }
+                        self::$logger->log_user_action('achat_status_checker', 'sequential_progress_allowed', ['achat_id' => $achat->Id, 'from' => $current_status, 'to' => $next_id], $user_id);
+                        self::update_auto_status($achat->Id, $next_slug, $next_id);
+                        $status_updated = true;
                     }
+                    // Première règle du statut suivant rencontrée : atteinte ou non, on ne saute pas au-delà
+                    break 2;
                 }
                 break;
             }

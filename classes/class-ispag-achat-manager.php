@@ -435,7 +435,7 @@ class ISPAG_Achat_Manager
         $logger = ISPAG_Logger::get_instance();
         $logger->log_user_action('achat_manager', 'bulk_selected_article_start', ['achat_id' => $achat_id], $user_id);
 
-        $can_manage_order = current_user_can('manage_order');
+        $can_manage_order = current_user_can('manage_order') || current_user_can('edit_supplier_order');
         if (!$can_manage_order)
         {
             $logger->log('achat_manager', 'ERROR: User cannot manage order', $user_id);
@@ -475,9 +475,9 @@ class ISPAG_Achat_Manager
         $date_depart_has_update = false;
 
         $article_ids = $_POST['articles'] ?? [];
-        $achat_id = $_POST['achat_id'] ?? [];
+        $achat_id = intval($_POST['achat_id'] ?? 0);
 
-        if (!current_user_can('manage_order') || empty($article_ids))
+        if (!(current_user_can('edit_supplier_order') || current_user_can('manage_order')) || empty($article_ids))
         {
             $logger->log('achat_manager', 'ERROR: Unauthorized or empty selection', $user_id);
             wp_send_json_error(['message' => __('Unauthorized or empty selection', 'creation-reservoir')]);
@@ -501,55 +501,61 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'articles_parsed', ['ids' => $ids], $user_id);
 
+        if (!$ids) {
+            wp_send_json_error(['message' => __('Unauthorized or empty selection', 'creation-reservoir')]);
+        }
         $in_clause = implode(',', $ids);
 
         $date_depart = $_POST['date_depart'] ?? null;
-        if ($date_depart)
+        $depart_ts   = $date_depart ? strtotime($date_depart) : false;
+        $livre_ts    = !empty($_POST['livre_date']) ? strtotime($_POST['livre_date']) : false;
+        $invoiced_ts = !empty($_POST['invoiced_date']) ? strtotime($_POST['invoiced_date']) : false;
+
+        if ($depart_ts)
         {
-            $timestamp = strtotime($date_depart);
-            if ($timestamp)
-            {
-                $updates[] = "TimestampDateLivraisonConfirme = '" . intval($timestamp) . "'";
-                $date_depart_has_update = true;
-                $logger->log_user_action('achat_manager', 'date_depart_added', ['timestamp' => $timestamp], $user_id);
-            }
+            $updates[] = 'TimestampDateLivraisonConfirme = ' . intval($depart_ts);
+            $date_depart_has_update = true;
+        }
+        if ($livre_ts)
+        {
+            // Reçu = quantité commandée (c'est une quantité) ; la date de livraison est la date confirmée, sauf date de départ saisie en même temps
+            $updates[] = 'Recu = Qty';
+            if (!$depart_ts) $updates[] = 'TimestampDateLivraisonConfirme = ' . intval($livre_ts);
+        }
+        if ($invoiced_ts)
+        {
+            $updates[] = 'Facture = Qty';
         }
 
-        if (!empty($_POST['livre_date']))
-        {
-            $timestamp = strtotime($_POST['livre_date']);
-            if ($timestamp)
-            {
-                $updates[] = "Recu = 1";
-                $logger->log_user_action('achat_manager', 'livre_date_added', ['timestamp' => $timestamp], $user_id);
-            }
-        }
-
-        if (!empty($_POST['invoiced_date']))
-        {
-            $timestamp = strtotime($_POST['invoiced_date']);
-            if ($timestamp)
-            {
-                $updates[] = "Invoice = 1";
-                $logger->log_user_action('achat_manager', 'invoiced_date_added', ['timestamp' => $timestamp], $user_id);
-            }
-        }
-
+        $affected = 0;
         if (!empty($updates))
         {
-            $query = "UPDATE {$wpdb->prefix}achats_articles_cmd_fournisseurs SET " . implode(', ', $updates) . " WHERE id IN ($in_clause)";
+            $query = "UPDATE {$wpdb->prefix}achats_articles_cmd_fournisseurs SET " . implode(', ', $updates) . " WHERE Id IN ($in_clause)";
             $result = $wpdb->query($query);
             $logger->log_db_change('achat_manager', 'achats_articles_cmd_fournisseurs', 'BULK_UPDATE', ['query' => $query, 'result' => $result], $user_id);
+            if ($result === false) {
+                wp_send_json_error(['message' => __('Database error: nothing was saved', 'creation-reservoir')]);
+            }
+            $affected = (int) $result;
 
-            if ($date_depart_has_update && $date_depart)
+            if ($date_depart_has_update && $depart_ts)
             {
-                do_action('ispag_update_delivery_date_from_purchase', null, $achat_id, $ids, $timestamp);
+                do_action('ispag_update_delivery_date_from_purchase', null, $achat_id, $ids, $depart_ts);
                 $logger->log_user_action('achat_manager', 'delivery_date_update_triggered', ['achat_id' => $achat_id], $user_id);
             }
+
+            // Transport / dédouanement livrés avec le reste, avancement automatique du statut de la commande
+            if ($achat_id) {
+                do_action('ispag_check_auto_status_for_achat', (int) $achat_id);
+            }
+        }
+        else
+        {
+            wp_send_json_error(['message' => __('Nothing to apply: fill in at least one date', 'creation-reservoir')]);
         }
 
         $logger->log_user_action('achat_manager', 'bulk_achat_update_articles_complete', [], $user_id);
-        wp_send_json_success(['message' => __('Bulk update applied successfully', 'creation-reservoir')]);
+        wp_send_json_success(['message' => __('Bulk update applied successfully', 'creation-reservoir'), 'updated' => $affected]);
     }
 
     public static function handle_inline_edit($updated, $args)
@@ -762,6 +768,12 @@ class ISPAG_Achat_Manager
                 $project_data,
                 ['Id' => $id_commande_client]
             );
+        }
+
+        // Transport / dédouanement livrés avec le reste, avancement automatique du statut de la commande
+        $achat_of_article = (int) $wpdb->get_var($wpdb->prepare("SELECT IdCommande FROM {$table_purchase} WHERE Id = %d", $article_id));
+        if ($achat_of_article) {
+            do_action('ispag_check_auto_status_for_achat', $achat_of_article);
         }
 
         return ['success' => true, 'message' => 'Update OK'];
