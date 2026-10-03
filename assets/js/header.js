@@ -1,3 +1,4 @@
+window.ispagT = window.ispagT || function (s) { return s; }; // traductions des textes JS (voir includes/js-strings.php)
 jQuery(document).ready(function($) {
     $(document).on('click', '.apply-auto-adjustment', function(e) {
         e.preventDefault();
@@ -17,8 +18,8 @@ jQuery(document).ready(function($) {
                 // On recharge l'onglet ou la page pour voir le changement
                 location.reload(); 
             } else {
-                alert('Error: ' + response.data);
-                $btn.prop('disabled', false).text('Retry');
+                alert(ispagT('Error: ') + response.data);
+                $btn.prop('disabled', false).text(ispagT('Retry'));
             }
         });
     });

@@ -1,3 +1,4 @@
+window.ispagT = window.ispagT || function (s) { return s; }; // traductions des textes JS (voir includes/js-strings.php)
 (function ($) {
     const cfg = window.ispagMailTpl || {};
     const $root = $('#ispag-mailtpl');
@@ -123,7 +124,7 @@
                     $status.text('❌ ' + ((r && r.data) || 'Error'));
                 }
             })
-            .fail(function () { $status.text('❌ Network error'); })
+            .fail(function () { $status.text(ispagT('❌ Network error')); })
             .always(function () { $btn.prop('disabled', false); });
     });
 })(jQuery);

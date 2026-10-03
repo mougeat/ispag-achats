@@ -93,6 +93,7 @@ if (!function_exists('ispag_i18n_register_dir')) {
 }
 
 ispag_i18n_register_dir(__DIR__ . '/languages');
+require_once __DIR__ . '/includes/js-strings.php';
 
 
 // Chemin d'ISPAG Project Manager, quel que soit le nom de son dossier (un ZIP GitHub donne « ispag-project-manager-<branche> »)

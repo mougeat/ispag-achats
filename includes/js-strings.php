@@ -1,0 +1,35 @@
+<?php
+defined('ABSPATH') || exit;
+
+/**
+ * Textes affichés par le JavaScript de ce paquet (messages d'erreur, confirmations, libellés).
+ * Le JavaScript les appelle avec ispagT('Texte anglais') ; ce fichier fournit leur traduction dans la langue du site
+ * (fichiers languages/ de ce paquet). Un texte absent de la liste reste tel quel (anglais).
+ * Après avoir ajouté un texte dans un fichier JS, ajoutez-le ici puis lancez tools/i18n/build.py (ISPAG Project Manager).
+ */
+if (!function_exists('ispag_achats_js_strings')) {
+    function ispag_achats_js_strings() {
+        return [
+        'Error' => __('Error', 'creation-reservoir'),
+        'Error: ' => __('Error: ', 'creation-reservoir'),
+        'Network error' => __('Network error', 'creation-reservoir'),
+        'No article selected' => __('No article selected', 'creation-reservoir'),
+        'No contact found for this supplier.' => __('No contact found for this supplier.', 'creation-reservoir'),
+        'Retry' => __('Retry', 'creation-reservoir'),
+        'Save' => __('Save', 'creation-reservoir'),
+        'Save failed.' => __('Save failed.', 'creation-reservoir'),
+        'The email draft could not be created. Please try again.' => __('The email draft could not be created. Please try again.', 'creation-reservoir'),
+        '❌ An unknown network or server error occurred. Please check logs.' => __('❌ An unknown network or server error occurred. Please check logs.', 'creation-reservoir'),
+        '❌ Network error' => __('❌ Network error', 'creation-reservoir'),
+        ];
+    }
+
+    /** Dictionnaire {texte anglais → texte traduit} injecté dans la page ; seuls les textes réellement traduits sont envoyés. */
+    function ispag_achats_print_js_i18n() {
+        $map = array_filter(ispag_achats_js_strings(), function ($translated, $english) { return $translated !== $english; }, ARRAY_FILTER_USE_BOTH);
+        echo '<script>window.ISPAG_JS_I18N=Object.assign(window.ISPAG_JS_I18N||{},' . wp_json_encode($map, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . ');'
+            . 'window.ispagT=function(s){var d=window.ISPAG_JS_I18N||{};return Object.prototype.hasOwnProperty.call(d,s)?d[s]:s};</script>' . "\n";
+    }
+    add_action('wp_head', 'ispag_achats_print_js_i18n', 1);
+    add_action('admin_head', 'ispag_achats_print_js_i18n', 1);
+}

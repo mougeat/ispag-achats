@@ -1,3 +1,4 @@
+window.ispagT = window.ispagT || function (s) { return s; }; // traductions des textes JS (voir includes/js-strings.php)
 jQuery(document).ready(function($) {
 
     if (typeof ispagAjax === 'undefined') {
@@ -83,14 +84,14 @@ jQuery(document).ready(function($) {
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 // Error de connexion ou autre problème HTTP/JS
-                messageArea.html('❌ An unknown network or server error occurred. Please check logs.')
+                messageArea.html(ispagT('❌ An unknown network or server error occurred. Please check logs.'))
                            .addClass('ispag-notice error');
                 console.error("AJAX Error:", textStatus, errorThrown, jqXHR.responseText);
             },
             complete: function() {
                 // Rétablir le bouton UNIQUEMENT en cas d'erreur
                 if (!messageArea.hasClass('success')) {
-                    submitButton.prop('disabled', false).val('Save');
+                    submitButton.prop('disabled', false).val(ispagT('Save'));
                 }
             }
         });

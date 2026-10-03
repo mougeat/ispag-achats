@@ -820,3 +820,43 @@ msgstr "Voraussichtliche Lieferung"
 #: classes/templates/render-article-block.php:84
 msgid "pcs"
 msgstr "Stk."
+
+#: includes/js-strings.php:13
+msgid "Error"
+msgstr "Fehler"
+
+#: includes/js-strings.php:14
+msgid "Error: "
+msgstr "Fehler: "
+
+#: includes/js-strings.php:15
+msgid "Network error"
+msgstr "Netzwerkfehler"
+
+#: includes/js-strings.php:16
+msgid "No article selected"
+msgstr "Kein Artikel ausgewählt"
+
+#: includes/js-strings.php:17
+msgid "No contact found for this supplier."
+msgstr "Für diesen Lieferanten wurde kein Kontakt gefunden."
+
+#: includes/js-strings.php:18
+msgid "Retry"
+msgstr "Erneut versuchen"
+
+#: includes/js-strings.php:20
+msgid "Save failed."
+msgstr "Speichern fehlgeschlagen."
+
+#: includes/js-strings.php:21
+msgid "The email draft could not be created. Please try again."
+msgstr "Der E-Mail-Entwurf konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+
+#: includes/js-strings.php:22
+msgid "❌ An unknown network or server error occurred. Please check logs."
+msgstr "❌ Es ist ein unbekannter Netzwerk- oder Serverfehler aufgetreten. Bitte prüfen Sie die Protokolle."
+
+#: includes/js-strings.php:23
+msgid "❌ Network error"
+msgstr "❌ Netzwerkfehler"
