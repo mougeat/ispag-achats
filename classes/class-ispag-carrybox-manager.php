@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 
 class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
 

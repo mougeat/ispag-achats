@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * Fiche d'un achat : structure à 3 colonnes (comme la fiche projet) rendue immédiatement avec les informations de base ;
  * les onglets (Articles, Détails, Suivi, Documents) sont chargés en arrière-plan (voir assets/js/details-achat.js).

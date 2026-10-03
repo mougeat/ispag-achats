@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * Gère les opérations de BDD et l'interface utilisateur pour les commandes d'achat ISPAG.
  * Utilise AJAX pour le traitement du formulaire, incluant la liaison aux projets clients/Hubspot.
@@ -62,7 +63,6 @@ class ISPAG_Achat_Commande_Manager {
 
         // Enregistrement des hooks AJAX (connectés et déconnectés)
         add_action('wp_ajax_' . self::$instance->ajax_action, [self::$instance, 'handle_achat_ajax_submission']);
-        add_action('wp_ajax_nopriv_' . self::$instance->ajax_action, [self::$instance, 'handle_achat_ajax_submission']);
 
         // Enqueue des scripts et localisation des variables AJAX
         add_action('wp_enqueue_scripts', [self::$instance, 'enqueue_ajax_script']);

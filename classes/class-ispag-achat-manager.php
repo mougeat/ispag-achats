@@ -858,7 +858,6 @@ class ISPAG_Achat_Manager
 // ----------------------------------------------------------------------------
 
 add_action('wp_ajax_ispag_load_more_achats', 'ispag_load_more_achats');
-add_action('wp_ajax_nopriv_ispag_load_more_achats', 'ispag_load_more_achats');
 
 function ispag_load_more_achats()
 {
@@ -902,7 +901,6 @@ function ispag_load_more_achats()
     wp_send_json_success(['html' => $html, 'has_more' => $has_more]);
 }
 add_action('wp_ajax_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
-add_action('wp_ajax_nopriv_filter_achats_custom_tables', 'ajax_filter_achats_custom_tables');
 
 function ajax_filter_achats_custom_tables()
 {

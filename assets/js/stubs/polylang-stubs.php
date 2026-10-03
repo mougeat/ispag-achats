@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 // Stub pour que Intelephense arrête de râler si Polylang n'est pas chargé
 
 if (!function_exists('pll_set_language')) {

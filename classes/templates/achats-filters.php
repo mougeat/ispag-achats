@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * Template pour les champs de recherche/filtrage des achats
  * Basé sur les tables personnalisées : wor9711_ispag_companies et wor9711_achats_commande_liste_fournisseurs

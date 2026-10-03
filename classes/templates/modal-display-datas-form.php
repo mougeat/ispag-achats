@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * ISPAG Article Purchase Edit Modal View - Modernized V2
  * Alignée sur la version Projet 2.1.8

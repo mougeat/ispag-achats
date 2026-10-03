@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 
 
 class ISPAG_Achat_Supplier_Repository {

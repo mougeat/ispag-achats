@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 // Dans ton plugin achats
 // require_once WP_PLUGIN_DIR . '/ispag-project-manager/classes/class-ispag-document-manager.php';
 

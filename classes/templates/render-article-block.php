@@ -1,4 +1,5 @@
 <?php
+defined('ABSPATH') || exit;
 /**
  * ISPAG Purchase Article Item View - Aligned with Project UI
  */
@@ -116,10 +117,9 @@ $line_total = isset($article->total_price) ? (float) $article->total_price : (fl
             $fitting_html = apply_filters('ispag_get_fitting_btn', '', $article->IdCommandeClient, $article->Id);
         }
 
-        $upload_dir = wp_upload_dir();
-        $calc_path  = $upload_dir['basedir'] . '/ispag_pricing/article_' . $article->IdCommandeClient . '_purchase.txt';
-        $calc_url   = $upload_dir['baseurl'] . '/ispag_pricing/article_' . $article->IdCommandeClient . '_purchase.txt';
-        $has_calc   = file_exists($calc_path);
+        // Note de calcul : jamais d'adresse directe, passage par un point d'entrée protégé (droit manage_order)
+        $has_calc = class_exists('ISPAG_Pricing_Files') && current_user_can('manage_order') && ISPAG_Pricing_Files::exists((int) $article->IdCommandeClient, 'purchase');
+        $calc_url = $has_calc ? ISPAG_Pricing_Files::url((int) $article->IdCommandeClient, 'purchase') : '';
         $can_delete = current_user_can('manage_order');
         ?>
         <?php if ($fitting_html || $has_calc || $can_delete): ?>
