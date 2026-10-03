@@ -9,6 +9,7 @@ class ISPAG_Achat_Renderer {
         add_action('ispag_achat_articles_tab', [self::class, 'render_articles_tab'], 10, 1);
         add_filter('ispag_render_purchase_article_modal', [self::class, 'render_article_modal'], 10, 2);
         add_filter('ispag_purchase_article_view_data', [self::class, 'article_view_data'], 10, 2);
+        add_action('wp_ajax_ispag_achat_supplier_cards', [self::class, 'ajax_supplier_cards']);
         add_filter('ispag_render_purchase_article_modal_form', [self::class, 'render_article_modal_form'], 10, 3);
         add_filter('ispag_render_article_block', [self::class, 'reload_article_row'], 10, 2);
         add_action('wp_ajax_ispag_apply_purchase_adjustment', [self::class, 'ajax_apply_adjustment']);
@@ -241,6 +242,52 @@ class ISPAG_Achat_Renderer {
         ];
     }
 
+    /** Carte « Supplier » (colonne de droite de la fiche achat). */
+    public static function render_supplier_card($supplier_row) {
+        ob_start();
+        ?>
+            <div class="ispag-card ispag-supplier-card" style="font-size:14px;">
+                <h5><?php _e('Supplier', 'creation-reservoir'); ?></h5>
+                <?php if ($supplier_row): ?>
+                    <p style="margin:5px 0;"><strong><?php echo esc_html($supplier_row->Fournisseur); ?></strong></p>
+                    <?php
+                    $addr = array_filter([trim((string) $supplier_row->SupplierAdresse), trim(trim((string) $supplier_row->CodePostal) . ' ' . trim((string) $supplier_row->Ville)), trim((string) $supplier_row->Pays)]);
+                    if ($addr): ?><p style="margin:5px 0;"><?php echo esc_html(implode(', ', $addr)); ?></p><?php endif; ?>
+                    <?php if (!empty(trim((string) $supplier_row->NumTel)) && trim($supplier_row->NumTel) !== '-'): ?>
+                        <p style="margin:5px 0;"><?php _e('Phone number', 'creation-reservoir'); ?>: <a href="tel:<?php echo esc_attr($supplier_row->NumTel); ?>"><?php echo esc_html($supplier_row->NumTel); ?></a></p>
+                    <?php endif; ?>
+                    <?php if (!empty(trim((string) $supplier_row->Mail)) && trim($supplier_row->Mail) !== '-'): ?>
+                        <p style="margin:5px 0;"><?php _e('Email', 'creation-reservoir'); ?>: <a href="mailto:<?php echo esc_attr(trim($supplier_row->Mail)); ?>"><?php echo esc_html(trim($supplier_row->Mail)); ?></a></p>
+                    <?php endif; ?>
+                    <?php if (!empty($supplier_row->compagnyDomain)): ?>
+                        <p style="margin:5px 0;"><?php _e('Website', 'creation-reservoir'); ?>: <a href="<?php echo esc_url('https://' . preg_replace('#^https?://#i', '', trim($supplier_row->compagnyDomain))); ?>" target="_blank" rel="noopener"><?php echo esc_html($supplier_row->compagnyDomain); ?></a></p>
+                    <?php endif; ?>
+                    <p style="margin:5px 0;"><?php _e('Currency', 'creation-reservoir'); ?>: <?php echo esc_html($supplier_row->Monnaie ?: '—'); ?> · <?php _e('Delivery time', 'creation-reservoir'); ?>: <?php echo (int) $supplier_row->deliveryDays; ?> <?php _e('days', 'creation-reservoir'); ?></p>
+                <?php else: ?>
+                    <p class="ispag-no-company"><?php _e('No supplier selected.', 'creation-reservoir'); ?></p>
+                <?php endif; ?>
+            </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /** AJAX : cartes fournisseur + contacts d'une commande (après changement de fournisseur, sans recharger la page). */
+    public static function ajax_supplier_cards() {
+        if (!current_user_can('view_supplier_order') && !current_user_can('manage_order')) {
+            wp_send_json_error('forbidden', 403);
+        }
+        global $wpdb;
+        $achat_id = absint($_POST['achat_id'] ?? 0);
+        $supplier_id = (int) $wpdb->get_var($wpdb->prepare("SELECT IdFournisseur FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d", $achat_id));
+        $supplier_row = $supplier_id ? ISPAG_Achat_Supplier_Repository::get_supplier_row($supplier_id) : null;
+        $can_edit = current_user_can('edit_supplier_order');
+        wp_send_json_success([
+            'supplier_id'   => $supplier_id,
+            'supplier_html' => self::render_supplier_card($supplier_row),
+            'contacts_html' => ISPAG_Achat_Supplier_Contacts::render_card($supplier_row, $can_edit),
+        ]);
+    }
+
     public static function render_article_modal($html, $article_id){
         $data = self::article_view_data(null, $article_id);
         if (!$data || !class_exists('ISPAG_Article_View')) {
@@ -324,7 +371,10 @@ class ISPAG_Achat_Renderer {
         // if (!in_array($achat->EtatCommande, [1, 2, 6, 10])) {
         //     return;
         // }
-        return '<button id="ispag-add-article" data-poid="' . esc_attr($achat_id) .'"  source="purchase" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir'). '</button>';
+        $poid = esc_attr($achat_id);
+        // Bouton visible : choix « article standard du fournisseur » ou « article manuel » ; le bouton d'origine (formulaire manuel) reste en coulisse
+        return '<button type="button" id="ispag-achat-add-product" data-achat-id="' . $poid . '" class="ispag-btn ispag-btn-secondary-outlined"><span class="dashicons dashicons-plus-alt"></span> ' . __('Add product', 'creation-reservoir') . '</button>'
+            . '<button id="ispag-add-article" data-poid="' . $poid . '"  source="purchase" class="ispag-btn ispag-btn-secondary-outlined" style="display:none;"></button>';
     }
 
     private static function display_purchase_adjustments($achat_id, $grouped_articles) {

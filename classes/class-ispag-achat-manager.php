@@ -138,6 +138,7 @@ class ISPAG_Achat_Manager
             'all_loaded_text' => __('All projects are loaded', 'creation-reservoir'),
             'security' => wp_create_nonce('ispag_achat_nonce'),
             'bulk_nonce' => wp_create_nonce('ispag_bulk_update'),
+            'add_product_nonce' => ISPAG_Achat_Add_Product::nonce(),
         ]);
 
         $fournisseurs = $wpdb->get_results(

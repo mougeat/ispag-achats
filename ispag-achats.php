@@ -79,6 +79,7 @@ add_action('init', function () {
     ISPAG_Achat_Document_Analyser::init();
     ISPAG_Achat_Commande_Manager::init();
     ISPAG_Achat_Supplier_Contacts::init();
+    ISPAG_Achat_Add_Product::init();
     ISPAG_Achat_Mail_Templates::init();
     ISPAG_Achat_Mail_Draft::init();
     ISPAG_Achat_Settings::init();

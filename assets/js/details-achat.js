@@ -111,6 +111,13 @@ jQuery(function ($) {
     }
 
     // Les boutons/blocs d'un onglet chargé après coup doivent être « branchés » (les scripts s'initialisent au chargement de la page)
+    // Recharge l'onglet Articles (ex. : après l'ajout d'un article standard)
+    $(document).on('ispag:achat-reload-articles', function () {
+        const $panel = $('#articles');
+        $panel.data('lazyState', null);
+        loadLazyTab($panel);
+    });
+
     function afterTabInjected(tab, $panel) {
         if (tab === 'articles') {
             ['attachEditModalEvents', 'attachViewModalEvents', 'bindStandardTitleListener'].forEach(function (fn) {
@@ -164,6 +171,88 @@ jQuery(function ($) {
     $(document).on('change', '.ispag-article-checkbox', updateBulkActions);
 
     // --- Blocs articles : menu ⋯, clic sur la ligne, groupes repliables ---
+    // --- Changement de fournisseur : cartes Supplier et Contacts mises à jour sans recharger la page ---
+    $(document).on('ispag:inline-edit-saved', function (e, info) {
+        if (!info || info.source !== 'purchase' || info.field !== 'Fournisseur') { return; }
+        const achatId = $('#achat-status-wrapper').data('achat-id') || $('#achat-id').val() || info.id;
+        $.post(ajaxurl, { action: 'ispag_achat_supplier_cards', achat_id: achatId }, function (resp) {
+            if (!resp || !resp.success) { return; }
+            $('.ispag-supplier-card').replaceWith(resp.data.supplier_html);
+            const $contacts = $('.ispag-supplier-contacts');
+            if ($contacts.length) { $contacts.replaceWith(resp.data.contacts_html); }
+            else { $('.ispag-supplier-card').first().after(resp.data.contacts_html); }
+            $('#tank-supplier-display').attr('data-supplier-id', resp.data.supplier_id || '');
+            $(document).trigger('ispag:achat-supplier-changed', [resp.data.supplier_id]);
+        });
+    });
+
+
+    // --- Add product : article standard du fournisseur, ou article manuel (formulaire habituel) ---
+    function esc(t) { return $('<div>').text(t == null ? '' : String(t)).html(); }
+
+    $(document).on('click', '#ispag-achat-add-product', function () {
+        const achatId = $(this).data('achat-id');
+        $('#ispag-achat-add-modal').remove();
+        const $m = $(
+            '<div id="ispag-achat-add-modal" style="position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;">' +
+              '<div style="background:#fff;border-radius:10px;max-width:640px;width:100%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3);">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid #eee;"><h3 style="margin:0;font-size:1.1em;">Add product</h3><button type="button" class="ispag-add-close" aria-label="Close" style="background:none;border:0;font-size:26px;line-height:1;cursor:pointer;width:auto;padding:0 6px;color:#555;">&times;</button></div>' +
+                '<div style="padding:14px 18px;overflow:auto;">' +
+                  '<p style="margin:0 0 6px;font-weight:600;">Standard article of this supplier</p>' +
+                  '<input type="search" class="ispag-add-search" placeholder="Search by title, reference or description…" style="width:100%;margin-bottom:8px;" autocomplete="off">' +
+                  '<div class="ispag-add-results" style="min-height:60px;"></div>' +
+                  '<hr style="margin:16px 0;">' +
+                  '<button type="button" class="ispag-btn ispag-btn-secondary-outlined ispag-add-manual">Manual article…</button>' +
+                '</div>' +
+              '</div>' +
+            '</div>').appendTo('body');
+
+        let timer = null;
+        function load() {
+            const q = $m.find('.ispag-add-search').val();
+            const $r = $m.find('.ispag-add-results').html('<p style="color:#888;">Loading…</p>');
+            $.post(ajaxurl, { action: 'ispag_achat_supplier_std_articles', achat_id: achatId, q: q, nonce: (window.ispagVars || {}).add_product_nonce }, function (resp) {
+                if (!resp || !resp.success) {
+                    const msg = resp && resp.data && resp.data.message ? resp.data.message : 'Error';
+                    $r.html('<p style="color:#b32d2e;">' + esc(msg) + '</p>');
+                    return;
+                }
+                const items = resp.data.items;
+                if (!items.length) { $r.html('<p style="color:#888;">No standard article for this supplier.</p>'); return; }
+                $r.empty();
+                items.forEach(function (it) {
+                    const price = it.price ? (it.price + (it.currency ? ' ' + it.currency : '') + (it.discount ? ' −' + it.discount + '%' : '')) : '';
+                    $r.append(
+                        '<div class="ispag-add-item" data-id="' + it.id + '" style="display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #e5e7eb;">' +
+                          '<div style="min-width:0;"><div style="font-weight:600;">' + esc(it.title) + '</div><div style="font-size:12px;color:#6b7280;">' + esc(it.ref) + (price ? ' · ' + esc(price) : '') + '</div></div>' +
+                          '<div style="display:flex;gap:6px;align-items:center;"><input type="number" min="1" value="1" class="ispag-add-qty" style="width:64px;"><button type="button" class="ispag-btn ispag-btn-red-outlined ispag-add-std">Add</button></div>' +
+                        '</div>');
+                });
+            });
+        }
+        load();
+
+        $m.on('input', '.ispag-add-search', function () { clearTimeout(timer); timer = setTimeout(load, 300); });
+        $m.on('click', '.ispag-add-close', function () { $m.remove(); });
+        $m.on('click', function (e) { if (e.target === $m[0]) { $m.remove(); } });
+        $m.on('click', '.ispag-add-manual', function () { $m.remove(); $('#ispag-add-article').trigger('click'); });
+        $m.on('click', '.ispag-add-std', function () {
+            const $row = $(this).closest('.ispag-add-item');
+            const $btn = $(this).prop('disabled', true);
+            $.post(ajaxurl, { action: 'ispag_achat_add_standard_article', achat_id: achatId, article_id: $row.data('id'), qty: $row.find('.ispag-add-qty').val(), nonce: (window.ispagVars || {}).add_product_nonce }, function (resp) {
+                if (resp && resp.success) {
+                    $m.remove();
+                    // L'onglet Articles est rechargé : la nouvelle ligne apparaît tout de suite
+                    $('#articles').removeData('loaded').removeAttr('data-loaded');
+                    $(document).trigger('ispag:achat-reload-articles');
+                } else {
+                    alert((resp && resp.data && resp.data.message) || 'Error');
+                    $btn.prop('disabled', false);
+                }
+            });
+        });
+    });
+
     // --- Actions groupées : ne recharge que les articles modifiés ---
     function reloadArticleRows(ids) {
         (ids || []).forEach(function (id) {

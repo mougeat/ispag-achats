@@ -147,27 +147,7 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
         </button>
         <div class="ispag-right-panel" data-panel="right">
 
-            <div class="ispag-card ispag-supplier-card" style="font-size:14px;">
-                <h5><?php _e('Supplier', 'creation-reservoir'); ?></h5>
-                <?php if ($supplier_row): ?>
-                    <p style="margin:5px 0;"><strong><?php echo esc_html($supplier_row->Fournisseur); ?></strong></p>
-                    <?php
-                    $addr = array_filter([trim((string) $supplier_row->SupplierAdresse), trim(trim((string) $supplier_row->CodePostal) . ' ' . trim((string) $supplier_row->Ville)), trim((string) $supplier_row->Pays)]);
-                    if ($addr): ?><p style="margin:5px 0;"><?php echo esc_html(implode(', ', $addr)); ?></p><?php endif; ?>
-                    <?php if (!empty(trim((string) $supplier_row->NumTel)) && trim($supplier_row->NumTel) !== '-'): ?>
-                        <p style="margin:5px 0;"><?php _e('Phone number', 'creation-reservoir'); ?>: <a href="tel:<?php echo esc_attr($supplier_row->NumTel); ?>"><?php echo esc_html($supplier_row->NumTel); ?></a></p>
-                    <?php endif; ?>
-                    <?php if (!empty(trim((string) $supplier_row->Mail)) && trim($supplier_row->Mail) !== '-'): ?>
-                        <p style="margin:5px 0;"><?php _e('Email', 'creation-reservoir'); ?>: <a href="mailto:<?php echo esc_attr(trim($supplier_row->Mail)); ?>"><?php echo esc_html(trim($supplier_row->Mail)); ?></a></p>
-                    <?php endif; ?>
-                    <?php if (!empty($supplier_row->compagnyDomain)): ?>
-                        <p style="margin:5px 0;"><?php _e('Website', 'creation-reservoir'); ?>: <a href="<?php echo esc_url('https://' . preg_replace('#^https?://#i', '', trim($supplier_row->compagnyDomain))); ?>" target="_blank" rel="noopener"><?php echo esc_html($supplier_row->compagnyDomain); ?></a></p>
-                    <?php endif; ?>
-                    <p style="margin:5px 0;"><?php _e('Currency', 'creation-reservoir'); ?>: <?php echo esc_html($supplier_row->Monnaie ?: '—'); ?> · <?php _e('Delivery time', 'creation-reservoir'); ?>: <?php echo (int) $supplier_row->deliveryDays; ?> <?php _e('days', 'creation-reservoir'); ?></p>
-                <?php else: ?>
-                    <p class="ispag-no-company"><?php _e('No supplier selected.', 'creation-reservoir'); ?></p>
-                <?php endif; ?>
-            </div>
+            <?php echo ISPAG_Achat_Renderer::render_supplier_card($supplier_row); ?>
 
             <?php
             // Contacts du fournisseur (commande/offre, plan, facturation, livraison), modifiables
