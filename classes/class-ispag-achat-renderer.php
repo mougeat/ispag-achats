@@ -232,7 +232,7 @@ class ISPAG_Achat_Renderer {
                 [__('Factory departure', 'creation-reservoir'), $ts ? date('d.m.Y', $ts) : '-'],
             ],
             'steps'       => [
-                [__('Drawing approved', 'creation-reservoir'), (int) $article->DrawingApproved === 1],
+                [__('Drawing approved', 'creation-reservoir'), (int) ($article->DrawingApproved ?? 0) === 1],
                 [__('Received / Delivered', 'creation-reservoir'), !empty($article->Recu)],
                 [__('Invoiced', 'creation-reservoir'), !empty($article->Facture)],
             ],

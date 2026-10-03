@@ -164,7 +164,9 @@ class ISPAG_Achat_Article_Repository {
                 case 5: // Échangeur à plaques sur mesure — prix hors historique catalogue
                     $article->RefSurMesure  = apply_filters('ispag_get_plate_exchanger_title',       $article->RefSurMesure,  $article->IdCommandeClient);
                     $article->DescSurMesure = apply_filters('ispag_get_plate_exchanger_description', $article->DescSurMesure, $article->IdCommandeClient, true);
-                    $article->image         = wp_get_attachment_url(12289);
+                    // Image du type de prestation (échangeur), plus une image générique figée sur un Id de média
+                    $type_img = class_exists('ISPAG_Article_Repository') ? ISPAG_Article_Repository::type_image((int) $article->Type) : '';
+                    if ($type_img) $article->image = $type_img;
                     break;
 
                 default: // Article standard catalogue — prix issu de l'historique (ph)
