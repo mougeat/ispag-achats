@@ -573,45 +573,65 @@ msgstr "Einklappen / Ausklappen"
 msgid "Copy title"
 msgstr "Titel kopieren"
 
-#: classes/class-ispag-achat-settings.php:100
+#: classes/class-ispag-achat-settings.php:112
+msgid "Settings saved."
+msgstr "Einstellungen gespeichert."
+
+#: classes/class-ispag-achat-settings.php:116
 msgid "Automatic amounts"
 msgstr "Automatische Beträge"
 
-#: classes/class-ispag-achat-settings.php:103
+#: classes/class-ispag-achat-settings.php:119
 msgid "Transport per 1000 L of tanks"
 msgstr "Transport pro 1000 L Behälter"
 
-#: classes/class-ispag-achat-settings.php:105
+#: classes/class-ispag-achat-settings.php:121
 msgid "Amount of the TRANS line, per started 1000 L, for the suppliers ticked below."
 msgstr "Betrag der Zeile TRANS pro angefangene 1000 L für die unten angekreuzten Lieferanten."
 
-#: classes/class-ispag-achat-settings.php:108
+#: classes/class-ispag-achat-settings.php:124
 msgid "Customs clearance rate on purchases (%)"
 msgstr "Verzollungssatz auf Einkäufe (%)"
 
-#: classes/class-ispag-achat-settings.php:110
+#: classes/class-ispag-achat-settings.php:126
 msgid "Percentage of the net total for the DED line of purchase orders in EUR. The rate used for sales prices is separate: ISPAG Settings → Customs clearance rate on sales."
 msgstr "Prozentsatz des Nettototals für die Zeile DED von Bestellungen in EUR. Der für Verkaufspreise verwendete Satz ist separat: ISPAG-Einstellungen → Verzollungssatz auf Verkäufe."
 
-#: classes/class-ispag-achat-settings.php:114
+#: classes/class-ispag-achat-settings.php:130
+msgid "Default suppliers for automatic lines"
+msgstr "Standardlieferanten für automatische Positionen"
+
+#: classes/class-ispag-achat-settings.php:131
+msgid "Used for the welding and insulation lines created from a tank when the standard article has no supplier of its own (otherwise the first supplier selling the article is used)."
+msgstr "Werden für Schweiss- und Isolationspositionen verwendet, die aus einem Behälter erzeugt werden, wenn der Standardartikel keinen eigenen Lieferanten hat (sonst wird der erste Lieferant des Artikels verwendet)."
+
+#: classes/class-ispag-achat-settings.php:134
+msgid "Default supplier for on-site welding"
+msgstr "Standardlieferant für Schweissen vor Ort"
+
+#: classes/class-ispag-achat-settings.php:135
+msgid "Default supplier for insulation"
+msgstr "Standardlieferant für die Isolation"
+
+#: classes/class-ispag-achat-settings.php:141
+msgid "None"
+msgstr "Keine"
+
+#: classes/class-ispag-achat-settings.php:151
 msgid "Suppliers with automatic transport"
 msgstr "Lieferanten mit automatischem Transport"
 
-#: classes/class-ispag-achat-settings.php:115
+#: classes/class-ispag-achat-settings.php:152
 msgid "For these suppliers, an order containing tanks offers to add the transport line (TRANS line, see the amount above). Tick the suppliers concerned."
 msgstr "Für diese Lieferanten wird bei einer Bestellung mit Behältern vorgeschlagen, die Transportzeile hinzuzufügen (Zeile TRANS, siehe Betrag oben). Kreuzen Sie die betroffenen Lieferanten an."
 
-#: classes/class-ispag-achat-settings.php:63
+#: classes/class-ispag-achat-settings.php:76
 msgid "Purchase settings"
 msgstr "Einkaufseinstellungen"
 
-#: classes/class-ispag-achat-settings.php:73
+#: classes/class-ispag-achat-settings.php:86
 msgid "Not authorized"
 msgstr "Nicht autorisiert"
-
-#: classes/class-ispag-achat-settings.php:96
-msgid "Settings saved."
-msgstr "Einstellungen gespeichert."
 
 #: classes/class-ispag-achat-status-render.php:167
 msgid "No steps defined."

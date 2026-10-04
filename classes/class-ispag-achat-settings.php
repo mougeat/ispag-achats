@@ -14,12 +14,25 @@ class ISPAG_Achat_Settings {
     const OPTION = 'ispag_achats_transport_suppliers';
     const OPT_TRANSPORT_RATE = 'ispag_achats_transport_per_1000l'; // montant du transport par tranche de 1000 L
     const OPT_CUSTOMS_RATE   = 'ispag_achats_customs_rate';         // taux de dédouanement des ACHATS (%) ; la vente a le sien : ISPAG Settings → wpcb_custom_fee
+    // Fournisseur attribué aux lignes créées automatiquement par le constructeur de cuves quand l'article n'a pas de fournisseur propre
+    const OPT_SUPPLIER_WELDING    = 'ispag_achats_default_supplier_welding';    // type d'article 3 : soudure sur site
+    const OPT_SUPPLIER_INSULATION = 'ispag_achats_default_supplier_insulation'; // type d'article 2 : isolation
     const DEFAULT_TRANSPORT_RATE = 250.0;
     const DEFAULT_CUSTOMS_RATE   = 10.0;
     const LEGACY_IDS = [1, 3, 395]; // anciens Id (achats_fournisseurs)
 
     public static function init() {
         add_action('admin_menu', [self::class, 'admin_menu']);
+        add_filter('ispag_default_supplier_for_type', [self::class, 'default_supplier_for_type'], 20, 2);
+    }
+
+    /** Fournisseur par défaut choisi dans cette page pour la soudure (type 3) et l'isolation (type 2) ; sinon la valeur reçue. */
+    public static function default_supplier_for_type($fallback, $type_id) {
+        $map = [3 => self::OPT_SUPPLIER_WELDING, 2 => self::OPT_SUPPLIER_INSULATION];
+        $type_id = (int) $type_id;
+        if (!isset($map[$type_id])) return $fallback;
+        $id = (int) get_option($map[$type_id], 0);
+        return $id > 0 ? $id : $fallback;
     }
 
     /** Montant du transport par tranche de 1000 L de cuves (dans la devise du site, CHF par défaut). */
@@ -84,6 +97,9 @@ class ISPAG_Achat_Settings {
             if (isset($_POST['customs_rate']) && is_numeric(str_replace(',', '.', $_POST['customs_rate']))) {
                 update_option(self::OPT_CUSTOMS_RATE, max(0, (float) str_replace(',', '.', $_POST['customs_rate'])), false);
             }
+            foreach ([self::OPT_SUPPLIER_WELDING => 'default_supplier_welding', self::OPT_SUPPLIER_INSULATION => 'default_supplier_insulation'] as $opt => $field) {
+                update_option($opt, isset($_POST[$field]) ? absint($_POST[$field]) : 0, false);
+            }
             $saved_notice = true;
         }
 
@@ -109,6 +125,27 @@ class ISPAG_Achat_Settings {
                         <td><input type="number" step="0.01" min="0" id="customs_rate" name="customs_rate" value="<?php echo esc_attr(self::customs_rate()); ?>" class="small-text"> %
                             <p class="description"><?php esc_html_e('Percentage of the net total for the DED line of purchase orders in EUR. The rate used for sales prices is separate: ISPAG Settings → Customs clearance rate on sales.', 'creation-reservoir'); ?></p></td>
                     </tr>
+                </tbody></table>
+
+                <h2><?php esc_html_e('Default suppliers for automatic lines', 'creation-reservoir'); ?></h2>
+                <p class="description"><?php esc_html_e('Used for the welding and insulation lines created from a tank when the standard article has no supplier of its own (otherwise the first supplier selling the article is used).', 'creation-reservoir'); ?></p>
+                <table class="form-table" role="presentation"><tbody>
+                    <?php foreach ([
+                        'default_supplier_welding'    => [__('Default supplier for on-site welding', 'creation-reservoir'), self::OPT_SUPPLIER_WELDING],
+                        'default_supplier_insulation' => [__('Default supplier for insulation', 'creation-reservoir'), self::OPT_SUPPLIER_INSULATION],
+                    ] as $field => [$label, $opt]): $current = (int) get_option($opt, 0); ?>
+                        <tr>
+                            <th scope="row"><label for="<?php echo esc_attr($field); ?>"><?php echo esc_html($label); ?></label></th>
+                            <td>
+                                <select id="<?php echo esc_attr($field); ?>" name="<?php echo esc_attr($field); ?>">
+                                    <option value="0">— <?php esc_html_e('None', 'creation-reservoir'); ?> —</option>
+                                    <?php foreach ($suppliers as $s): ?>
+                                        <option value="<?php echo (int) $s->Id; ?>" <?php selected($current, (int) $s->Id); ?>><?php echo esc_html($s->company_name); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody></table>
 
                 <h2><?php esc_html_e('Suppliers with automatic transport', 'creation-reservoir'); ?></h2>
