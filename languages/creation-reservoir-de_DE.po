@@ -477,23 +477,23 @@ msgstr "Nichts anzuwenden: Geben Sie mindestens ein Datum an"
 msgid "Bulk update applied successfully"
 msgstr "Sammelaktualisierung erfolgreich angewendet"
 
-#: classes/class-ispag-achat-purchase-order-pdf.php:103
+#: classes/class-ispag-achat-purchase-order-pdf.php:104
 msgid "Confirm online"
 msgstr "Online bestätigen"
 
-#: classes/class-ispag-achat-purchase-order-pdf.php:107
+#: classes/class-ispag-achat-purchase-order-pdf.php:108
 msgid "Scan the QR code to confirm the order and the delivery dates,"
 msgstr "Scannen Sie den QR-Code, um die Bestellung und die Liefertermine zu bestätigen,"
 
-#: classes/class-ispag-achat-purchase-order-pdf.php:111
+#: classes/class-ispag-achat-purchase-order-pdf.php:112
 msgid "or click here on your computer"
 msgstr "oder klicken Sie hier am Computer"
 
-#: classes/class-ispag-achat-purchase-order-pdf.php:232
+#: classes/class-ispag-achat-purchase-order-pdf.php:233
 msgid "Delivery address"
 msgstr "Lieferadresse"
 
-#: classes/class-ispag-achat-purchase-order-pdf.php:336
+#: classes/class-ispag-achat-purchase-order-pdf.php:337
 msgid "Total"
 msgstr "Total"
 
@@ -525,35 +525,35 @@ msgstr "Zeichnung genehmigt"
 msgid "Received / Delivered"
 msgstr "Erhalten / Geliefert"
 
-#: classes/class-ispag-achat-renderer.php:260
+#: classes/class-ispag-achat-renderer.php:262
 msgid "Email"
 msgstr "E-Mail"
 
-#: classes/class-ispag-achat-renderer.php:263
+#: classes/class-ispag-achat-renderer.php:265
 msgid "Website"
 msgstr "Website"
 
-#: classes/class-ispag-achat-renderer.php:265
+#: classes/class-ispag-achat-renderer.php:267
 msgid "Currency"
 msgstr "Währung"
 
-#: classes/class-ispag-achat-renderer.php:265
+#: classes/class-ispag-achat-renderer.php:267
 msgid "Delivery time"
 msgstr "Lieferzeit"
 
-#: classes/class-ispag-achat-renderer.php:265
+#: classes/class-ispag-achat-renderer.php:267
 msgid "days"
 msgstr "Tage"
 
-#: classes/class-ispag-achat-renderer.php:267
+#: classes/class-ispag-achat-renderer.php:269
 msgid "No supplier selected."
 msgstr "Kein Lieferant ausgewählt."
 
-#: classes/class-ispag-achat-renderer.php:294
+#: classes/class-ispag-achat-renderer.php:296
 msgid "Article not found"
 msgstr "Artikel nicht gefunden"
 
-#: classes/class-ispag-achat-renderer.php:335
+#: classes/class-ispag-achat-renderer.php:337
 msgid "Delivery note"
 msgstr "Lieferschein"
 
@@ -561,31 +561,31 @@ msgstr "Lieferschein"
 msgid "No items were found for this supplier order."
 msgstr "Für diese Lieferantenbestellung wurden keine Artikel gefunden."
 
-#: classes/class-ispag-achat-renderer.php:343
+#: classes/class-ispag-achat-renderer.php:345
 msgid "No items selected"
 msgstr "Keine Artikel ausgewählt"
 
-#: classes/class-ispag-achat-renderer.php:365
+#: classes/class-ispag-achat-renderer.php:367
 msgid "Delete"
 msgstr "Löschen"
 
-#: classes/class-ispag-achat-renderer.php:376
+#: classes/class-ispag-achat-renderer.php:378
 msgid "Add product"
 msgstr "Produkt hinzufügen"
 
-#: classes/class-ispag-achat-renderer.php:449
+#: classes/class-ispag-achat-renderer.php:451
 msgid "Transport: %s L calculated."
 msgstr "Transport: %s L berechnet."
 
-#: classes/class-ispag-achat-renderer.php:450
+#: classes/class-ispag-achat-renderer.php:452
 msgid "Apply transport (%s)"
 msgstr "Transport anwenden (%s)"
 
-#: classes/class-ispag-achat-renderer.php:461
+#: classes/class-ispag-achat-renderer.php:463
 msgid "Customs clearance (%1$s%%) on a net total of %2$s EUR."
 msgstr "Verzollung (%1$s%%) auf einen Nettobetrag von %2$s EUR."
 
-#: classes/class-ispag-achat-renderer.php:462
+#: classes/class-ispag-achat-renderer.php:464
 msgid "Apply customs clearance (%s EUR)"
 msgstr "Verzollung anwenden (%s EUR)"
 
@@ -593,23 +593,23 @@ msgstr "Verzollung anwenden (%s EUR)"
 msgid "Select all"
 msgstr "Alle auswählen"
 
-#: classes/class-ispag-achat-renderer.php:484
+#: classes/class-ispag-achat-renderer.php:486
 msgid "You do not have the necessary rights for this action."
 msgstr "Sie haben nicht die erforderlichen Rechte für diese Aktion."
 
-#: classes/class-ispag-achat-renderer.php:494
+#: classes/class-ispag-achat-renderer.php:496
 msgid "Invalid data."
 msgstr "Ungültige Daten."
 
-#: classes/class-ispag-achat-renderer.php:518
+#: classes/class-ispag-achat-renderer.php:520
 msgid "Article updated."
 msgstr "Artikel aktualisiert."
 
-#: classes/class-ispag-achat-renderer.php:537
+#: classes/class-ispag-achat-renderer.php:539
 msgid "Article added."
 msgstr "Artikel hinzugefügt."
 
-#: classes/class-ispag-achat-renderer.php:541
+#: classes/class-ispag-achat-renderer.php:543
 msgid "Error while saving to the database."
 msgstr "Fehler beim Speichern in der Datenbank."
 
@@ -709,59 +709,59 @@ msgstr "Erledigt"
 msgid "Pending"
 msgstr "Ausstehend"
 
-#: classes/class-ispag-achat-supplier-confirm.php:114
+#: classes/class-ispag-achat-supplier-confirm.php:189
 msgid "Something went wrong, please try again."
 msgstr "Es ist ein Fehler aufgetreten, bitte versuchen Sie es erneut."
 
-#: classes/class-ispag-achat-supplier-confirm.php:114
+#: classes/class-ispag-achat-supplier-confirm.php:189
 msgid "Thank you, your confirmation has been recorded."
 msgstr "Danke, Ihre Bestätigung wurde gespeichert."
 
-#: classes/class-ispag-achat-supplier-confirm.php:146
+#: classes/class-ispag-achat-supplier-confirm.php:225
 msgid "This link has expired."
 msgstr "Dieser Link ist abgelaufen."
 
-#: classes/class-ispag-achat-supplier-confirm.php:146
+#: classes/class-ispag-achat-supplier-confirm.php:225
 msgid "This link is not valid."
 msgstr "Dieser Link ist ungültig."
 
-#: classes/class-ispag-achat-supplier-confirm.php:147
+#: classes/class-ispag-achat-supplier-confirm.php:226
 msgid "Please ask your contact for a new purchase order."
 msgstr "Bitte fordern Sie bei Ihrem Ansprechpartner eine neue Bestellung an."
 
-#: classes/class-ispag-achat-supplier-confirm.php:149
+#: classes/class-ispag-achat-supplier-confirm.php:228
 msgid "Purchase order %s"
 msgstr "Bestellung %s"
 
-#: classes/class-ispag-achat-supplier-confirm.php:150
+#: classes/class-ispag-achat-supplier-confirm.php:229
 msgid "Please confirm the delivery date of each line and your order confirmation number."
 msgstr "Bitte bestätigen Sie das Lieferdatum jeder Position und Ihre Auftragsbestätigungsnummer."
 
-#: classes/class-ispag-achat-supplier-confirm.php:152
+#: classes/class-ispag-achat-supplier-confirm.php:231
 msgid "Your order confirmation number"
 msgstr "Ihre Auftragsbestätigungsnummer"
 
-#: classes/class-ispag-achat-supplier-confirm.php:158
+#: classes/class-ispag-achat-supplier-confirm.php:237
 msgid "Quantity: %d"
 msgstr "Menge: %d"
 
-#: classes/class-ispag-achat-supplier-confirm.php:159
+#: classes/class-ispag-achat-supplier-confirm.php:238
 msgid "Confirmed delivery date"
 msgstr "Bestätigtes Lieferdatum"
 
-#: classes/class-ispag-achat-supplier-confirm.php:163
+#: classes/class-ispag-achat-supplier-confirm.php:242
 msgid "Comment (optional)"
 msgstr "Kommentar (optional)"
 
-#: classes/class-ispag-achat-supplier-confirm.php:165
+#: classes/class-ispag-achat-supplier-confirm.php:244
 msgid "Confirm"
 msgstr "Bestätigen"
 
-#: classes/class-ispag-achat-supplier-confirm.php:239
+#: classes/class-ispag-achat-supplier-confirm.php:324
 msgid "%d line(s) with a confirmed delivery date."
 msgstr "%d Position(en) mit bestätigtem Lieferdatum."
 
-#: classes/class-ispag-achat-supplier-confirm.php:239
+#: classes/class-ispag-achat-supplier-confirm.php:324
 msgid "Confirmation No. %s."
 msgstr "Bestätigungsnr. %s."
 
@@ -793,47 +793,47 @@ msgstr "Kontakte"
 msgid "Logistics and storage - Carry Box"
 msgstr "Logistik und Lagerung - Carry Box"
 
-#: classes/templates/achat-detail.php:105
+#: classes/templates/achat-detail.php:108
 msgid "To project"
 msgstr "Zum Projekt"
 
-#: classes/templates/achat-detail.php:106
+#: classes/templates/achat-detail.php:109
 msgid "To purchase list"
 msgstr "Zur Einkaufsliste"
 
-#: classes/templates/achat-detail.php:124
+#: classes/templates/achat-detail.php:127
 msgid "Articles"
 msgstr "Artikel"
 
-#: classes/templates/achat-detail.php:125
+#: classes/templates/achat-detail.php:128
 msgid "Details"
 msgstr "Details"
 
-#: classes/templates/achat-detail.php:126
+#: classes/templates/achat-detail.php:129
 msgid "Follow up"
 msgstr "Nachverfolgung"
 
-#: classes/templates/achat-detail.php:127
+#: classes/templates/achat-detail.php:130
 msgid "Document flow"
 msgstr "Dokumentenfluss"
 
-#: classes/templates/achat-detail.php:142
+#: classes/templates/achat-detail.php:145
 msgid "Display / Mask panel"
 msgstr "Panel ein- / ausblenden"
 
-#: classes/templates/achat-detail.php:143
+#: classes/templates/achat-detail.php:146
 msgid "Mask panel"
 msgstr "Panel ausblenden"
 
-#: classes/templates/achat-detail.php:164
+#: classes/templates/achat-detail.php:167
 msgid "Project"
 msgstr "Projekt"
 
-#: classes/templates/achat-detail.php:165
+#: classes/templates/achat-detail.php:168
 msgid "Open the project"
 msgstr "Projekt öffnen"
 
-#: classes/templates/achat-detail.php:166
+#: classes/templates/achat-detail.php:169
 msgid "Deal ID"
 msgstr "Deal-ID"
 
@@ -841,11 +841,15 @@ msgstr "Deal-ID"
 msgid "Date"
 msgstr "Datum"
 
-#: classes/templates/achat-detail.php:85
+#: classes/templates/achat-detail.php:82
+msgid "Open the company page"
+msgstr "Firmenseite öffnen"
+
+#: classes/templates/achat-detail.php:88
 msgid "Status"
 msgstr "Status"
 
-#: classes/templates/achat-detail.php:93
+#: classes/templates/achat-detail.php:96
 msgid "Managed by"
 msgstr "Verwaltet von"
 

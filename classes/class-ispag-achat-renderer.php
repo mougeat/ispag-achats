@@ -249,7 +249,9 @@ class ISPAG_Achat_Renderer {
             <div class="ispag-card ispag-supplier-card" style="font-size:14px;">
                 <h5><?php _e('Supplier', 'creation-reservoir'); ?></h5>
                 <?php if ($supplier_row): ?>
-                    <p style="margin:5px 0;"><strong><?php echo esc_html($supplier_row->Fournisseur); ?></strong></p>
+                    <p style="margin:5px 0;"><strong><?php
+                        // Le nom ouvre la fiche entreprise du fournisseur (pour qui peut voir les entreprises)
+                        if (current_user_can('view_company') && !empty($supplier_row->Id)): ?><a href="<?php echo esc_url(home_url('/company/' . (int) $supplier_row->Id . '/')); ?>"><?php echo esc_html($supplier_row->Fournisseur); ?></a><?php else: echo esc_html($supplier_row->Fournisseur); endif; ?></strong></p>
                     <?php
                     $addr = array_filter([trim((string) $supplier_row->SupplierAdresse), trim(trim((string) $supplier_row->CodePostal) . ' ' . trim((string) $supplier_row->Ville)), trim((string) $supplier_row->Pays)]);
                     if ($addr): ?><p style="margin:5px 0;"><?php echo esc_html(implode(', ', $addr)); ?></p><?php endif; ?>
