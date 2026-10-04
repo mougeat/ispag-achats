@@ -299,7 +299,7 @@ button{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--b
                 $supplier = (string) $wpdb->get_var($wpdb->prepare("SELECT company_name FROM {$wpdb->prefix}ispag_companies WHERE Id = %d", (int) $order->IdFournisseur));
                 ISPAG_Notifications_Manager::send(
                     [(int) $order->created_by],
-                    'product_manager',
+                    'purchase_followup', // même type que le suivi des achats (étapes de commande)
                     sprintf(esc_html__('✅ Order confirmed by the supplier: %s', 'ispag-crm'), esc_html(stripslashes((string) $order->RefCommande) . ($supplier !== '' ? ' (' . $supplier . ')' : ''))),
                     esc_html(sprintf(__('%d line(s) with a confirmed delivery date.', 'creation-reservoir'), $updated)) . ($conf !== '' ? ' ' . esc_html(sprintf(__('Confirmation No. %s.', 'creation-reservoir'), $conf)) : '') . ($comment !== '' ? ' ' . esc_html($comment) : ''),
                     'liste-des-achats/?search=' . (int) $order->hubspot_deal_id,
