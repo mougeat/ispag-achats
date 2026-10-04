@@ -176,7 +176,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
                 if (function_exists('pll_set_language')) {
                     pll_set_language($lang);
                 }
-                $locale_switched = (bool) switch_to_locale($lang);
+                $locale_switched = ISPAG_Achat_Supplier_Confirm::enter_locale($lang); // inclut l'italien pour les textes du bon de commande
                 self::$logger->log_user_action(
                     'achat_generate_purchase_order_pdf',
                     'language_switched',
@@ -309,7 +309,7 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             $pdf->Output($uploadedfile, 'F');
 
             // PDF construit dans la langue du fournisseur : la suite de la requête retrouve la langue de l'utilisateur
-            if (!empty($locale_switched)) { restore_previous_locale(); $locale_switched = false; }
+            ISPAG_Achat_Supplier_Confirm::leave_locale(!empty($locale_switched)); $locale_switched = false;
 
             self::$logger->log_user_action(
                 'achat_generate_purchase_order_pdf',
