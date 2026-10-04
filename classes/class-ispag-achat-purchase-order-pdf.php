@@ -84,7 +84,8 @@ class ISPAG_Achat_Purchase_Order_PDF extends ISPAG_PDF_Generator {
     /** Cadre « confirmer en ligne » : QR code cliquable et texte (moitié droite). Retourne le bas du cadre, ou 0 sans lien. */
     protected function drawConfirmLink(float $top, int $order_id): float {
         if (!$order_id || !class_exists('ISPAG_QR_Code') || !class_exists('ISPAG_Achat_Supplier_Confirm')) return 0;
-        $url = ISPAG_Achat_Supplier_Confirm::url($order_id);
+        // Le document est dessiné dans la langue du fournisseur : le QR code ouvre la page dans cette même langue
+        $url = ISPAG_Achat_Supplier_Confirm::url($order_id, determine_locale());
         $w   = 87;
         $x   = self::MARGIN + self::CONTENT - $w;
         $h   = 34;

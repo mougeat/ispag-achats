@@ -28,14 +28,17 @@ class ISPAG_Achat_Supplier_Confirm {
     }
 
     /** Adresse publique (QR code et lien du bon de commande) de la confirmation d'une commande. */
-    public static function url(int $order_id): string {
+    public static function url(int $order_id, string $lang = ''): string {
         $expires = time() + self::VALID_DAYS * DAY_IN_SECONDS;
-        return add_query_arg([
+        $args = [
             'action' => self::ACTION_PAGE,
             'o'      => $order_id,
             'e'      => $expires,
             's'      => self::signature($order_id, $expires),
-        ], admin_url('admin-ajax.php'));
+        ];
+        // Langue du fournisseur : la page s'ouvre directement dans la bonne langue (non signée : il peut en changer sur la page)
+        if (isset(self::languages()[$lang])) $args['lang'] = $lang;
+        return add_query_arg($args, admin_url('admin-ajax.php'));
     }
 
     /** @return array [numéro de commande, état] état : ok | expired | invalid */
@@ -77,16 +80,33 @@ class ISPAG_Achat_Supplier_Confirm {
             'Confirm' => 'Conferma',
             'Thank you, your confirmation has been recorded.' => 'Grazie, la sua conferma è stata registrata.',
             'Something went wrong, please try again.' => 'Qualcosa è andato storto, riprovi.',
+            // Bon de commande PDF (l'italien n'existe que pour les textes de ces documents fournisseur)
+            'Purchase order' => 'Ordine d\'acquisto',
+            'Supplier' => 'Fornitore',
+            'Reference' => 'Riferimento',
+            'Project name' => 'Nome del progetto',
+            'Order number' => 'Numero d\'ordine',
+            'Order date' => 'Data dell\'ordine',
+            'Delivery address' => 'Indirizzo di consegna',
+            'Ref' => 'Rif.',
+            'Description' => 'Descrizione',
+            'Unit price' => 'Prezzo unitario',
+            'Qty' => 'Q.tà',
+            'Disc.' => 'Sconto',
+            'Total' => 'Totale',
+            'Confirm online' => 'Conferma online',
+            'Scan the QR code to confirm the order and the delivery dates,' => 'Scansioni il codice QR per confermare l\'ordine e le date di consegna,',
+            'or click here on your computer' => 'oppure clicchi qui dal computer',
         ];
     }
 
     /** Active la langue choisie pour le reste de la requête ; retourne true s'il faudra la restaurer (leave_locale). */
-    private static function enter_locale(string $locale): bool {
+    public static function enter_locale(string $locale): bool {
         if ($locale === 'it_IT') add_filter('gettext', [self::class, 'italian_gettext'], 20, 3);
         return (bool) switch_to_locale($locale);
     }
 
-    private static function leave_locale(bool $switched) {
+    public static function leave_locale(bool $switched) {
         remove_filter('gettext', [self::class, 'italian_gettext'], 20);
         if ($switched) restore_previous_locale();
     }
@@ -299,7 +319,7 @@ button{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--b
                 $supplier = (string) $wpdb->get_var($wpdb->prepare("SELECT company_name FROM {$wpdb->prefix}ispag_companies WHERE Id = %d", (int) $order->IdFournisseur));
                 ISPAG_Notifications_Manager::send(
                     [(int) $order->created_by],
-                    'product_manager',
+                    'supplier_order_confirmed',
                     sprintf(esc_html__('✅ Order confirmed by the supplier: %s', 'ispag-crm'), esc_html(stripslashes((string) $order->RefCommande) . ($supplier !== '' ? ' (' . $supplier . ')' : ''))),
                     esc_html(sprintf(__('%d line(s) with a confirmed delivery date.', 'creation-reservoir'), $updated)) . ($conf !== '' ? ' ' . esc_html(sprintf(__('Confirmation No. %s.', 'creation-reservoir'), $conf)) : '') . ($comment !== '' ? ' ' . esc_html($comment) : ''),
                     'liste-des-achats/?search=' . (int) $order->hubspot_deal_id,
