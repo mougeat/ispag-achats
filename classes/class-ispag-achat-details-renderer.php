@@ -235,10 +235,28 @@ class ISPAG_Achat_Details_Renderer {
             'City'               => $found['city'],
         ], $deal_id);
 
+        // Le lieu a une entreprise (manutentionnaire) : même action que « Carry Box delivery », demande d'achat de logistique comprise
+        $logistics = '';
+        if (!empty($found['supplier_id']) && $deal_id) {
+            $manager = new ISPAG_CarryBox_Manager($deal_id, (int) $found['supplier_id'], [
+                'AdresseDeLivraison' => $found['name'], 'DeliveryAdresse2' => $found['address'], 'NIP' => $found['zip'], 'City' => $found['city'],
+            ]);
+            try {
+                if ($manager->logistics_order_exists()) {
+                    $logistics = 'exists';
+                } else {
+                    $manager->generate_carrybox_process();
+                    $logistics = 'created';
+                }
+            } catch (Exception $e) {
+                wp_send_json_error($e->getMessage());
+            }
+        }
+
         $infos = (new ISPAG_Achat_Details_Repository())->get_infos_livraison($achat_id);
         ob_start();
         self::render_bloc_livraison($infos, $achat_id, $deal_id);
-        wp_send_json_success(['html' => ob_get_clean()]);
+        wp_send_json_success(['html' => ob_get_clean(), 'logistics' => $logistics]);
     }
 
     public static function copy_adress_from_project(){
