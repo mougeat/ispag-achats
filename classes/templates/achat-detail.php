@@ -78,6 +78,9 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
                                 <span class="edit-icon" style="cursor:pointer; margin-left:4px;">✏️</span>
                             <?php endif; ?>
                         </span>
+                        <?php if ($field === 'Fournisseur' && !empty($achat->IdFournisseur) && current_user_can('view_company')): ?>
+                            <a href="<?php echo esc_url(home_url('/company/' . (int) $achat->IdFournisseur . '/')); ?>" title="<?php echo esc_attr__('Open the company page', 'creation-reservoir'); ?>" aria-label="<?php echo esc_attr__('Open the company page', 'creation-reservoir'); ?>" style="margin-left:6px; text-decoration:none;"><span class="dashicons dashicons-external" style="font-size:16px; width:16px; height:16px; vertical-align:text-bottom;"></span></a>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
 
