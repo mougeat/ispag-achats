@@ -333,6 +333,11 @@ class ISPAG_Achat_Renderer {
         if(!in_array($achat->EtatCommande, $array_etat)){
             return;
         }
+        // Même fenêtre que dans le projet (adresse reprise de la commande d'achat, modifiable avant génération)
+        if (function_exists('get_delivery_btn')) {
+            $infos = (new ISPAG_Achat_Details_Repository())->get_infos_livraison($achat_id);
+            return get_delivery_btn($infos, (int) $achat_id);
+        }
         return '<button id="generate-pdf" class="ispag-btn ispag-btn-secondary-outlined" >
                 📄 ' .  __('Delivery note', 'creation-reservoir') . '
             </button>
