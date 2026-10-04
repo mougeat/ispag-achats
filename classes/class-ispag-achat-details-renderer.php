@@ -8,6 +8,7 @@ class ISPAG_Achat_Details_Renderer {
         add_action('wp_ajax_ispag_copy_project_address', [self::class, 'copy_adress_from_project']);
         add_action('wp_ajax_ispag_set_carrybox_address', [self::class, 'ispag_set_carrybox_address']);
         add_action('wp_ajax_ispag_achat_save_delivery', [self::class, 'ajax_save_delivery']);
+        add_action('wp_ajax_ispag_set_stock_location_address', [self::class, 'ajax_set_stock_location_address']);
     }
 
     public static function display_achat_details_tab($achat_id) {
@@ -120,6 +121,16 @@ class ISPAG_Achat_Details_Renderer {
         if ($can_edit) {
             echo '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-btn-copy-from-project" data-achat="' . esc_attr($achat_id) . '" data-deal-id="' . esc_attr($deal_id) . '">📥 ' . __('Copy from project', 'creation-reservoir') . '</button>';
             echo '<button type="button" class="ispag-btn ispag-btn-blue-outlined ispag-btn-set-carrybox" data-achat="' . esc_attr($achat_id) . '" data-deal-id="' . esc_attr($deal_id) . '">📦 Carry Box delivery</button>';
+            // Dépôts de stock (plugin ISPAG Stock) : l'adresse de livraison devient celle du dépôt choisi
+            $stock_locations = (array) apply_filters('ispag_stock_delivery_locations', []);
+            if ($stock_locations) {
+                echo '<span class="ispag-stock-location-picker"><select class="ispag-stock-location-select" aria-label="' . esc_attr__('Stock location', 'creation-reservoir') . '">';
+                echo '<option value="">' . esc_html__('Deliver to stock location…', 'creation-reservoir') . '</option>';
+                foreach ($stock_locations as $loc) {
+                    echo '<option value="' . (int) $loc['id'] . '">' . esc_html($loc['name']) . '</option>';
+                }
+                echo '</select> <button type="button" class="ispag-btn ispag-btn-blue-outlined ispag-btn-set-stock-location" data-achat="' . esc_attr($achat_id) . '" data-deal-id="' . esc_attr($deal_id) . '">🏭 ' . esc_html__('Use', 'creation-reservoir') . '</button></span>';
+            }
         }
         echo '</div>';
         echo '</div>';
@@ -199,6 +210,36 @@ class ISPAG_Achat_Details_Renderer {
         wp_send_json_success(['html' => ob_get_clean()]);
     }
 
+
+    /** Adresse de livraison = celle d'un emplacement de stock (le nom du dépôt est la première ligne : le stock reconnaît ainsi le lieu). */
+    public static function ajax_set_stock_location_address() {
+        if (!current_user_can('edit_supplier_order')) wp_send_json_error('Not authorized', 403);
+        $achat_id = intval($_POST['achat_id'] ?? 0);
+        $deal_id  = intval($_POST['deal_id'] ?? 0);
+        $loc_id   = intval($_POST['location_id'] ?? 0);
+        if (!$achat_id || !$loc_id) wp_send_json_error('Missing data');
+
+        $found = null;
+        foreach ((array) apply_filters('ispag_stock_delivery_locations', []) as $loc) {
+            if ((int) $loc['id'] === $loc_id) { $found = $loc; break; }
+        }
+        if (!$found) wp_send_json_error('Unknown stock location');
+
+        $project = apply_filters('ispag_get_project_by_deal_id', null, $deal_id);
+        $objet   = ($project && !empty($project->ObjetCommande)) ? stripslashes($project->ObjetCommande) : 'Projet #' . $deal_id;
+        self::save_delivery_row($achat_id, [
+            'AdresseDeLivraison' => $found['name'],
+            'DeliveryAdresse2'   => $found['address'],
+            'DeliveryAdresse3'   => 'ISPAG - ' . $objet,
+            'NIP'                => $found['zip'],
+            'City'               => $found['city'],
+        ], $deal_id);
+
+        $infos = (new ISPAG_Achat_Details_Repository())->get_infos_livraison($achat_id);
+        ob_start();
+        self::render_bloc_livraison($infos, $achat_id, $deal_id);
+        wp_send_json_success(['html' => ob_get_clean()]);
+    }
 
     public static function copy_adress_from_project(){
         if (!current_user_can('edit_supplier_order')) wp_send_json_error('Not authorized', 403);

@@ -9,21 +9,29 @@ jQuery(document).on('click', '.ispag-btn-set-carrybox', function () {
     handleAddressUpdate(jQuery(this), 'ispag_set_carrybox_address');
 });
 
+// --- ADRESSE = DÉPÔT DE STOCK (plugin ISPAG Stock) ---
+jQuery(document).on('click', '.ispag-btn-set-stock-location', function () {
+    const btn = jQuery(this);
+    const locationId = btn.closest('.ispag-stock-location-picker').find('.ispag-stock-location-select').val();
+    if (!locationId) return;
+    handleAddressUpdate(btn, 'ispag_set_stock_location_address', { location_id: locationId });
+});
+
 /**
  * Fonction générique pour mettre à jour l'adresse
  */
-function handleAddressUpdate(btn, actionName) {
+function handleAddressUpdate(btn, actionName, extra) {
     const achatId = btn.data('achat');
     const dealId = btn.data('deal-id');
     const originalText = btn.html();
 
     btn.prop('disabled', true).html('⏳ ...');
 
-    jQuery.post(ajaxurl, {
+    jQuery.post(ajaxurl, Object.assign({
         action: actionName,
         achat_id: achatId,
         deal_id: dealId
-    }, function (response) {
+    }, extra || {}), function (response) {
         if (response.success && response.data.html) {
             // On remplace tout le bloc par le nouveau HTML généré par PHP
             jQuery('#ispag-delivery-box').replaceWith(response.data.html);
