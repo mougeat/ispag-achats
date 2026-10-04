@@ -446,8 +446,8 @@ class ISPAG_Achat_Renderer {
         if (in_array($supplier_id, $target_suppliers) && $total_volume > 0) {
             $theoretical_trans = ceil($total_volume / 1000) * ISPAG_Achat_Settings::transport_rate();
             if (!$transport_found || abs($current_transport_price - $theoretical_trans) > 1.00) {
-                $msg = "Transport: " . number_format($total_volume, 0, '.', "'") . " L calculated.";
-                self::render_adjustment_notice($msg, "Apply transport (" . number_format($theoretical_trans, 2, '.', '') . " " . get_option('wpcb_currency', 'CHF') . ")", 'TRANS', $theoretical_trans, $achat_id);
+                $msg = sprintf(__('Transport: %s L calculated.', 'creation-reservoir'), number_format($total_volume, 0, '.', "'"));
+                self::render_adjustment_notice($msg, sprintf(__('Apply transport (%s)', 'creation-reservoir'), number_format($theoretical_trans, 2, '.', '') . ' ' . get_option('wpcb_currency', 'CHF')), 'TRANS', $theoretical_trans, $achat_id);
             }
         }
 
@@ -458,8 +458,8 @@ class ISPAG_Achat_Renderer {
             $theoretical_ded = round($total_amount_net_taxable * $customs_rate / 100, 2);
             
             if (!$dedouanement_found || abs($current_dedouanement_price - $theoretical_ded) > 1.00) {
-                $msg = "Customs clearance (" . rtrim(rtrim(number_format($customs_rate, 2, '.', ''), '0'), '.') . "%) on a net total of " . number_format($total_amount_net_taxable, 2) . " EUR.";
-                self::render_adjustment_notice($msg, "Apply customs clearance ($theoretical_ded EUR)", 'DED', $theoretical_ded, $achat_id);
+                $msg = sprintf(__('Customs clearance (%1$s%%) on a net total of %2$s EUR.', 'creation-reservoir'), rtrim(rtrim(number_format($customs_rate, 2, '.', ''), '0'), '.'), number_format($total_amount_net_taxable, 2));
+                self::render_adjustment_notice($msg, sprintf(__('Apply customs clearance (%s EUR)', 'creation-reservoir'), $theoretical_ded), 'DED', $theoretical_ded, $achat_id);
             }
         }
     }
@@ -481,7 +481,7 @@ class ISPAG_Achat_Renderer {
         check_ajax_referer('ispag_achat_nonce', 'security');
 
         if (!current_user_can('edit_supplier_order')) {
-            wp_send_json_error('Permissions insuffisantes.');
+            wp_send_json_error(__('You do not have the necessary rights for this action.', 'creation-reservoir'));
         }
 
         global $wpdb;
@@ -491,7 +491,7 @@ class ISPAG_Achat_Renderer {
         $table    = $wpdb->prefix . 'achats_articles_cmd_fournisseurs'; // À vérifier selon votre table réelle
 
         if (!$achat_id || !$amount) {
-            wp_send_json_error('Invalid data.');
+            wp_send_json_error(__('Invalid data.', 'creation-reservoir'));
         }
 
         // 1. Vérifier si l'article existe déjà dans cette commande
@@ -515,7 +515,7 @@ class ISPAG_Achat_Renderer {
             );
             
             if ($updated !== false) {
-                wp_send_json_success('Article updated.');
+                wp_send_json_success(__('Article updated.', 'creation-reservoir'));
             }
         } else {
             // CRÉATION
@@ -534,10 +534,10 @@ class ISPAG_Achat_Renderer {
             );
 
             if ($inserted) {
-                wp_send_json_success('Article added.');
+                wp_send_json_success(__('Article added.', 'creation-reservoir'));
             }
         }
 
-        wp_send_json_error('Error while saving to the database.');
+        wp_send_json_error(__('Error while saving to the database.', 'creation-reservoir'));
     }
 }
