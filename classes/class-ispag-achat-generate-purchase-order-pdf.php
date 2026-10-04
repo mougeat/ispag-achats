@@ -170,12 +170,13 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             );
 
             // Changement de langue selon le fournisseur
-            $lang = $supplier_info['lang'] ?: 'fr_FR';
+            $lang = ISPAG_Achat_Mail_Templates::normalize_lang($supplier_info['lang'] ?? '') ?: 'fr_FR';
+            $locale_switched = false;
             if ($lang) {
                 if (function_exists('pll_set_language')) {
                     pll_set_language($lang);
                 }
-                switch_to_locale($lang);
+                $locale_switched = (bool) switch_to_locale($lang);
                 self::$logger->log_user_action(
                     'achat_generate_purchase_order_pdf',
                     'language_switched',
@@ -306,6 +307,9 @@ class ISPAG_Achat_Generate_Purchase_Order_PDF {
             $title         = $stored_name;
             $uploadedfile  = trailingslashit($wp_upload_dir['path']) . $stored_name;
             $pdf->Output($uploadedfile, 'F');
+
+            // PDF construit dans la langue du fournisseur : la suite de la requête retrouve la langue de l'utilisateur
+            if (!empty($locale_switched)) { restore_previous_locale(); $locale_switched = false; }
 
             self::$logger->log_user_action(
                 'achat_generate_purchase_order_pdf',

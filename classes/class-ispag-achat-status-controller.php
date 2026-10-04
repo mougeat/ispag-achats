@@ -245,7 +245,8 @@ class ISPAG_Achat_Status_Controller {
             $contact_id = intval($fournisseur->IdContactCommande);
         }
 
-        $lang = !empty($fournisseur->Langue) ? sanitize_text_field($fournisseur->Langue) : 'fr_FR';
+        $lang = !empty($fournisseur->Langue) ? ISPAG_Achat_Mail_Templates::normalize_lang(sanitize_text_field($fournisseur->Langue)) : 'fr_FR';
+        if ($lang === '') $lang = 'fr_FR';
 
 
         // 3. Récupérer contact user
@@ -297,9 +298,10 @@ class ISPAG_Achat_Status_Controller {
         // error_log('[SEND MAIL DEBUG] Lang du destinataire ID' . $contact_id . ' --> ' . $lang);
 
         // 2. Définir la langue AVANT toute récupération de données
+        $switched = false;
         if ($lang) {
             if (function_exists('pll_set_language')) pll_set_language($lang);
-            switch_to_locale($lang);
+            $switched = (bool) switch_to_locale($lang);
         }
 
         // error_log('[SEND MAIL DEBUG] Langue active avant récup articles: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
@@ -381,6 +383,9 @@ class ISPAG_Achat_Status_Controller {
         ];
 
         $text = strtr($text, $replacements);
+
+        // Les données ont été préparées dans la langue du fournisseur : on rend sa langue à la suite de la requête
+        if ($switched) restore_previous_locale();
 
         // 6. Nettoyer le texte
         $text = str_ireplace(['<br />', '<br/>'], "\n", $text);

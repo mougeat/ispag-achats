@@ -79,6 +79,22 @@ class ISPAG_Achat_Mail_Templates {
         return $langs;
     }
 
+    /**
+     * Code de locale valide pour une langue de fournisseur saisie à l'ancienne (« fr », « FR », « Français », « Deutsch »…) ;
+     * vide si non renseignée (le français est alors utilisé par l'appelant).
+     */
+    public static function normalize_lang($value): string {
+        $value = trim((string) $value);
+        if ($value === '') return '';
+        $langs = self::languages();
+        if (isset($langs[$value])) return $value;
+        $v = strtolower($value);
+        foreach ($langs as $code => $label) {
+            if ($v === strtolower($code) || $v === strtolower(substr($code, 0, 2)) || $v === strtolower($label)) return $code;
+        }
+        return $value;
+    }
+
     /** Balises des e-mails clients d'étape (remplacées par ISPAG_Phase_Mail du plugin ISPAG Project Manager). */
     public static function project_tags(): array {
         return [
