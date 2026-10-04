@@ -32,3 +32,7 @@ msgstr "Ajouter des pièces jointes"
 #: classes/class-ispag-achat-renderer.php:154
 msgid "No group"
 msgstr "Sans groupe"
+
+#: classes/class-ispag-achat-supplier-confirm.php:238
+msgid "✅ Order confirmed by the supplier: %s"
+msgstr "✅ Commande confirmée par le fournisseur : %s"

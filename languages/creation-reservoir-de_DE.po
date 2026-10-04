@@ -477,11 +477,23 @@ msgstr "Nichts anzuwenden: Geben Sie mindestens ein Datum an"
 msgid "Bulk update applied successfully"
 msgstr "Sammelaktualisierung erfolgreich angewendet"
 
-#: classes/class-ispag-achat-purchase-order-pdf.php:198
+#: classes/class-ispag-achat-purchase-order-pdf.php:103
+msgid "Confirm online"
+msgstr "Online bestätigen"
+
+#: classes/class-ispag-achat-purchase-order-pdf.php:107
+msgid "Scan the QR code to confirm the order and the delivery dates,"
+msgstr "Scannen Sie den QR-Code, um die Bestellung und die Liefertermine zu bestätigen,"
+
+#: classes/class-ispag-achat-purchase-order-pdf.php:111
+msgid "or click here on your computer"
+msgstr "oder klicken Sie hier am Computer"
+
+#: classes/class-ispag-achat-purchase-order-pdf.php:232
 msgid "Delivery address"
 msgstr "Lieferadresse"
 
-#: classes/class-ispag-achat-purchase-order-pdf.php:302
+#: classes/class-ispag-achat-purchase-order-pdf.php:336
 msgid "Total"
 msgstr "Total"
 
@@ -696,6 +708,62 @@ msgstr "Erledigt"
 #: classes/class-ispag-achat-status-render.php:232
 msgid "Pending"
 msgstr "Ausstehend"
+
+#: classes/class-ispag-achat-supplier-confirm.php:114
+msgid "Something went wrong, please try again."
+msgstr "Es ist ein Fehler aufgetreten, bitte versuchen Sie es erneut."
+
+#: classes/class-ispag-achat-supplier-confirm.php:114
+msgid "Thank you, your confirmation has been recorded."
+msgstr "Danke, Ihre Bestätigung wurde gespeichert."
+
+#: classes/class-ispag-achat-supplier-confirm.php:146
+msgid "This link has expired."
+msgstr "Dieser Link ist abgelaufen."
+
+#: classes/class-ispag-achat-supplier-confirm.php:146
+msgid "This link is not valid."
+msgstr "Dieser Link ist ungültig."
+
+#: classes/class-ispag-achat-supplier-confirm.php:147
+msgid "Please ask your contact for a new purchase order."
+msgstr "Bitte fordern Sie bei Ihrem Ansprechpartner eine neue Bestellung an."
+
+#: classes/class-ispag-achat-supplier-confirm.php:149
+msgid "Purchase order %s"
+msgstr "Bestellung %s"
+
+#: classes/class-ispag-achat-supplier-confirm.php:150
+msgid "Please confirm the delivery date of each line and your order confirmation number."
+msgstr "Bitte bestätigen Sie das Lieferdatum jeder Position und Ihre Auftragsbestätigungsnummer."
+
+#: classes/class-ispag-achat-supplier-confirm.php:152
+msgid "Your order confirmation number"
+msgstr "Ihre Auftragsbestätigungsnummer"
+
+#: classes/class-ispag-achat-supplier-confirm.php:158
+msgid "Quantity: %d"
+msgstr "Menge: %d"
+
+#: classes/class-ispag-achat-supplier-confirm.php:159
+msgid "Confirmed delivery date"
+msgstr "Bestätigtes Lieferdatum"
+
+#: classes/class-ispag-achat-supplier-confirm.php:163
+msgid "Comment (optional)"
+msgstr "Kommentar (optional)"
+
+#: classes/class-ispag-achat-supplier-confirm.php:165
+msgid "Confirm"
+msgstr "Bestätigen"
+
+#: classes/class-ispag-achat-supplier-confirm.php:239
+msgid "%d line(s) with a confirmed delivery date."
+msgstr "%d Position(en) mit bestätigtem Lieferdatum."
+
+#: classes/class-ispag-achat-supplier-confirm.php:239
+msgid "Confirmation No. %s."
+msgstr "Bestätigungsnr. %s."
 
 #: classes/class-ispag-achat-supplier-contacts.php:13
 msgid "Order / quotation contact"

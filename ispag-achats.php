@@ -135,6 +135,7 @@ add_action('init', function () {
     ISPAG_Achat_Mail_Templates::init();
     ISPAG_Achat_Mail_Draft::init();
     ISPAG_Achat_Settings::init();
+    ISPAG_Achat_Supplier_Confirm::init();
 
     ISPAG_CarryBox_Manager::init();
     

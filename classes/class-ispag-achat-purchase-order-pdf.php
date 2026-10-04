@@ -73,9 +73,43 @@ class ISPAG_Achat_Purchase_Order_PDF extends ISPAG_PDF_Generator {
         $this->drawHeader();
         $bottom = $this->drawInfoCards();
         // Adresse de livraison : demi-largeur, sous la carte fournisseur
-        $bottom = $this->drawDeliveryCard($bottom + 5);
+        $card_top = $bottom + 5;
+        $bottom   = $this->drawDeliveryCard($card_top);
+        // QR code + lien : le fournisseur confirme la commande et les dates de livraison en ligne (moitié droite, à côté de l'adresse de livraison)
+        $bottom   = max($bottom, $this->drawConfirmLink($card_top, (int) ($achat->Id ?? 0)));
         $this->SetY($bottom + 10);
         $this->drawTable($this->scaleColumns($table_header), $articles);
+    }
+
+    /** Cadre « confirmer en ligne » : QR code cliquable et texte (moitié droite). Retourne le bas du cadre, ou 0 sans lien. */
+    protected function drawConfirmLink(float $top, int $order_id): float {
+        if (!$order_id || !class_exists('ISPAG_QR_Code') || !class_exists('ISPAG_Achat_Supplier_Confirm')) return 0;
+        $url = ISPAG_Achat_Supplier_Confirm::url($order_id);
+        $w   = 87;
+        $x   = self::MARGIN + self::CONTENT - $w;
+        $h   = 34;
+        $this->color(self::CARD, 'fill');
+        $this->Rect($x, $top, $w, $h, 'F');
+        $this->color(self::RED, 'fill');
+        $this->Rect($x, $top, 1.2, $h, 'F');
+
+        $size = 26;
+        if (!ISPAG_QR_Code::draw($this, $url, $x + $w - $size - 4, $top + 4, $size, true)) return 0;
+
+        $tw = $w - $size - 14;
+        $this->SetXY($x + 6, $top + 4);
+        $this->SetFont('Arial', 'B', 8);
+        $this->color(self::MUTED);
+        $this->Cell($tw, 4, $this->cleanStr(mb_strtoupper(__('Confirm online', 'creation-reservoir'))), 0, 1);
+        $this->SetX($x + 6);
+        $this->SetFont('Arial', '', 8.5);
+        $this->color(self::INK);
+        $this->MultiCell($tw, 4.2, $this->cleanStr(__('Scan the QR code to confirm the order and the delivery dates,', 'creation-reservoir')), 0, 'L');
+        $this->SetX($x + 6);
+        $this->SetFont('Arial', 'U', 8.5);
+        $this->color(self::RED);
+        $this->Cell($tw, 4.2, $this->cleanStr(__('or click here on your computer', 'creation-reservoir')), 0, 1, 'L', false, $url);
+        return $top + $h;
     }
 
     protected function drawHeader() {
