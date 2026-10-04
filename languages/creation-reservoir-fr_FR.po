@@ -85,35 +85,35 @@ msgstr "Modifier"
 msgid "No delivery address yet."
 msgstr "Pas encore d'adresse de livraison."
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:224
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:225
 msgid "Project name"
 msgstr "Nom du projet"
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:225
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:226
 msgid "Order number"
 msgstr "Numéro de commande"
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:229
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:230
 msgid "Ref"
 msgstr "Réf."
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:230
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:231
 msgid "Description"
 msgstr "Description"
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:231
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:232
 msgid "Unit price"
 msgstr "Prix unitaire"
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:232
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:233
 msgid "Qty"
 msgstr "Qté"
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:233
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:234
 msgid "Disc."
 msgstr "Rem."
 
-#: classes/class-ispag-achat-generate-purchase-order-pdf.php:288
+#: classes/class-ispag-achat-generate-purchase-order-pdf.php:289
 msgid "Purchase order"
 msgstr "Commande d'achat"
 
@@ -162,176 +162,224 @@ msgid "A small file ending in “.eml” has just been downloaded. Open it: your
 msgstr "Un petit fichier se terminant par « .eml » vient d'être téléchargé. Ouvrez-le : votre e-mail s'affiche dans Outlook avec le destinataire, le texte et les pièces jointes déjà remplis."
 
 #: classes/class-ispag-achat-mail-templates.php:101
+msgid "Recipient first name"
+msgstr "Prénom du destinataire"
+
+#: classes/class-ispag-achat-mail-templates.php:102
+msgid "Recipient last name"
+msgstr "Nom du destinataire"
+
+#: classes/class-ispag-achat-mail-templates.php:105
+msgid "Link to the project (address only)"
+msgstr "Lien vers le projet (adresse seule)"
+
+#: classes/class-ispag-achat-mail-templates.php:106
+msgid "Link to the project (clickable: \"view the project\" in the recipient language)"
+msgstr "Lien vers le projet (cliquable : « voir le projet » dans la langue du destinataire)"
+
+#: classes/class-ispag-achat-mail-templates.php:107
+msgid "List of items, grouped"
+msgstr "Liste des articles, regroupés"
+
+#: classes/class-ispag-achat-mail-templates.php:108
+msgid "Items not delivered yet that have a delivery date, grouped, with their planned delivery"
+msgstr "Articles pas encore livrés ayant une date de livraison, regroupés, avec leur livraison prévue"
+
+#: classes/class-ispag-achat-mail-templates.php:109
+msgid "Planned delivery date (or period)"
+msgstr "Date (ou période) de livraison prévue"
+
+#: classes/class-ispag-achat-mail-templates.php:111
+msgid "Delivery postal code"
+msgstr "Code postal de livraison"
+
+#: classes/class-ispag-achat-mail-templates.php:112
+msgid "Delivery city"
+msgstr "Ville de livraison"
+
+#: classes/class-ispag-achat-mail-templates.php:113
+msgid "On-site contact"
+msgstr "Contact sur place"
+
+#: classes/class-ispag-achat-mail-templates.php:114
+msgid "On-site contact phone"
+msgstr "Téléphone du contact sur place"
+
+#: classes/class-ispag-achat-mail-templates.php:115
+msgid "Deadline to return the approved drawings (working days from sending, set in ISPAG Settings → Plan reminders); in a reminder, the date of the next reminder"
+msgstr "Délai de retour des plans validés (jours ouvrables à partir de l'envoi, défini dans Réglages ISPAG → Rappels de plans) ; dans un rappel, date du prochain rappel"
+
+#: classes/class-ispag-achat-mail-templates.php:117
 msgid "Number of working days given to return the drawings"
 msgstr "Nombre de jours ouvrables pour retourner les plans"
 
-#: classes/class-ispag-achat-mail-templates.php:102
+#: classes/class-ispag-achat-mail-templates.php:118
 msgid "Satisfaction survey link"
 msgstr "Lien du questionnaire de satisfaction"
 
-#: classes/class-ispag-achat-mail-templates.php:103
+#: classes/class-ispag-achat-mail-templates.php:119
 msgid "Start of a text kept only if the order contains a type 1 item (drawings to approve) — close it with {/IF_DRAWINGS}"
 msgstr "Début d'un texte conservé uniquement si la commande contient un article de type 1 (plans à valider) — à fermer avec {/IF_DRAWINGS}"
 
-#: classes/class-ispag-achat-mail-templates.php:104
+#: classes/class-ispag-achat-mail-templates.php:120
 msgid "End of the \"with drawings\" text"
 msgstr "Fin du texte « avec plans »"
 
-#: classes/class-ispag-achat-mail-templates.php:105
+#: classes/class-ispag-achat-mail-templates.php:121
 msgid "Start of a text kept only if the order has no type 1 item — close it with {/IF_NO_DRAWINGS}"
 msgstr "Début d'un texte conservé uniquement si la commande n'a aucun article de type 1 — à fermer avec {/IF_NO_DRAWINGS}"
 
-#: classes/class-ispag-achat-mail-templates.php:106
+#: classes/class-ispag-achat-mail-templates.php:122
 msgid "End of the \"without drawings\" text"
 msgstr "Fin du texte « sans plans »"
 
-#: classes/class-ispag-achat-mail-templates.php:107
+#: classes/class-ispag-achat-mail-templates.php:123
 msgid "Start of a text kept only if a document is attached to the e-mail — close it with {/IF_ATTACHMENTS}"
 msgstr "Début d'un texte conservé uniquement si un document est joint à l'e-mail — à fermer avec {/IF_ATTACHMENTS}"
 
-#: classes/class-ispag-achat-mail-templates.php:108
+#: classes/class-ispag-achat-mail-templates.php:124
 msgid "End of the \"with attachments\" text"
 msgstr "Fin du texte « avec pièces jointes »"
 
-#: classes/class-ispag-achat-mail-templates.php:109
+#: classes/class-ispag-achat-mail-templates.php:125
 msgid "Start of a text kept only if no document is attached — close it with {/IF_NO_ATTACHMENTS}"
 msgstr "Début d'un texte conservé uniquement si aucun document n'est joint — à fermer avec {/IF_NO_ATTACHMENTS}"
 
-#: classes/class-ispag-achat-mail-templates.php:110
+#: classes/class-ispag-achat-mail-templates.php:126
 msgid "End of the \"without attachments\" text"
 msgstr "Fin du texte « sans pièces jointes »"
 
-#: classes/class-ispag-achat-mail-templates.php:111
+#: classes/class-ispag-achat-mail-templates.php:127
 msgid "Name of the person who triggered the e-mail"
 msgstr "Nom de la personne qui a déclenché l'e-mail"
 
-#: classes/class-ispag-achat-mail-templates.php:120
+#: classes/class-ispag-achat-mail-templates.php:136
 msgid "Supplier name"
 msgstr "Nom du fournisseur"
 
-#: classes/class-ispag-achat-mail-templates.php:123
+#: classes/class-ispag-achat-mail-templates.php:139
 msgid "Full order reference (number - project)"
 msgstr "Référence complète de la commande (numéro - projet)"
 
-#: classes/class-ispag-achat-mail-templates.php:126
+#: classes/class-ispag-achat-mail-templates.php:142
 msgid "Delivery address (full block)"
 msgstr "Adresse de livraison (bloc complet)"
 
-#: classes/class-ispag-achat-mail-templates.php:127
+#: classes/class-ispag-achat-mail-templates.php:143
 msgid "Contact on site"
 msgstr "Contact sur place"
 
-#: classes/class-ispag-achat-mail-templates.php:128
+#: classes/class-ispag-achat-mail-templates.php:144
 msgid "Contact phone number"
 msgstr "Numéro de téléphone du contact"
 
-#: classes/class-ispag-achat-mail-templates.php:129
+#: classes/class-ispag-achat-mail-templates.php:145
 msgid "Link to the order"
 msgstr "Lien vers la commande"
 
-#: classes/class-ispag-achat-mail-templates.php:130
+#: classes/class-ispag-achat-mail-templates.php:146
 msgid "Sender name"
 msgstr "Nom de l'expéditeur"
 
-#: classes/class-ispag-achat-mail-templates.php:131
+#: classes/class-ispag-achat-mail-templates.php:147
 msgid "Your company name"
 msgstr "Nom de votre entreprise"
 
-#: classes/class-ispag-achat-mail-templates.php:187
+#: classes/class-ispag-achat-mail-templates.php:203
 msgid "Invalid type or language"
 msgstr "Type ou langue invalide"
 
-#: classes/class-ispag-achat-mail-templates.php:190
+#: classes/class-ispag-achat-mail-templates.php:206
 msgid "Subject and message are required"
 msgstr "L'objet et le message sont obligatoires"
 
-#: classes/class-ispag-achat-mail-templates.php:199
+#: classes/class-ispag-achat-mail-templates.php:215
 msgid "A template already exists for this type and language"
 msgstr "Un modèle existe déjà pour ce type et cette langue"
 
-#: classes/class-ispag-achat-mail-templates.php:233
+#: classes/class-ispag-achat-mail-templates.php:249
 msgid "Email templates"
 msgstr "Modèles d'e-mail"
 
-#: classes/class-ispag-achat-mail-templates.php:250
+#: classes/class-ispag-achat-mail-templates.php:266
 msgid "Delete this template?"
 msgstr "Supprimer ce modèle ?"
-
-#: classes/class-ispag-achat-mail-templates.php:285
-msgid "New template"
-msgstr "Nouveau modèle"
-
-#: classes/class-ispag-achat-mail-templates.php:287
-msgid "One template per message type and language. If a supplier’s language has no template, the English one is used."
-msgstr "Un modèle par type de message et par langue. Si la langue d'un fournisseur n'a pas de modèle, le modèle anglais est utilisé."
-
-#: classes/class-ispag-achat-mail-templates.php:290
-msgid "Search"
-msgstr "Rechercher"
-
-#: classes/class-ispag-achat-mail-templates.php:290
-msgid "Search a template (type, language, subject, text)…"
-msgstr "Rechercher un modèle (type, langue, objet, texte)…"
-
-#: classes/class-ispag-achat-mail-templates.php:291
-msgid "Family"
-msgstr "Famille"
-
-#: classes/class-ispag-achat-mail-templates.php:292
-msgid "All families"
-msgstr "Toutes les familles"
 
 #: classes/class-ispag-achat-mail-templates.php:30
 msgid "Supplier orders"
 msgstr "Commandes fournisseurs"
 
+#: classes/class-ispag-achat-mail-templates.php:301
+msgid "New template"
+msgstr "Nouveau modèle"
+
+#: classes/class-ispag-achat-mail-templates.php:303
+msgid "One template per message type and language. If a supplier’s language has no template, the English one is used."
+msgstr "Un modèle par type de message et par langue. Si la langue d'un fournisseur n'a pas de modèle, le modèle anglais est utilisé."
+
+#: classes/class-ispag-achat-mail-templates.php:306
+msgid "Search"
+msgstr "Rechercher"
+
+#: classes/class-ispag-achat-mail-templates.php:306
+msgid "Search a template (type, language, subject, text)…"
+msgstr "Rechercher un modèle (type, langue, objet, texte)…"
+
+#: classes/class-ispag-achat-mail-templates.php:307
+msgid "Family"
+msgstr "Famille"
+
+#: classes/class-ispag-achat-mail-templates.php:308
+msgid "All families"
+msgstr "Toutes les familles"
+
 #: classes/class-ispag-achat-mail-templates.php:31
 msgid "Project follow-up (customer)"
 msgstr "Suivi de projet (client)"
 
-#: classes/class-ispag-achat-mail-templates.php:312
+#: classes/class-ispag-achat-mail-templates.php:328
 msgid "Message type"
 msgstr "Type de message"
 
-#: classes/class-ispag-achat-mail-templates.php:318
+#: classes/class-ispag-achat-mail-templates.php:334
 msgid "Language"
 msgstr "Langue"
 
-#: classes/class-ispag-achat-mail-templates.php:325
+#: classes/class-ispag-achat-mail-templates.php:341
 msgid "Subject"
 msgstr "Objet"
 
-#: classes/class-ispag-achat-mail-templates.php:327
+#: classes/class-ispag-achat-mail-templates.php:343
 msgid "Message"
 msgstr "Message"
 
-#: classes/class-ispag-achat-mail-templates.php:331
+#: classes/class-ispag-achat-mail-templates.php:347
 msgid "Fields replaced when the email is sent — click to insert:"
 msgstr "Champs remplacés à l'envoi de l'e-mail — cliquez pour insérer :"
 
-#: classes/class-ispag-achat-mail-templates.php:342
+#: classes/class-ispag-achat-mail-templates.php:358
 msgid "Preview (sample data)"
 msgstr "Aperçu (données d'exemple)"
 
-#: classes/class-ispag-achat-mail-templates.php:349
+#: classes/class-ispag-achat-mail-templates.php:365
 msgid "Preview"
 msgstr "Aperçu"
 
-#: classes/class-ispag-achat-mail-templates.php:366
+#: classes/class-ispag-achat-mail-templates.php:382
 msgid "No template yet."
 msgstr "Aucun modèle pour l'instant."
 
-#: classes/class-ispag-achat-mail-templates.php:368
+#: classes/class-ispag-achat-mail-templates.php:384
 msgid "Type"
 msgstr "Type"
-
-#: classes/class-ispag-achat-mail-templates.php:378
-msgid "Duplicate (e.g. to translate)"
-msgstr "Dupliquer (par ex. pour traduire)"
 
 #: classes/class-ispag-achat-mail-templates.php:39
 msgid "Request for quotation (RFQ)"
 msgstr "Demande d'offre (RFQ)"
+
+#: classes/class-ispag-achat-mail-templates.php:394
+msgid "Duplicate (e.g. to translate)"
+msgstr "Dupliquer (par ex. pour traduire)"
 
 #: classes/class-ispag-achat-mail-templates.php:40
 msgid "Drawing validation"
@@ -340,54 +388,6 @@ msgstr "Validation des plans"
 #: classes/class-ispag-achat-mail-templates.php:41
 msgid "Drawing modifications"
 msgstr "Modifications de plans"
-
-#: classes/class-ispag-achat-mail-templates.php:85
-msgid "Recipient first name"
-msgstr "Prénom du destinataire"
-
-#: classes/class-ispag-achat-mail-templates.php:86
-msgid "Recipient last name"
-msgstr "Nom du destinataire"
-
-#: classes/class-ispag-achat-mail-templates.php:89
-msgid "Link to the project (address only)"
-msgstr "Lien vers le projet (adresse seule)"
-
-#: classes/class-ispag-achat-mail-templates.php:90
-msgid "Link to the project (clickable: \"view the project\" in the recipient language)"
-msgstr "Lien vers le projet (cliquable : « voir le projet » dans la langue du destinataire)"
-
-#: classes/class-ispag-achat-mail-templates.php:91
-msgid "List of items, grouped"
-msgstr "Liste des articles, regroupés"
-
-#: classes/class-ispag-achat-mail-templates.php:92
-msgid "Items not delivered yet that have a delivery date, grouped, with their planned delivery"
-msgstr "Articles pas encore livrés ayant une date de livraison, regroupés, avec leur livraison prévue"
-
-#: classes/class-ispag-achat-mail-templates.php:93
-msgid "Planned delivery date (or period)"
-msgstr "Date (ou période) de livraison prévue"
-
-#: classes/class-ispag-achat-mail-templates.php:95
-msgid "Delivery postal code"
-msgstr "Code postal de livraison"
-
-#: classes/class-ispag-achat-mail-templates.php:96
-msgid "Delivery city"
-msgstr "Ville de livraison"
-
-#: classes/class-ispag-achat-mail-templates.php:97
-msgid "On-site contact"
-msgstr "Contact sur place"
-
-#: classes/class-ispag-achat-mail-templates.php:98
-msgid "On-site contact phone"
-msgstr "Téléphone du contact sur place"
-
-#: classes/class-ispag-achat-mail-templates.php:99
-msgid "Deadline to return the approved drawings (working days from sending, set in ISPAG Settings → Plan reminders); in a reminder, the date of the next reminder"
-msgstr "Délai de retour des plans validés (jours ouvrables à partir de l'envoi, défini dans Réglages ISPAG → Rappels de plans) ; dans un rappel, date du prochain rappel"
 
 #: classes/class-ispag-achat-manager.php:1012
 msgid "No purchase found"
@@ -561,9 +561,45 @@ msgstr "Supprimer"
 msgid "Add product"
 msgstr "Ajouter un produit"
 
+#: classes/class-ispag-achat-renderer.php:449
+msgid "Transport: %s L calculated."
+msgstr "Transport : %s L calculés."
+
+#: classes/class-ispag-achat-renderer.php:450
+msgid "Apply transport (%s)"
+msgstr "Appliquer le transport (%s)"
+
+#: classes/class-ispag-achat-renderer.php:461
+msgid "Customs clearance (%1$s%%) on a net total of %2$s EUR."
+msgstr "Dédouanement (%1$s%%) sur un total net de %2$s EUR."
+
+#: classes/class-ispag-achat-renderer.php:462
+msgid "Apply customs clearance (%s EUR)"
+msgstr "Appliquer le dédouanement (%s EUR)"
+
 #: classes/class-ispag-achat-renderer.php:47
 msgid "Select all"
 msgstr "Tout sélectionner"
+
+#: classes/class-ispag-achat-renderer.php:484
+msgid "You do not have the necessary rights for this action."
+msgstr "Vous n'avez pas les droits nécessaires pour cette action."
+
+#: classes/class-ispag-achat-renderer.php:494
+msgid "Invalid data."
+msgstr "Données invalides."
+
+#: classes/class-ispag-achat-renderer.php:518
+msgid "Article updated."
+msgstr "Article mis à jour."
+
+#: classes/class-ispag-achat-renderer.php:537
+msgid "Article added."
+msgstr "Article ajouté."
+
+#: classes/class-ispag-achat-renderer.php:541
+msgid "Error while saving to the database."
+msgstr "Erreur lors de l'enregistrement en base de données."
 
 #: classes/class-ispag-achat-renderer.php:63
 msgid "Collapse / expand"
