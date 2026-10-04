@@ -48,6 +48,55 @@ class ISPAG_Achat_Supplier_Confirm {
         return [$order, 'ok'];
     }
 
+    // ------------------------------------------------------------------ langue
+
+    /** Langues proposées au fournisseur (code de locale => libellé dans sa propre langue). */
+    public static function languages(): array {
+        return ['fr_FR' => 'Français', 'de_DE' => 'Deutsch', 'it_IT' => 'Italiano', 'en_US' => 'English'];
+    }
+
+    /** Langue choisie par le fournisseur sur la page, sinon celle de sa fiche. */
+    private static function page_locale(array $src, int $supplier_id): string {
+        $lang = sanitize_text_field((string) ($src['lang'] ?? ''));
+        return isset(self::languages()[$lang]) ? $lang : self::supplier_locale($supplier_id);
+    }
+
+    /** Traductions italiennes des textes de cette page (le reste de l'application n'est traduit qu'en FR / DE). */
+    private static function italian(): array {
+        return [
+            'Order confirmation' => 'Conferma d\'ordine',
+            'This link has expired.' => 'Questo link è scaduto.',
+            'This link is not valid.' => 'Questo link non è valido.',
+            'Please ask your contact for a new purchase order.' => 'Chieda al suo referente un nuovo ordine d\'acquisto.',
+            'Purchase order %s' => 'Ordine d\'acquisto %s',
+            'Please confirm the delivery date of each line and your order confirmation number.' => 'Confermi la data di consegna di ogni riga e il numero della sua conferma d\'ordine.',
+            'Your order confirmation number' => 'Numero della sua conferma d\'ordine',
+            'Quantity: %d' => 'Quantità: %d',
+            'Confirmed delivery date' => 'Data di consegna confermata',
+            'Comment (optional)' => 'Commento (facoltativo)',
+            'Confirm' => 'Conferma',
+            'Thank you, your confirmation has been recorded.' => 'Grazie, la sua conferma è stata registrata.',
+            'Something went wrong, please try again.' => 'Qualcosa è andato storto, riprovi.',
+        ];
+    }
+
+    /** Active la langue choisie pour le reste de la requête ; retourne true s'il faudra la restaurer (leave_locale). */
+    private static function enter_locale(string $locale): bool {
+        if ($locale === 'it_IT') add_filter('gettext', [self::class, 'italian_gettext'], 20, 3);
+        return (bool) switch_to_locale($locale);
+    }
+
+    private static function leave_locale(bool $switched) {
+        remove_filter('gettext', [self::class, 'italian_gettext'], 20);
+        if ($switched) restore_previous_locale();
+    }
+
+    public static function italian_gettext($translated, $text, $domain) {
+        static $map = null;
+        if ($map === null) $map = self::italian();
+        return ($domain === 'creation-reservoir' && isset($map[$text])) ? $map[$text] : $translated;
+    }
+
     // ------------------------------------------------------------------ données
 
     private static function order(int $order_id) {
@@ -69,12 +118,17 @@ class ISPAG_Achat_Supplier_Confirm {
         return $lang !== '' ? $lang : 'fr_FR';
     }
 
+    /** Lignes ajoutées automatiquement (transport TRANS, dédouanement DED) : le fournisseur n'a rien à confirmer. */
+    private static function is_automatic_line(string $ref): bool {
+        return in_array(strtoupper(trim($ref)), ['DED', 'TRANS'], true);
+    }
+
     /** Lignes de la commande (sans prix) : [Id, référence, description, quantité, date confirmée Y-m-d]. */
     private static function lines(int $order_id, string $locale): array {
         $lines = [];
         $articles = (new ISPAG_Achat_Article_Repository())->get_articles_by_order(null, $order_id, $locale);
         foreach ($articles as $a) {
-            if (!empty($a->archive)) continue;
+            if (!empty($a->archive) || self::is_automatic_line((string) ($a->RefSurMesure ?? ''))) continue;
             $desc = trim(preg_replace('/\s+/', ' ', html_entity_decode(wp_strip_all_tags(str_replace(['<br>', '<br />', '<br/>'], "\n", (string) ($a->DescSurMesure ?? ''))), ENT_QUOTES, 'UTF-8')));
             $lines[] = [
                 'id'   => (int) $a->Id,
@@ -96,7 +150,8 @@ class ISPAG_Achat_Supplier_Confirm {
 
         // Page dans la langue du fournisseur
         $switched = false;
-        if ($order) $switched = (bool) switch_to_locale(self::supplier_locale((int) $order->IdFournisseur));
+        $locale   = $order ? self::page_locale($_GET, (int) $order->IdFournisseur) : 'fr_FR';
+        if ($order) $switched = self::enter_locale($locale);
 
         nocache_headers();
         header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
@@ -106,11 +161,11 @@ class ISPAG_Achat_Supplier_Confirm {
         $company = (string) get_option('wpcb_companyName', get_bloginfo('name'));
         $logo_id = (int) get_theme_mod('custom_logo');
         $logo    = $logo_id ? (string) wp_get_attachment_image_url($logo_id, 'medium') : '';
-        $lines   = $order ? self::lines($order_id, determine_locale()) : [];
+        $lines   = $order ? self::lines($order_id, $locale) : [];
         $cfg = [
             'url'    => admin_url('admin-ajax.php'),
             'action' => self::ACTION_SAVE,
-            'auth'   => ['o' => $order_id, 'e' => absint($_GET['e'] ?? 0), 's' => (string) ($_GET['s'] ?? '')],
+            'auth'   => ['o' => $order_id, 'e' => absint($_GET['e'] ?? 0), 's' => (string) ($_GET['s'] ?? ''), 'lang' => $locale],
             'i18n'   => ['saved' => __('Thank you, your confirmation has been recorded.', 'creation-reservoir'), 'error' => __('Something went wrong, please try again.', 'creation-reservoir')],
         ];
         ?><!DOCTYPE html>
@@ -126,6 +181,7 @@ class ISPAG_Achat_Supplier_Confirm {
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 .top{background:var(--brand);color:#fff;padding:12px 16px}.top .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;justify-content:space-between}
 .logo{display:inline-flex;background:#fff;border-radius:10px;padding:6px 12px}.logo img{display:block;max-height:32px;width:auto;max-width:170px}
+.langs{max-width:720px;margin:10px auto 0;padding:0 12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.langs a{padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);text-decoration:none;font-size:.9rem}.langs a.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
 .wrap{max-width:720px;margin:0 auto;padding:0 12px 110px}
 h1{font-size:1.35rem;margin:18px 4px 4px}.sub{color:var(--muted);margin:0 4px 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px}
@@ -141,6 +197,9 @@ button{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--b
 </head>
 <body>
 <div class="top"><div class="in"><?php if ($logo): ?><span class="logo"><img src="<?php echo esc_url($logo); ?>" alt="<?php echo esc_attr($company); ?>"></span><?php else: ?><strong><?php echo esc_html($company); ?></strong><?php endif; ?><span><?php esc_html_e('Order confirmation', 'creation-reservoir'); ?></span></div></div>
+<?php if ($order): ?>
+<nav class="langs" aria-label="Language"><?php foreach (self::languages() as $code => $label): ?><a href="<?php echo esc_url(add_query_arg('lang', $code)); ?>" class="<?php echo $code === $locale ? 'on' : ''; ?>" hreflang="<?php echo esc_attr(substr($code, 0, 2)); ?>"><?php echo esc_html($label); ?></a><?php endforeach; ?></nav>
+<?php endif; ?>
 <div class="wrap">
 <?php if ($state !== 'ok'): ?>
     <div class="err-page"><h1><?php echo esc_html($state === 'expired' ? __('This link has expired.', 'creation-reservoir') : __('This link is not valid.', 'creation-reservoir')); ?></h1>
@@ -190,7 +249,7 @@ button{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--b
 </body>
 </html>
         <?php
-        if ($switched) restore_previous_locale();
+        self::leave_locale($switched);
         exit;
     }
 
@@ -203,6 +262,7 @@ button{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--b
         if ($state !== 'ok') wp_send_json_error(['message' => __('This link is not valid.', 'creation-reservoir')], 403);
         $order = self::order($order_id);
         if (!$order) wp_send_json_error(['message' => __('This link is not valid.', 'creation-reservoir')], 403);
+        $sw = self::enter_locale(self::page_locale($_POST, (int) $order->IdFournisseur)); // messages d'erreur dans la langue de la page
 
         $t       = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
         $dates   = (array) ($_POST['date'] ?? []);
@@ -216,7 +276,8 @@ button{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--b
             if (!$ts || $ts < strtotime('-1 year') || $ts > strtotime('+5 years')) continue;
             // Uniquement les lignes de cette commande
             $n = $wpdb->query($wpdb->prepare(
-                "UPDATE {$t} SET TimestampDateLivraisonConfirme = %d WHERE Id = %d AND IdCommande = %d AND (archive IS NULL OR archive = 0)",
+                "UPDATE {$t} SET TimestampDateLivraisonConfirme = %d WHERE Id = %d AND IdCommande = %d AND (archive IS NULL OR archive = 0)
+                 AND UPPER(TRIM(RefSurMesure)) NOT IN ('DED', 'TRANS')",
                 $ts, $line_id, $order_id
             ));
             if ($n !== false) { $updated += (int) $n; $latest = max($latest, $ts); }
@@ -228,14 +289,18 @@ button{width:100%;min-height:50px;border:0;border-radius:12px;background:var(--b
         if ($latest > 0) $set['TimestampDateReceptionConfirmee'] = $latest;
         if ($set) $wpdb->update($wpdb->prefix . 'achats_commande_liste_fournisseurs', $set, ['Id' => $order_id]);
 
+        // La notification est rédigée dans la langue du destinataire, pas dans celle du fournisseur
+        self::leave_locale($sw);
+
         // Informe la personne qui a créé la commande
         $comment = sanitize_textarea_field(wp_unslash($_POST['comment'] ?? ''));
         if (class_exists('ISPAG_Notifications_Manager') && (int) $order->created_by > 0) {
             try {
+                $supplier = (string) $wpdb->get_var($wpdb->prepare("SELECT company_name FROM {$wpdb->prefix}ispag_companies WHERE Id = %d", (int) $order->IdFournisseur));
                 ISPAG_Notifications_Manager::send(
                     [(int) $order->created_by],
                     'product_manager',
-                    sprintf(esc_html__('✅ Order confirmed by the supplier: %s', 'ispag-crm'), esc_html(stripslashes((string) $order->RefCommande))),
+                    sprintf(esc_html__('✅ Order confirmed by the supplier: %s', 'ispag-crm'), esc_html(stripslashes((string) $order->RefCommande) . ($supplier !== '' ? ' (' . $supplier . ')' : ''))),
                     esc_html(sprintf(__('%d line(s) with a confirmed delivery date.', 'creation-reservoir'), $updated)) . ($conf !== '' ? ' ' . esc_html(sprintf(__('Confirmation No. %s.', 'creation-reservoir'), $conf)) : '') . ($comment !== '' ? ' ' . esc_html($comment) : ''),
                     'liste-des-achats/?search=' . (int) $order->hubspot_deal_id,
                     (int) $order->hubspot_deal_id
