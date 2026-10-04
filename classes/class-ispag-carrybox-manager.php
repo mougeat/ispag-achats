@@ -1,6 +1,10 @@
 <?php
 defined('ABSPATH') || exit;
 
+/**
+ * Demande d'achat de logistique chez un manutentionnaire (Carry Box par défaut). Lancée par le sélecteur « Deliver to stock location »
+ * du bloc Delivery d'une commande d'achat (voir ISPAG_Achat_Details_Renderer::ajax_set_stock_location_address).
+ */
 class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
 
     protected $id_carrybox = 444; // ID dans wor9711_ispag_companies (id) : à remapper après migration
@@ -25,37 +29,6 @@ class ISPAG_CarryBox_Manager extends ISPAG_Purchase_Request_Generator {
             "SELECT Id FROM {$this->table_liste_commandes} WHERE hubspot_deal_id = %d AND IdFournisseur = %d AND RefCommande LIKE %s LIMIT 1",
             $this->deal_id, $this->id_carrybox, 'LOGISTIQUE%'
         ));
-    }
-
-    public static function init() {
-        // Action AJAX pour le bouton "Envoyer chez Carry Box"
-        add_action('wp_ajax_ispag_create_carrybox_order', [self::class, 'ajax_create_order']);
-    }
-
-    /**
-     * Handler AJAX
-     */
-    public static function ajax_create_order() {
-        ob_start();
-        
-        $deal_id = isset($_POST['deal_id']) ? intval($_POST['deal_id']) : 0;
-        
-        if (!$deal_id || !current_user_can('manage_order')) {
-            ob_end_clean();
-            wp_send_json_error(['message' => 'Access denied or missing Deal ID']);
-        }
-
-        try {
-            $manager = new self($deal_id);
-            $result = $manager->generate_carrybox_process();
-            
-            if (ob_get_length()) ob_clean();
-            wp_send_json_success($result);
-            
-        } catch (Exception $e) {
-            if (ob_get_length()) ob_clean();
-            wp_send_json_error(['message' => $e->getMessage()]);
-        }
     }
 
     /**

@@ -6,7 +6,6 @@ class ISPAG_Achat_Details_Renderer {
     public static function init() {
         add_action('ispag_achat_details_tab', [self::class, 'display_achat_details_tab'], 10, 1);
         add_action('wp_ajax_ispag_copy_project_address', [self::class, 'copy_adress_from_project']);
-        add_action('wp_ajax_ispag_set_carrybox_address', [self::class, 'ispag_set_carrybox_address']);
         add_action('wp_ajax_ispag_achat_save_delivery', [self::class, 'ajax_save_delivery']);
         add_action('wp_ajax_ispag_set_stock_location_address', [self::class, 'ajax_set_stock_location_address']);
     }
@@ -120,7 +119,6 @@ class ISPAG_Achat_Details_Renderer {
         echo '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-btn-copy-description" data-target="#delivery-info-copy">📋</button>';
         if ($can_edit) {
             echo '<button type="button" class="ispag-btn ispag-btn-grey-outlined ispag-btn-copy-from-project" data-achat="' . esc_attr($achat_id) . '" data-deal-id="' . esc_attr($deal_id) . '">📥 ' . __('Copy from project', 'creation-reservoir') . '</button>';
-            echo '<button type="button" class="ispag-btn ispag-btn-blue-outlined ispag-btn-set-carrybox" data-achat="' . esc_attr($achat_id) . '" data-deal-id="' . esc_attr($deal_id) . '">📦 Carry Box delivery</button>';
             // Dépôts de stock (plugin ISPAG Stock) : l'adresse de livraison devient celle du dépôt choisi
             $stock_locations = (array) apply_filters('ispag_stock_delivery_locations', []);
             if ($stock_locations) {
@@ -176,40 +174,6 @@ class ISPAG_Achat_Details_Renderer {
         self::render_bloc_livraison($infos, $achat_id, $deal_id);
         wp_send_json_success(['html' => ob_get_clean()]);
     }
-
-    public static function ispag_set_carrybox_address() {
-        if (!current_user_can('edit_supplier_order')) wp_send_json_error('Not authorized', 403);
-        $achat_id = intval($_POST['achat_id'] ?? 0);
-        $deal_id = intval($_POST['deal_id'] ?? 0);
-        
-        if (!$achat_id) wp_send_json_error('ID Achat manquant');
-
-        // 1. Récupération des infos du projet pour le nom
-        $project = apply_filters('ispag_get_project_by_deal_id', null, $deal_id);
-        $objet_commande = ($project && !empty($project->ObjetCommande)) 
-            ? stripslashes($project->ObjetCommande) 
-            : 'Projet #' . $deal_id;
-
-        // 2. Préparation des données d'adresse
-        $data_delivery = array(
-            'AdresseDeLivraison' => 'Carry Box',
-            'DeliveryAdresse2'   => '58 rte du Nant d’Avril',
-            'DeliveryAdresse3'   => 'ISPAG - ' . $objet_commande,
-            'NIP'                => '1214',
-            'City'               => 'Vernier-Genève'
-        );
-        self::save_delivery_row($achat_id, $data_delivery, $deal_id);
-
-        $manager = new ISPAG_CarryBox_Manager($deal_id);
-        $manager->generate_carrybox_process();
-
-        // 3. Régénération du bloc pour le front-end
-        $infos = (new ISPAG_Achat_Details_Repository())->get_infos_livraison($achat_id);
-        ob_start();
-        self::render_bloc_livraison($infos, $achat_id, $deal_id);
-        wp_send_json_success(['html' => ob_get_clean()]);
-    }
-
 
     /** Adresse de livraison = celle d'un emplacement de stock (le nom du dépôt est la première ligne : le stock reconnaît ainsi le lieu). */
     public static function ajax_set_stock_location_address() {

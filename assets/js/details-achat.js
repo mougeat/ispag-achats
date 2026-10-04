@@ -4,11 +4,6 @@ jQuery(document).on('click', '.ispag-btn-copy-from-project', function () {
     handleAddressUpdate(jQuery(this), 'ispag_copy_project_address');
 });
 
-// --- REMPLISSAGE CARRY BOX ---
-jQuery(document).on('click', '.ispag-btn-set-carrybox', function () {
-    handleAddressUpdate(jQuery(this), 'ispag_set_carrybox_address');
-});
-
 // --- ADRESSE = DÉPÔT DE STOCK (plugin ISPAG Stock) ---
 jQuery(document).on('click', '.ispag-btn-set-stock-location', function () {
     const btn = jQuery(this);
