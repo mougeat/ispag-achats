@@ -32,3 +32,7 @@ msgstr "Anhänge hinzufügen"
 #: classes/class-ispag-achat-renderer.php:154
 msgid "No group"
 msgstr "Keine Gruppe"
+
+#: classes/class-ispag-achat-supplier-confirm.php:238
+msgid "✅ Order confirmed by the supplier: %s"
+msgstr "✅ Bestellung vom Lieferanten bestätigt: %s"
