@@ -123,8 +123,8 @@ class ISPAG_Achat_Article_Repository {
         $switched = false;
         if ($lang) {
             if (function_exists('pll_set_language')) pll_set_language($lang);
-            switch_to_locale($lang);
-            $switched = true;
+            // false si cette langue est déjà active (appelant déjà basculé) : on ne restaure alors pas celle de l'appelant
+            $switched = (bool) switch_to_locale($lang);
         }
 
         try {
