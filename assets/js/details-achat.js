@@ -122,6 +122,41 @@ jQuery(function ($) {
         loadLazyTab($panel);
     });
 
+    /**
+     * Ajoute (ou remplace) une seule ligne dans l'onglet Articles, sans recharger toute la liste.
+     * Retombe sur le rechargement complet si la liste n'est pas encore affichée ou en cas de problème.
+     */
+    function upsertLine(lineId) {
+        const fallback = function () { $('#articles').removeData('loaded').removeAttr('data-loaded'); $(document).trigger('ispag:achat-reload-articles'); };
+        const $list = $('#articles .ispag-achat-articles-list');
+        if (!lineId || !$list.length) { fallback(); return; }
+        $.post(ajaxurl, { action: 'ispag_achat_line_row', achat_id: $('#achat-id').val() || $('#articles').data('achat-id'), line_id: lineId }, function (resp) {
+            if (!resp || !resp.success) { fallback(); return; }
+            const d = resp.data;
+            const $html = $($.parseHTML($.trim(d.html)));
+            const $existing = $('.ispag-article[data-article-id="' + lineId + '"]');
+            if ($existing.length) {
+                $existing.replaceWith($html);
+            } else {
+                let $wrap = $list.find('.ispag-article-group-wrapper').filter(function () {
+                    return $.trim($(this).find('.ispag-article-group-header h3').text()) === d.group;
+                }).first();
+                if (!$wrap.length) {
+                    $wrap = $('<div class="ispag-article-group-wrapper"><div class="ispag-article-group-header"><h3></h3><span class="ispag-group-count"></span><span class="ispag-group-total"></span></div><div class="ispag-article-card-container"></div></div>');
+                    $wrap.find('h3').text(d.group);
+                    $list.append($wrap);
+                }
+                $wrap.find('.ispag-article-card-container').append($html);
+            }
+            // Compteur et total du groupe
+            const $g = $html.closest('.ispag-article-group-wrapper').length ? $html.closest('.ispag-article-group-wrapper') : $('.ispag-article[data-article-id="' + lineId + '"]').closest('.ispag-article-group-wrapper');
+            $g.find('.ispag-group-count').text(d.count);
+            $g.find('.ispag-group-total').text(d.group_total);
+            setTimeout(function () { afterTabInjected('articles', $('#articles')); }, 100);
+        }).fail(fallback);
+    }
+    window.ispagUpsertPurchaseLine = upsertLine;
+
     function afterTabInjected(tab, $panel) {
         if (tab === 'articles') {
             ['attachEditModalEvents', 'attachViewModalEvents', 'bindStandardTitleListener'].forEach(function (fn) {
@@ -246,9 +281,8 @@ jQuery(function ($) {
             $.post(ajaxurl, { action: 'ispag_achat_add_standard_article', achat_id: achatId, article_id: $row.data('id'), qty: $row.find('.ispag-add-qty').val(), nonce: (window.ispagVars || {}).add_product_nonce }, function (resp) {
                 if (resp && resp.success) {
                     $m.remove();
-                    // L'onglet Articles est rechargé : la nouvelle ligne apparaît tout de suite
-                    $('#articles').removeData('loaded').removeAttr('data-loaded');
-                    $(document).trigger('ispag:achat-reload-articles');
+                    // Seule la nouvelle ligne est ajoutée (pas de rechargement de tous les articles)
+                    upsertLine(resp.data && resp.data.article_line_id);
                 } else {
                     alert((resp && resp.data && resp.data.message) || 'Error');
                     $btn.prop('disabled', false);

@@ -13,6 +13,7 @@ class ISPAG_Achat_Renderer {
         add_filter('ispag_render_purchase_article_modal_form', [self::class, 'render_article_modal_form'], 10, 3);
         add_filter('ispag_render_article_block', [self::class, 'reload_article_row'], 10, 2);
         add_action('wp_ajax_ispag_apply_purchase_adjustment', [self::class, 'ajax_apply_adjustment']);
+        add_action('wp_ajax_ispag_achat_line_row', [self::class, 'ajax_line_row']);
     }
     
     public static function render_articles_tab($achat_id) {
@@ -484,6 +485,39 @@ class ISPAG_Achat_Renderer {
         </div>
         <?php
     }
+    /**
+     * Une seule ligne de la commande (HTML) + infos de son groupe : permet d'ajouter/mettre à jour une ligne
+     * dans l'onglet Articles sans recharger toute la liste.
+     */
+    public static function ajax_line_row() {
+        if (!current_user_can('view_supplier_order') && !current_user_can('edit_supplier_order')) {
+            wp_send_json_error(['message' => 'Not authorized'], 403);
+        }
+        $achat_id = absint($_POST['achat_id'] ?? 0);
+        $line_id  = absint($_POST['line_id'] ?? 0);
+        $repo     = new ISPAG_Achat_Repository();
+        $articles = $repo->get_articles_by_order(null, $achat_id);
+        $grouped  = self::group_articles_by_group_name($articles);
+        foreach ($grouped as $group_name => $items) {
+            foreach ($items as $article) {
+                if ((int) $article->Id !== $line_id) continue;
+                $total = 0;
+                foreach ($items as $it) {
+                    $total += isset($it->total_price) ? (float) $it->total_price : (float) $it->UnitPriceNet * (int) $it->Qty;
+                }
+                ob_start();
+                self::render_article_block($article);
+                wp_send_json_success([
+                    'html'        => ob_get_clean(),
+                    'group'       => stripslashes($group_name),
+                    'count'       => count($items),
+                    'group_total' => number_format($total, 2) . ' ' . get_option('wpcb_currency', 'CHF'),
+                ]);
+            }
+        }
+        wp_send_json_error(['message' => 'Line not found'], 404);
+    }
+
     public static function ajax_apply_adjustment() {
         check_ajax_referer('ispag_achat_nonce', 'security');
 
@@ -522,7 +556,7 @@ class ISPAG_Achat_Renderer {
             );
             
             if ($updated !== false) {
-                wp_send_json_success(__('Article updated.', 'creation-reservoir'));
+                wp_send_json_success(['message' => __('Article updated.', 'creation-reservoir'), 'line_id' => (int) $existing_id]);
             }
         } else {
             // CRÉATION
@@ -541,7 +575,7 @@ class ISPAG_Achat_Renderer {
             );
 
             if ($inserted) {
-                wp_send_json_success(__('Article added.', 'creation-reservoir'));
+                wp_send_json_success(['message' => __('Article added.', 'creation-reservoir'), 'line_id' => (int) $wpdb->insert_id]);
             }
         }
 

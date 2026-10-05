@@ -16,14 +16,19 @@ jQuery(document).ready(function($) {
         $.post(ispag_fournisseurs.ajaxurl, data, function(response) {
             if (response.success) {
                 if ($('#articles').length) {
-                    // Sans recharger la page : le bandeau disparaît et l'onglet Articles est rechargé (ligne ajoutée, bandeau recalculé)
+                    // Sans recharger la page ni tous les articles : le bandeau disparaît et seule la ligne est ajoutée / mise à jour
                     $btn.closest('.ispag-notice').fadeOut(150);
-                    $(document).trigger('ispag:achat-reload-articles');
+                    const lineId = response.data && response.data.line_id;
+                    if (typeof window.ispagUpsertPurchaseLine === 'function' && lineId) {
+                        window.ispagUpsertPurchaseLine(lineId);
+                    } else {
+                        $(document).trigger('ispag:achat-reload-articles');
+                    }
                 } else {
                     location.reload();
                 }
             } else {
-                alert(ispagT('Error: ') + response.data);
+                alert(ispagT('Error: ') + (response.data && response.data.message ? response.data.message : response.data));
                 $btn.prop('disabled', false).text(ispagT('Retry'));
             }
         });
