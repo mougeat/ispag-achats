@@ -9,27 +9,27 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Domain: ispag-crm\n"
 
-#: classes/class-ispag-achat-manager.php:177
+#: classes/class-ispag-achat-manager.php:179
 msgid "Restricted access"
 msgstr "Eingeschränkter Zugriff"
 
-#: classes/class-ispag-achat-manager.php:178
+#: classes/class-ispag-achat-manager.php:180
 msgid "You do not have the necessary rights to view this order."
 msgstr "Sie haben nicht die erforderlichen Rechte, um diese Bestellung anzuzeigen."
 
-#: classes/class-ispag-achat-manager.php:179
+#: classes/class-ispag-achat-manager.php:181
 msgid "To login page"
 msgstr "Zur Anmeldeseite"
 
-#: classes/class-ispag-achat-manager.php:309
+#: classes/class-ispag-achat-manager.php:311
 msgid "Unknown user"
 msgstr "Unbekannter Benutzer"
 
-#: classes/class-ispag-achat-renderer.php:112
+#: classes/class-ispag-achat-renderer.php:113
 msgid "Add attachments"
 msgstr "Anhänge hinzufügen"
 
-#: classes/class-ispag-achat-renderer.php:154
+#: classes/class-ispag-achat-renderer.php:155
 msgid "No group"
 msgstr "Keine Gruppe"
 
