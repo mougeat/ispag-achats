@@ -37,7 +37,7 @@ msgstr "Abbrechen"
 msgid "Copy from project"
 msgstr "Aus dem Projekt kopieren"
 
-#: classes/class-ispag-achat-details-renderer.php:160
+#: classes/class-ispag-achat-details-renderer.php:169
 msgid "Error while saving"
 msgstr "Fehler beim Speichern"
 
@@ -553,39 +553,39 @@ msgstr "Kein Lieferant ausgewählt."
 msgid "Article not found"
 msgstr "Artikel nicht gefunden"
 
-#: classes/class-ispag-achat-renderer.php:337
-msgid "Delivery note"
-msgstr "Lieferschein"
-
 #: classes/class-ispag-achat-renderer.php:34
 msgid "No items were found for this supplier order."
 msgstr "Für diese Lieferantenbestellung wurden keine Artikel gefunden."
 
-#: classes/class-ispag-achat-renderer.php:345
+#: classes/class-ispag-achat-renderer.php:342
+msgid "Delivery note"
+msgstr "Lieferschein"
+
+#: classes/class-ispag-achat-renderer.php:350
 msgid "No items selected"
 msgstr "Keine Artikel ausgewählt"
 
-#: classes/class-ispag-achat-renderer.php:367
+#: classes/class-ispag-achat-renderer.php:372
 msgid "Delete"
 msgstr "Löschen"
 
-#: classes/class-ispag-achat-renderer.php:378
+#: classes/class-ispag-achat-renderer.php:383
 msgid "Add product"
 msgstr "Produkt hinzufügen"
 
-#: classes/class-ispag-achat-renderer.php:451
+#: classes/class-ispag-achat-renderer.php:456
 msgid "Transport: %s L calculated."
 msgstr "Transport: %s L berechnet."
 
-#: classes/class-ispag-achat-renderer.php:452
+#: classes/class-ispag-achat-renderer.php:457
 msgid "Apply transport (%s)"
 msgstr "Transport anwenden (%s)"
 
-#: classes/class-ispag-achat-renderer.php:463
+#: classes/class-ispag-achat-renderer.php:468
 msgid "Customs clearance (%1$s%%) on a net total of %2$s EUR."
 msgstr "Verzollung (%1$s%%) auf einen Nettobetrag von %2$s EUR."
 
-#: classes/class-ispag-achat-renderer.php:464
+#: classes/class-ispag-achat-renderer.php:469
 msgid "Apply customs clearance (%s EUR)"
 msgstr "Verzollung anwenden (%s EUR)"
 
@@ -593,23 +593,23 @@ msgstr "Verzollung anwenden (%s EUR)"
 msgid "Select all"
 msgstr "Alle auswählen"
 
-#: classes/class-ispag-achat-renderer.php:486
+#: classes/class-ispag-achat-renderer.php:491
 msgid "You do not have the necessary rights for this action."
 msgstr "Sie haben nicht die erforderlichen Rechte für diese Aktion."
 
-#: classes/class-ispag-achat-renderer.php:496
+#: classes/class-ispag-achat-renderer.php:501
 msgid "Invalid data."
 msgstr "Ungültige Daten."
 
-#: classes/class-ispag-achat-renderer.php:520
+#: classes/class-ispag-achat-renderer.php:525
 msgid "Article updated."
 msgstr "Artikel aktualisiert."
 
-#: classes/class-ispag-achat-renderer.php:539
+#: classes/class-ispag-achat-renderer.php:544
 msgid "Article added."
 msgstr "Artikel hinzugefügt."
 
-#: classes/class-ispag-achat-renderer.php:543
+#: classes/class-ispag-achat-renderer.php:548
 msgid "Error while saving to the database."
 msgstr "Fehler beim Speichern in der Datenbank."
 
@@ -789,7 +789,7 @@ msgstr "Ändern"
 msgid "Contacts"
 msgstr "Kontakte"
 
-#: classes/class-ispag-carrybox-manager.php:85
+#: classes/class-ispag-carrybox-manager.php:78
 msgid "Logistics and storage - Carry Box"
 msgstr "Logistik und Lagerung - Carry Box"
 
