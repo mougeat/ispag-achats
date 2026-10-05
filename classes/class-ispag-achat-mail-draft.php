@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
  * Brouillon d'e-mail (.eml) de la commande fournisseur, avec le bon de commande PDF en pièce jointe.
  *
  * Pièces jointes selon le type de message :
- *   - send_purchase_order : le bon de commande PDF ;
+ *   - send_purchase_order : le bon de commande PDF (+ plans validés des cuves liées, pour une commande d'isolation ou de soudure) ;
  *   - drawing_modified    : le dernier fichier « Drawing modification » de chaque article de la commande ;
  *   - drawing_validated   : le dernier fichier « Drawing approval » (validation) de chaque article de la commande.
  *
@@ -40,6 +40,12 @@ class ISPAG_Achat_Mail_Draft {
             "SELECT DISTINCT IdCommandeClient FROM {$wpdb->prefix}achats_articles_cmd_fournisseurs WHERE IdCommande = %d AND IdCommandeClient > 0",
             $achat_id
         ));
+        return self::latest_documents_for_articles($articles, $slug);
+    }
+
+    /** Dernier document d'un type (slug) pour chacun des articles de projet donnés (sans doublon). */
+    public static function latest_documents_for_articles(array $articles, $slug) {
+        global $wpdb;
         $files = [];
         $seen  = [];
         foreach ($articles as $article_id) {
@@ -59,10 +65,26 @@ class ISPAG_Achat_Mail_Draft {
         return $files;
     }
 
+    /**
+     * Plans validés des cuves concernées par une commande d'isolation ou de soudure : les lignes d'isolation (Type 2)
+     * et de soudure (Type 3) du projet sont liées à leur cuve (linked_tank) ; on joint le dernier « Drawing approval » de chacune.
+     */
+    public static function linked_tank_plans($achat_id) {
+        global $wpdb;
+        $tanks = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT d.linked_tank
+             FROM {$wpdb->prefix}achats_articles_cmd_fournisseurs c
+             JOIN {$wpdb->prefix}achats_details_commande d ON d.Id = c.IdCommandeClient
+             WHERE c.IdCommande = %d AND c.IdCommandeClient > 0 AND d.Type IN (2, 3) AND d.linked_tank > 0",
+            $achat_id
+        ));
+        return $tanks ? self::latest_documents_for_articles($tanks, 'drawingApproval') : [];
+    }
+
     /** Nombre de pièces jointes que le brouillon contiendra (pour avertir si aucune). */
     public static function attachments_count($achat_id, $type) {
         $slug = self::TYPES[$type] ?? null;
-        return $slug === null ? 1 : count(self::latest_documents($achat_id, $slug));
+        return $slug === null ? 1 + count(self::linked_tank_plans($achat_id)) : count(self::latest_documents($achat_id, $slug));
     }
 
     const HELP_META   = 'ispag_eml_help_seen';
@@ -154,6 +176,10 @@ class ISPAG_Achat_Mail_Draft {
                 wp_die('The purchase order PDF could not be generated.');
             }
             $attachments[] = ['content' => $pdf['content'], 'name' => $pdf['file_name'], 'mime' => 'application/pdf'];
+            // + plans validés des cuves concernées (commande d'isolation ou de soudure)
+            foreach (self::linked_tank_plans($achat_id) as $f) {
+                $attachments[] = ['content' => file_get_contents($f['path']), 'name' => $f['name'], 'mime' => $f['mime']];
+            }
             $name = preg_replace('/\.pdf$/i', '', $pdf['file_name']) . '.eml';
         } else {
             foreach (self::latest_documents($achat_id, $slug) as $f) {
