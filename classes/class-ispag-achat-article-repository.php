@@ -176,6 +176,17 @@ class ISPAG_Achat_Article_Repository {
                     break;
             }
 
+            // Documents de l'article du projet (documentation, note de calcul…), visibles comme dans le projet
+            $article->documents = [];
+            if (!empty($article->IdCommandeClient) && class_exists('ISPAG_Article_Repository')) {
+                $deal_id = (int) $this->wpdb->get_var($this->wpdb->prepare(
+                    "SELECT hubspot_deal_id FROM {$this->wpdb->prefix}achats_details_commande WHERE Id = %d", (int) $article->IdCommandeClient
+                ));
+                if ($deal_id) {
+                    $article->documents = (new ISPAG_Article_Repository())->get_latest_article_documents($deal_id, (int) $article->IdCommandeClient);
+                }
+            }
+
             $article->total_price         = floatval($article->UnitPriceNet) * intval($article->Qty);
             $article->date_livraison      = !empty($article->TimestampDateLivraison)         ? date('d/m/Y', $article->TimestampDateLivraison)         : '';
             $article->date_livraison_conf = !empty($article->TimestampDateLivraisonConfirme) ? date('d/m/Y', $article->TimestampDateLivraisonConfirme) : '';
