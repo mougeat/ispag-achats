@@ -15,8 +15,13 @@ jQuery(document).ready(function($) {
 
         $.post(ispag_fournisseurs.ajaxurl, data, function(response) {
             if (response.success) {
-                // On recharge l'onglet ou la page pour voir le changement
-                location.reload(); 
+                if ($('#articles').length) {
+                    // Sans recharger la page : le bandeau disparaît et l'onglet Articles est rechargé (ligne ajoutée, bandeau recalculé)
+                    $btn.closest('.ispag-notice').fadeOut(150);
+                    $(document).trigger('ispag:achat-reload-articles');
+                } else {
+                    location.reload();
+                }
             } else {
                 alert(ispagT('Error: ') + response.data);
                 $btn.prop('disabled', false).text(ispagT('Retry'));
