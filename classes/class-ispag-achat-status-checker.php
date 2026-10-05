@@ -146,6 +146,13 @@ class ISPAG_Achat_Status_Checker
                         return 10;
                     }
 
+                    // Offre fournisseur reçue et tous les prix saisis : la demande d'offre est terminée (la règle 10 enchaîne ensuite vers « offre reçue »)
+                    if ((self::search_doc_type_in_achat($achat_id, 'quotation') || self::search_doc_type_in_achat($achat_id, 'supplier_quotation'))
+                        && self::is_article_data_complete($achat_id, 'UnitPrice'))
+                    {
+                        return 10;
+                    }
+
                     self::$logger->log_user_action('achat_status_checker', 'rule_6_to_10_not_triggered', ['achat_id' => $achat_id, 'reason' => 'UnitPrice incomplete'], $user_id);
                     return false;
                 },
@@ -491,6 +498,26 @@ class ISPAG_Achat_Status_Checker
 
             if ($status_updated) continue;
 
+            // Règles de l'offre et de la commande (6, 10, 18, 2) : celle du statut COURANT renvoie le statut vers lequel avancer
+            if (in_array($current_status, [6, 10, 18, 2], true) && isset($registry[$current_status]))
+            {
+                $target = $registry[$current_status]['resolver']($achat->Id);
+                if (is_int($target) && $target !== $current_status && isset($etats_db[$target]) && (int)$etats_db[$target]->ordre > $current_ordre)
+                {
+                    self::$logger->log_user_action('achat_status_checker', 'offer_progress_allowed', ['achat_id' => $achat->Id, 'from' => $current_status, 'to' => $target], $user_id);
+                    self::update_auto_status($achat->Id, $etats_db[$target]->ClassCss, $target);
+                    // Étapes suivantes déjà remplies (ex. offre reçue + prix complets) : on enchaîne tout de suite
+                    static $chain_depth = 0;
+                    if ($chain_depth < 6)
+                    {
+                        $chain_depth++;
+                        self::auto_status_checker((int) $achat->Id);
+                        $chain_depth--;
+                    }
+                    continue;
+                }
+            }
+
             $ordered_etats = array_values($etats_db);
             self::$logger->log_user_action('achat_status_checker', 'checking_sequential_rules', ['achat_id' => $achat->Id], $user_id);
 
@@ -510,7 +537,7 @@ class ISPAG_Achat_Status_Checker
                     // Statut suivant sans règle automatique (étape manuelle) : on passe au suivant
                     if (!isset($registry[$next_id]) || (int)$ordered_etats[$j]->is_automatic === 0) continue;
 
-                    // C'est la règle du statut SUIVANT qui dit si la commande peut y avancer (et non celle du statut courant)
+                    // C'est la règle du statut SUIVANT qui dit si la commande peut y avancer
                     $resolved = $registry[$next_id]['resolver']($achat->Id);
 
                     if ($resolved !== false && $resolved === $next_id && $next_ordre > $current_ordre)
