@@ -21,6 +21,22 @@ if (!function_exists('ispag_achats_js_strings')) {
         'The email draft could not be created. Please try again.' => __('The email draft could not be created. Please try again.', 'creation-reservoir'),
         '❌ An unknown network or server error occurred. Please check logs.' => __('❌ An unknown network or server error occurred. Please check logs.', 'creation-reservoir'),
         '❌ Network error' => __('❌ Network error', 'creation-reservoir'),
+        'Compare the quote with the order' => __('Compare the quote with the order', 'creation-reservoir'),
+        'No tank was found in the document.' => __('No tank was found in the document.', 'creation-reservoir'),
+        'Close' => __('Close', 'creation-reservoir'),
+        'This order has no tank to compare with.' => __('This order has no tank to compare with.', 'creation-reservoir'),
+        'Tank' => __('Tank', 'creation-reservoir'),
+        'Tank in the quote' => __('Tank in the quote', 'creation-reservoir'),
+        'Tank of the order' => __('Tank of the order', 'creation-reservoir'),
+        'Field' => __('Field', 'creation-reservoir'),
+        'In the order' => __('In the order', 'creation-reservoir'),
+        'In the quote' => __('In the quote', 'creation-reservoir'),
+        'Net unit price' => __('Net unit price', 'creation-reservoir'),
+        'Cancel' => __('Cancel', 'creation-reservoir'),
+        'Import the selection' => __('Import the selection', 'creation-reservoir'),
+        'Select at least one line to import.' => __('Select at least one line to import.', 'creation-reservoir'),
+        'Saving…' => __('Saving…', 'creation-reservoir'),
+        'Network error.' => __('Network error.', 'creation-reservoir'),
         ];
     }
 

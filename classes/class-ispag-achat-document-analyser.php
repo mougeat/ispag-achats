@@ -133,6 +133,12 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
             $user_id
         );
 
+        // L'analyse Mistral tourne en tâche de fond : on renvoie l'identifiant de tâche, la page interroge ensuite l'état
+        // (check_analysis_status) puis envoie le résultat à la comparaison (ISPAG_Achat_Quote_Compare).
+        if (!empty($raw_response['async']) && !empty($raw_response['task_id'])) {
+            wp_send_json_success($raw_response);
+        }
+
         $normalized_tanks = self::normalize_gemini_data($raw_response);
         $existing_datas = self::get_existing_data($purchaseId);
         $datas_to_confirm = self::compare_data($normalized_tanks, $existing_datas);
@@ -352,6 +358,10 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
         }
 
         $prompt = "Voici un fichier à analyser :\n";
+        if ($analyseType === 'purchase') {
+            // Offre fournisseur : on demande aussi le prix net unitaire de chaque cuve (utilisé par la fenêtre de comparaison)
+            $prompt .= "Pour chaque réservoir, ajoute le champ \"net_price\" : prix net unitaire (nombre, hors TVA, après remise), et \"qty\" : la quantité.\n";
+        }
         $response_data = ISPAG_Mistral::send_to_mistral(null, $prompt, $analyseType, $file_url);
 
         if (empty($response_data)) {
