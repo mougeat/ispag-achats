@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
  * Brouillon d'e-mail (.eml) de la commande fournisseur, avec le bon de commande PDF en pièce jointe.
  *
  * Pièces jointes selon le type de message :
- *   - send_purchase_order : le bon de commande PDF (+ plans validés des cuves liées, pour une commande d'isolation ou de soudure) ;
+ *   - send_purchase_order : le bon de commande PDF (+ plans validés des cuves liées et bulletin de livraison, pour une commande d'isolation ou de soudure) ;
  *   - drawing_modified    : le dernier fichier « Drawing modification » de chaque article de la commande ;
  *   - drawing_validated   : le dernier fichier « Drawing approval » (validation) de chaque article de la commande.
  *
@@ -81,10 +81,78 @@ class ISPAG_Achat_Mail_Draft {
         return $tanks ? self::latest_documents_for_articles($tanks, 'drawingApproval') : [];
     }
 
+    /** La commande contient-elle des lignes d'isolation (Type 2) ou de soudure (Type 3) du projet ? */
+    public static function is_site_work_order($achat_id) {
+        global $wpdb;
+        return (bool) $wpdb->get_var($wpdb->prepare(
+            "SELECT 1 FROM {$wpdb->prefix}achats_articles_cmd_fournisseurs c
+             JOIN {$wpdb->prefix}achats_details_commande d ON d.Id = c.IdCommandeClient
+             WHERE c.IdCommande = %d AND c.IdCommandeClient > 0 AND d.Type IN (2, 3) LIMIT 1",
+            $achat_id
+        ));
+    }
+
+    /**
+     * Bulletin de livraison PDF (toutes les lignes de la commande, adresse de la commande, QR code / lien de signature),
+     * même contenu que le bouton « Bulletin de livraison » de la commande. @return array{content:string,name:string}|null
+     */
+    public static function delivery_note_attachment($achat_id) {
+        global $wpdb;
+        $needed = ['ISPAG_Delivery_Receipt', 'ISPAG_Delivery_Note_PDF'];
+        foreach ($needed as $c) { if (!class_exists($c)) return null; }
+        if (!class_exists('ISPAG_PDF_Generator')) {
+            $f = WP_PLUGIN_DIR . '/ispag-project-manager/classes/class-ispag-pdf-generator.php';
+            if (file_exists($f)) require_once $f;
+        }
+        $achat = apply_filters('ispag_get_achat_by_id', null, $achat_id);
+        if (empty($achat)) return null;
+        $infos = (new ISPAG_Achat_Details_Repository())->get_infos_livraison($achat_id);
+
+        $lines = $wpdb->get_results($wpdb->prepare(
+            "SELECT Id FROM {$wpdb->prefix}achats_articles_cmd_fournisseurs WHERE IdCommande = %d ORDER BY Id", $achat_id
+        ));
+        $articles = []; $line_ids = []; $project_ids = [];
+        foreach ($lines as $row) {
+            $line = apply_filters('ispag_get_purchse_article_by_id', null, (int) $row->Id);
+            if (empty($line)) continue;
+            $line_ids[] = (int) $line->Id;
+            if (!empty($line->IdCommandeClient)) $project_ids[] = (int) $line->IdCommandeClient;
+            $articles[] = ['ref' => $line->serial_no ?: $line->Id, 'description' => $line->RefSurMesure, 'qty' => $line->Qty];
+        }
+        if (!$articles) return null;
+
+        $title = __('Delivery note', 'creation-reservoir');
+        $project_header = [
+            __('Project', 'creation-reservoir')         => $achat->RefCommande ?? '',
+            __('Project number', 'creation-reservoir')  => $achat->NrCommande ?? '',
+            __('Delivery date', 'creation-reservoir')   => date('d.m.Y'),
+        ];
+        $table_header = [
+            ['label' => __('Reference', 'creation-reservoir'), 'key' => 'ref', 'width' => 40],
+            ['label' => __('Description', 'creation-reservoir'), 'key' => 'description', 'width' => 110],
+            ['label' => __('Quantity', 'creation-reservoir'), 'key' => 'qty', 'width' => 30, 'align' => 'C'],
+        ];
+        $payload = [
+            'title'          => $title,
+            'company'        => $achat->nom_entreprise ?? '',
+            'project_header' => $project_header,
+            'infos'          => array_intersect_key((array) $infos, array_flip(['AdresseDeLivraison', 'DeliveryAdresse2', 'DeliveryAdresse3', 'NIP', 'City', 'PersonneContact', 'num_tel_contact'])),
+            'table_header'   => $table_header,
+            'articles'       => $articles,
+            'article_ids'    => array_values(array_unique($project_ids)),
+            'purchase_line_ids' => $line_ids,
+        ];
+        $qr_url = ISPAG_Delivery_Receipt::create($payload, (int) ($achat->hubspot_deal_id ?? 0), (int) $achat_id);
+        $pdf = new ISPAG_Delivery_Note_PDF();
+        $pdf->generate($project_header, $achat, $infos, $table_header, $articles, $title, ['qr_url' => $qr_url]);
+        $name = sanitize_file_name(sanitize_title($title) . '-' . ($achat->NrCommande ?? $achat_id)) . '.pdf';
+        return ['content' => $pdf->Output('S'), 'name' => $name];
+    }
+
     /** Nombre de pièces jointes que le brouillon contiendra (pour avertir si aucune). */
     public static function attachments_count($achat_id, $type) {
         $slug = self::TYPES[$type] ?? null;
-        return $slug === null ? 1 + count(self::linked_tank_plans($achat_id)) : count(self::latest_documents($achat_id, $slug));
+        return $slug === null ? 1 + count(self::linked_tank_plans($achat_id)) + (self::is_site_work_order($achat_id) ? 1 : 0) : count(self::latest_documents($achat_id, $slug));
     }
 
     const HELP_META   = 'ispag_eml_help_seen';
@@ -179,6 +247,10 @@ class ISPAG_Achat_Mail_Draft {
             // + plans validés des cuves concernées (commande d'isolation ou de soudure)
             foreach (self::linked_tank_plans($achat_id) as $f) {
                 $attachments[] = ['content' => file_get_contents($f['path']), 'name' => $f['name'], 'mime' => $f['mime']];
+            }
+            // + bulletin de livraison (isolation / soudure : à faire signer sur place via le QR code)
+            if (self::is_site_work_order($achat_id) && ($dn = self::delivery_note_attachment($achat_id))) {
+                $attachments[] = ['content' => $dn['content'], 'name' => $dn['name'], 'mime' => 'application/pdf'];
             }
             $name = preg_replace('/\.pdf$/i', '', $pdf['file_name']) . '.eml';
         } else {
