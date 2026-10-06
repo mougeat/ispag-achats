@@ -145,6 +145,7 @@ class ISPAG_Achat_Mail_Templates {
             '{PURCHASE_URL}'     => __('Link to the order', 'creation-reservoir'),
             '{USER_NAME}'        => __('Sender name', 'creation-reservoir'),
             '{COMPANY_NAME}'     => __('Your company name', 'creation-reservoir'),
+            '{WORK_ORDER_NOTICE}' => __('Work order notice (insulation / welding orders: scan the QR code or return the signed work order)', 'creation-reservoir'),
         ];
     }
 

@@ -117,71 +117,79 @@ msgstr "Commande d'achat"
 msgid "Print purchase order"
 msgstr "Imprimer la commande d'achat"
 
-#: classes/class-ispag-achat-mail-draft.php:124
+#: classes/class-ispag-achat-mail-draft.php:126
 msgid "Delivery note"
 msgstr "Bulletin de livraison"
 
 #: classes/class-ispag-achat-mail-draft.php:126
+msgid "Work order"
+msgstr "Bon de travail"
+
+#: classes/class-ispag-achat-mail-draft.php:128
 msgid "Project"
 msgstr "Projet"
 
-#: classes/class-ispag-achat-mail-draft.php:127
+#: classes/class-ispag-achat-mail-draft.php:129
 msgid "Project number"
 msgstr "Numéro de projet"
 
-#: classes/class-ispag-achat-mail-draft.php:128
+#: classes/class-ispag-achat-mail-draft.php:130
 msgid "Delivery date"
 msgstr "Date de livraison"
 
-#: classes/class-ispag-achat-mail-draft.php:131
+#: classes/class-ispag-achat-mail-draft.php:133
 msgid "Reference"
 msgstr "Référence"
 
-#: classes/class-ispag-achat-mail-draft.php:132
+#: classes/class-ispag-achat-mail-draft.php:134
 msgid "Description"
 msgstr "Description"
 
-#: classes/class-ispag-achat-mail-draft.php:133
+#: classes/class-ispag-achat-mail-draft.php:135
 msgid "Quantity"
 msgstr "Quantité"
 
-#: classes/class-ispag-achat-mail-draft.php:188
+#: classes/class-ispag-achat-mail-draft.php:161
+msgid "Please find the work order attached. Once the work is finished, please scan the QR code on the work order and validate the work carried out, or send us the signed work order back."
+msgstr "Veuillez trouver ci-joint le bon de travail. Une fois les travaux terminés, merci de scanner le QR code figurant sur le bon de travail et de valider les travaux effectués, ou de nous retourner le bon de travail signé."
+
+#: classes/class-ispag-achat-mail-draft.php:216
 msgid "Your email is ready"
 msgstr "Votre e-mail est prêt"
 
-#: classes/class-ispag-achat-mail-draft.php:189
+#: classes/class-ispag-achat-mail-draft.php:217
 msgid "A small file ending in “.eml” has just been downloaded. Open it: your email appears in Outlook with the recipient, the text and the attachments already filled in."
 msgstr "Un petit fichier se terminant par « .eml » vient d'être téléchargé. Ouvrez-le : votre e-mail s'affiche dans Outlook avec le destinataire, le texte et les pièces jointes déjà remplis."
 
-#: classes/class-ispag-achat-mail-draft.php:190
+#: classes/class-ispag-achat-mail-draft.php:218
 msgid "Want it to open by itself next time?"
 msgstr "Vous voulez qu'il s'ouvre tout seul la prochaine fois ?"
 
-#: classes/class-ispag-achat-mail-draft.php:191
+#: classes/class-ispag-achat-mail-draft.php:219
 msgid "Do this once:"
 msgstr "À faire une seule fois :"
 
-#: classes/class-ispag-achat-mail-draft.php:193
+#: classes/class-ispag-achat-mail-draft.php:221
 msgid "In your browser, find the downloaded file (download bar, or the download arrow at the top right)."
 msgstr "Dans votre navigateur, repérez le fichier téléchargé (barre de téléchargement ou flèche de téléchargement en haut à droite)."
 
-#: classes/class-ispag-achat-mail-draft.php:194
+#: classes/class-ispag-achat-mail-draft.php:222
 msgid "Click the “…” (or “⋮”) next to the file."
 msgstr "Cliquez sur « … » (ou « ⋮ ») à côté du fichier."
 
-#: classes/class-ispag-achat-mail-draft.php:195
+#: classes/class-ispag-achat-mail-draft.php:223
 msgid "Choose “Always open files of this type”."
 msgstr "Choisissez « Toujours ouvrir les fichiers de ce type »."
 
-#: classes/class-ispag-achat-mail-draft.php:197
+#: classes/class-ispag-achat-mail-draft.php:225
 msgid "If the file does not open in Outlook: right-click it, choose “Open with”, select Outlook and tick “Always use this app”."
 msgstr "Si le fichier ne s'ouvre pas dans Outlook : clic droit dessus, « Ouvrir avec », sélectionnez Outlook et cochez « Toujours utiliser cette application »."
 
-#: classes/class-ispag-achat-mail-draft.php:198
+#: classes/class-ispag-achat-mail-draft.php:226
 msgid "You can read this again at any time with the “i” button next to the send button."
 msgstr "Vous pouvez relire ceci à tout moment avec le bouton « i » à côté du bouton d'envoi."
 
-#: classes/class-ispag-achat-mail-draft.php:200
+#: classes/class-ispag-achat-mail-draft.php:228
 msgid "Got it"
 msgstr "Compris"
 
@@ -309,23 +317,27 @@ msgstr "Nom de l'expéditeur"
 msgid "Your company name"
 msgstr "Nom de votre entreprise"
 
-#: classes/class-ispag-achat-mail-templates.php:203
+#: classes/class-ispag-achat-mail-templates.php:148
+msgid "Work order notice (insulation / welding orders: scan the QR code or return the signed work order)"
+msgstr "Texte bon de travail (commandes isolation / soudure : scanner le QR code ou retourner le bon signé)"
+
+#: classes/class-ispag-achat-mail-templates.php:204
 msgid "Invalid type or language"
 msgstr "Type ou langue invalide"
 
-#: classes/class-ispag-achat-mail-templates.php:206
+#: classes/class-ispag-achat-mail-templates.php:207
 msgid "Subject and message are required"
 msgstr "L'objet et le message sont obligatoires"
 
-#: classes/class-ispag-achat-mail-templates.php:215
+#: classes/class-ispag-achat-mail-templates.php:216
 msgid "A template already exists for this type and language"
 msgstr "Un modèle existe déjà pour ce type et cette langue"
 
-#: classes/class-ispag-achat-mail-templates.php:249
+#: classes/class-ispag-achat-mail-templates.php:250
 msgid "Email templates"
 msgstr "Modèles d'e-mail"
 
-#: classes/class-ispag-achat-mail-templates.php:266
+#: classes/class-ispag-achat-mail-templates.php:267
 msgid "Delete this template?"
 msgstr "Supprimer ce modèle ?"
 
@@ -333,27 +345,27 @@ msgstr "Supprimer ce modèle ?"
 msgid "Supplier orders"
 msgstr "Commandes fournisseurs"
 
-#: classes/class-ispag-achat-mail-templates.php:301
+#: classes/class-ispag-achat-mail-templates.php:302
 msgid "New template"
 msgstr "Nouveau modèle"
 
-#: classes/class-ispag-achat-mail-templates.php:303
+#: classes/class-ispag-achat-mail-templates.php:304
 msgid "One template per message type and language. If a supplier’s language has no template, the English one is used."
 msgstr "Un modèle par type de message et par langue. Si la langue d'un fournisseur n'a pas de modèle, le modèle anglais est utilisé."
 
-#: classes/class-ispag-achat-mail-templates.php:306
+#: classes/class-ispag-achat-mail-templates.php:307
 msgid "Search"
 msgstr "Rechercher"
 
-#: classes/class-ispag-achat-mail-templates.php:306
+#: classes/class-ispag-achat-mail-templates.php:307
 msgid "Search a template (type, language, subject, text)…"
 msgstr "Rechercher un modèle (type, langue, objet, texte)…"
 
-#: classes/class-ispag-achat-mail-templates.php:307
+#: classes/class-ispag-achat-mail-templates.php:308
 msgid "Family"
 msgstr "Famille"
 
-#: classes/class-ispag-achat-mail-templates.php:308
+#: classes/class-ispag-achat-mail-templates.php:309
 msgid "All families"
 msgstr "Toutes les familles"
 
@@ -361,35 +373,35 @@ msgstr "Toutes les familles"
 msgid "Project follow-up (customer)"
 msgstr "Suivi de projet (client)"
 
-#: classes/class-ispag-achat-mail-templates.php:328
+#: classes/class-ispag-achat-mail-templates.php:329
 msgid "Message type"
 msgstr "Type de message"
 
-#: classes/class-ispag-achat-mail-templates.php:334
+#: classes/class-ispag-achat-mail-templates.php:335
 msgid "Language"
 msgstr "Langue"
 
-#: classes/class-ispag-achat-mail-templates.php:341
+#: classes/class-ispag-achat-mail-templates.php:342
 msgid "Subject"
 msgstr "Objet"
 
-#: classes/class-ispag-achat-mail-templates.php:343
+#: classes/class-ispag-achat-mail-templates.php:344
 msgid "Message"
 msgstr "Message"
 
-#: classes/class-ispag-achat-mail-templates.php:347
+#: classes/class-ispag-achat-mail-templates.php:348
 msgid "Fields replaced when the email is sent — click to insert:"
 msgstr "Champs remplacés à l'envoi de l'e-mail — cliquez pour insérer :"
 
-#: classes/class-ispag-achat-mail-templates.php:358
+#: classes/class-ispag-achat-mail-templates.php:359
 msgid "Preview (sample data)"
 msgstr "Aperçu (données d'exemple)"
 
-#: classes/class-ispag-achat-mail-templates.php:365
+#: classes/class-ispag-achat-mail-templates.php:366
 msgid "Preview"
 msgstr "Aperçu"
 
-#: classes/class-ispag-achat-mail-templates.php:382
+#: classes/class-ispag-achat-mail-templates.php:383
 msgid "No template yet."
 msgstr "Aucun modèle pour l'instant."
 
@@ -397,7 +409,7 @@ msgstr "Aucun modèle pour l'instant."
 msgid "Request for quotation (RFQ)"
 msgstr "Demande d'offre (RFQ)"
 
-#: classes/class-ispag-achat-mail-templates.php:394
+#: classes/class-ispag-achat-mail-templates.php:395
 msgid "Duplicate (e.g. to translate)"
 msgstr "Dupliquer (par ex. pour traduire)"
 

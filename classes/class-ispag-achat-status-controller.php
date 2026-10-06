@@ -283,6 +283,7 @@ class ISPAG_Achat_Status_Controller {
             'achat_id' => $achat_id,
             'subject' => $subject,
             'message' => $message,
+            'lang' => $lang,
             'email_contact' => $email_contact,
             'email_copy' => ' ' // à adapter
         ];
@@ -366,6 +367,8 @@ class ISPAG_Achat_Status_Controller {
             '{PURCHASE_URL}'     => (string) $achat->purchase_url,
             '{USER_NAME}'        => $sender->display_name,
             '{COMPANY_NAME}'     => (string) get_option('wpcb_companyName'),
+            // Commande d'isolation / de soudure : demande de validation du bon de travail (QR code ou retour signé) ; vide sinon
+            '{WORK_ORDER_NOTICE}' => (class_exists('ISPAG_Achat_Mail_Draft') && ISPAG_Achat_Mail_Draft::is_site_work_order($achat_id)) ? ISPAG_Achat_Mail_Draft::work_order_notice('') : '',
 
             // Anciennes balises (modèles existants)
             'PRENOM'   => $user->first_name,
