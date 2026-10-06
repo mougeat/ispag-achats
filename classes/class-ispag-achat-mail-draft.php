@@ -121,7 +121,9 @@ class ISPAG_Achat_Mail_Draft {
         }
         if (!$articles) return null;
 
-        $title = __('Delivery note', 'creation-reservoir');
+        // Isolation / soudure sur site : le document remis au sous-traitant est un « bon de travail » (validé à la fin des travaux)
+        $work_order = self::is_site_work_order($achat_id);
+        $title = $work_order ? __('Work order', 'creation-reservoir') : __('Delivery note', 'creation-reservoir');
         $project_header = [
             __('Project', 'creation-reservoir')         => $achat->RefCommande ?? '',
             __('Project number', 'creation-reservoir')  => $achat->NrCommande ?? '',
@@ -133,6 +135,7 @@ class ISPAG_Achat_Mail_Draft {
             ['label' => __('Quantity', 'creation-reservoir'), 'key' => 'qty', 'width' => 30, 'align' => 'C'],
         ];
         $payload = [
+            'kind'           => $work_order ? 'work_order' : 'delivery_note',
             'title'          => $title,
             'company'        => $achat->nom_entreprise ?? '',
             'project_header' => $project_header,
@@ -144,9 +147,34 @@ class ISPAG_Achat_Mail_Draft {
         ];
         $qr_url = ISPAG_Delivery_Receipt::create($payload, (int) ($achat->hubspot_deal_id ?? 0), (int) $achat_id);
         $pdf = new ISPAG_Delivery_Note_PDF();
-        $pdf->generate($project_header, $achat, $infos, $table_header, $articles, $title, ['qr_url' => $qr_url]);
+        $pdf->generate($project_header, $achat, $infos, $table_header, $articles, $title, ['qr_url' => $qr_url, 'work_order' => $work_order]);
         $name = sanitize_file_name(sanitize_title($title) . '-' . ($achat->NrCommande ?? $achat_id)) . '.pdf';
         return ['content' => $pdf->Output('S'), 'name' => $name];
+    }
+
+    /**
+     * Paragraphe ajouté au message d'une commande de travaux sur site : joindre le bon de travail, demander de le valider à la fin
+     * (QR code) ou de le renvoyer signé. Écrit dans la langue du fournisseur ; le modèle de message peut le placer lui-même avec {WORK_ORDER_NOTICE} (remplacé à la fabrication du message).
+     */
+    public static function work_order_notice($lang = '') {
+        $switched = $lang !== '' ? (bool) switch_to_locale($lang) : false;
+        $text = __('Please find the work order attached. Once the work is finished, please scan the QR code on the work order and validate the work carried out, or send us the signed work order back.', 'creation-reservoir');
+        if ($switched) restore_previous_locale();
+        return $text;
+    }
+
+    /** Insère le paragraphe avant le dernier bloc du message (formule de politesse) ; à défaut à la fin. Sans effet s'il y figure déjà. */
+    public static function add_work_order_notice($message, $notice) {
+        $message = (string) $message;
+        if ($notice === '' || strpos($message, '{WORK_ORDER_NOTICE}') !== false) return str_replace('{WORK_ORDER_NOTICE}', $notice, $message);
+        if (strpos($message, $notice) !== false) return $message;
+        $norm   = str_replace(["\r\n", "\r"], "\n", rtrim($message));
+        $blocks = preg_split("/\n{2,}/", $norm);
+        if (count($blocks) >= 3) {
+            array_splice($blocks, count($blocks) - 1, 0, $notice);
+            return implode("\n\n", $blocks);
+        }
+        return $norm . "\n\n" . $notice;
     }
 
     /** Nombre de pièces jointes que le brouillon contiendra (pour avertir si aucune). */
@@ -249,8 +277,11 @@ class ISPAG_Achat_Mail_Draft {
                 $attachments[] = ['content' => file_get_contents($f['path']), 'name' => $f['name'], 'mime' => $f['mime']];
             }
             // + bulletin de livraison (isolation / soudure : à faire signer sur place via le QR code)
-            if (self::is_site_work_order($achat_id) && ($dn = self::delivery_note_attachment($achat_id))) {
-                $attachments[] = ['content' => $dn['content'], 'name' => $dn['name'], 'mime' => 'application/pdf'];
+            if (self::is_site_work_order($achat_id)) {
+                if ($dn = self::delivery_note_attachment($achat_id)) {
+                    $attachments[] = ['content' => $dn['content'], 'name' => $dn['name'], 'mime' => 'application/pdf'];
+                    $mail['message'] = self::add_work_order_notice($mail['message'], self::work_order_notice($mail['lang'] ?? ''));
+                }
             }
             $name = preg_replace('/\.pdf$/i', '', $pdf['file_name']) . '.eml';
         } else {
