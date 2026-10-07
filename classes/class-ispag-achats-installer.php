@@ -17,7 +17,7 @@ defined('ABSPATH') || exit;
  */
 class ISPAG_Achats_Installer {
 
-    const DB_VERSION = '1.10.0';
+    const DB_VERSION = '1.11.0';
     const OPTION     = 'ispag_achats_db_version';
 
     /** Droits utilisés par ce plugin (voir grant_default_caps()). */
@@ -48,6 +48,7 @@ class ISPAG_Achats_Installer {
                 error_log('[ISPAG Achats] Création de la table ' . $wpdb->prefix . $name . ' impossible : ' . $wpdb->last_error);
             }
         }
+        self::migrate();
         if (!self::seed()) {
             $ok = false;
         }
@@ -67,6 +68,15 @@ class ISPAG_Achats_Installer {
      * Valeurs initiales des tables de référence (install/seeds.php : ['table_sans_prefixe' => [ [colonne => valeur, …], … ]]).
      * Une table n'est remplie QUE si elle est vide : sur un site existant (production), rien n'est jamais ajouté ni modifié.
      */
+    /** Colonnes ajoutées après la création d'une table (CREATE TABLE IF NOT EXISTS ne touche pas une table existante). */
+    private static function migrate() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'achats_prepayments';
+        if ($wpdb->get_var("SHOW TABLES LIKE '{$table}'") === $table && !$wpdb->get_var("SHOW COLUMNS FROM `{$table}` LIKE 'DoxysDate'")) {
+            $wpdb->query("ALTER TABLE `{$table}` ADD COLUMN `DoxysDate` date DEFAULT NULL AFTER `Amount`");
+        }
+    }
+
     private static function seed() {
         global $wpdb;
         $dir  = dirname(__DIR__) . '/install';

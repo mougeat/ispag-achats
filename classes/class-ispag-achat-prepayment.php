@@ -4,6 +4,7 @@ defined('ABSPATH') || exit;
 /**
  * Paiement avant livraison (un seul paiement par commande d'achat).
  *
+ *  - Dates suivies : facture validée dans Doxys (logiciel de traitement des factures), paiement souhaité, paiement reçu.
  *  - Un fournisseur est marqué « paiement avant livraison » dans l'onglet Fournisseur de sa fiche (meta ispag_supplier_prepay).
  *  - Pour ses commandes, une carte « Paiement » apparaît sur la fiche de l'achat : montant (par défaut le total de la commande, modifiable),
  *    date de paiement souhaitée (demandée par ISPAG) et date de paiement réelle (saisie à réception). Payé = la marchandise part le lendemain.
@@ -96,7 +97,7 @@ class ISPAG_Achat_Prepayment {
             $v = str_replace([" ", "'", ','], ['', '', '.'], $raw);
             return is_numeric($v) && (float) $v >= 0 ? round((float) $v, 2) : false;
         }
-        if ($field === 'DesiredDate' || $field === 'PaidDate') {
+        if ($field === 'DoxysDate' || $field === 'DesiredDate' || $field === 'PaidDate') {
             if ($raw === '') return null;
             return self::valid_date($raw) ? $raw : false;
         }
@@ -192,7 +193,7 @@ class ISPAG_Achat_Prepayment {
         $supplier = $order_id ? (int) $wpdb->get_var($wpdb->prepare("SELECT IdFournisseur FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d", $order_id)) : 0;
         if (!$supplier) wp_send_json_error(['message' => __('Order not found.', 'creation-reservoir')]);
         if (!self::supplier_requires($supplier)) wp_send_json_error(['message' => __('This supplier does not require payment before delivery.', 'creation-reservoir')]);
-        if (!in_array($field, ['Amount', 'DesiredDate', 'PaidDate'], true)) wp_send_json_error(['message' => __('Invalid data', 'creation-reservoir')]);
+        if (!in_array($field, ['Amount', 'DoxysDate', 'DesiredDate', 'PaidDate'], true)) wp_send_json_error(['message' => __('Invalid data', 'creation-reservoir')]);
 
         $res = self::save($order_id, $field, $value, get_current_user_id());
         if (is_wp_error($res)) wp_send_json_error(['message' => $res->get_error_message()]);
@@ -221,6 +222,8 @@ class ISPAG_Achat_Prepayment {
                 <?php if (!$row || $row->Amount === null): ?>
                     <small style="color:#6b7280;margin-top:-.3rem;"><?php esc_html_e('Pre-filled with the order total: enter the amount of the proforma invoice when you receive it.', 'creation-reservoir'); ?></small>
                 <?php endif; ?>
+                <label><?php esc_html_e('Invoice validated in Doxys', 'creation-reservoir'); ?><br>
+                    <input type="date" data-prepay="DoxysDate" value="<?php echo esc_attr($row->DoxysDate ?? ''); ?>" <?php disabled(!$can); ?> style="width:100%;"></label>
                 <label><?php esc_html_e('Requested payment date', 'creation-reservoir'); ?><br>
                     <input type="date" data-prepay="DesiredDate" value="<?php echo esc_attr($row->DesiredDate ?? ''); ?>" <?php disabled(!$can); ?> style="width:100%;"></label>
                 <label><?php esc_html_e('Payment date received', 'creation-reservoir'); ?><br>
@@ -273,7 +276,7 @@ class ISPAG_Achat_Prepayment {
         global $wpdb;
         $p = $wpdb->prefix;
         $sql = "SELECT a.Id, a.RefCommande, a.IdFournisseur, a.created_by, a.EtatCommande, f.company_name AS supplier,
-                    pp.Amount, pp.DesiredDate, pp.PaidDate,
+                    pp.Amount, pp.DoxysDate, pp.DesiredDate, pp.PaidDate,
                     (SELECT COALESCE(NULLIF(MAX(l.TimestampDateLivraisonConfirme), 0), NULLIF(MAX(l.TimestampDateLivraison), 0), 0)
                        FROM {$p}achats_articles_cmd_fournisseurs l WHERE l.IdCommande = a.Id) AS delivery
                 FROM {$p}achats_commande_liste_fournisseurs a
@@ -324,6 +327,7 @@ class ISPAG_Achat_Prepayment {
             echo '<table class="widefat striped" id="ispag-prepay-table" data-nonce="' . esc_attr($nonce) . '"><thead><tr>'
                 . '<th>' . esc_html__('Project', 'creation-reservoir') . '</th><th>' . esc_html__('Supplier', 'creation-reservoir') . '</th>'
                 . '<th>' . esc_html__('Delivery date', 'creation-reservoir') . '</th><th>' . esc_html__('Amount', 'creation-reservoir') . ' (' . esc_html(self::currency()) . ')</th>'
+                . '<th>' . esc_html__('Invoice validated in Doxys', 'creation-reservoir') . '</th>'
                 . '<th>' . esc_html__('Requested payment date', 'creation-reservoir') . '</th><th>' . esc_html__('Payment date received', 'creation-reservoir') . '</th>'
                 . '<th>' . esc_html__('Status', 'creation-reservoir') . '</th></tr></thead><tbody>';
             foreach ($items as $r) {
@@ -333,12 +337,13 @@ class ISPAG_Achat_Prepayment {
                     . '<td>' . esc_html($r->supplier) . '</td>'
                     . '<td>' . esc_html($r->delivery ? date_i18n('d.m.Y', (int) $r->delivery) : '—') . '</td>'
                     . '<td><input type="number" step="0.01" min="0" data-prepay="Amount" value="' . esc_attr(number_format($r->amount_value, 2, '.', '')) . '" style="width:120px"' . ($can ? '' : ' disabled') . '></td>'
-                    . '<td><input type="date" data-prepay="DesiredDate" value="' . esc_attr($r->DesiredDate ?? '') . '"' . ($can ? '' : ' disabled') . '></td>'
+                    . '<td><input type="date" data-prepay="DoxysDate" value="' . esc_attr($r->DoxysDate ?? '') . '"' . ($can ? '' : ' disabled') . '></td>'
+                    . '<td><input type="date" data-prepay="DesiredDate" value=""' . esc_attr($r->DesiredDate ?? '') . '"' . ($can ? '' : ' disabled') . '></td>'
                     . '<td><input type="date" data-prepay="PaidDate" value="' . esc_attr($r->PaidDate ?? '') . '"' . ($can ? '' : ' disabled') . '></td>'
                     . '<td><span class="ispag-prepay-badge" style="display:inline-block;padding:1px 8px;border-radius:999px;color:#fff;background:' . esc_attr(self::status_color($r->status)) . '">' . esc_html(self::status_label($r->status)) . '</span>'
                     . ' <small class="ispag-prepay-ship" style="color:#16a34a">' . esc_html(self::ship_note($r->PaidDate)) . '</small></td></tr>';
             }
-            echo '</tbody><tfoot><tr><th colspan="3">' . esc_html__('Total shown', 'creation-reservoir') . '</th><th colspan="4"><strong id="ispag-prepay-total">' . esc_html(self::money($total)) . '</strong></th></tr></tfoot></table>';
+            echo '</tbody><tfoot><tr><th colspan="3">' . esc_html__('Total shown', 'creation-reservoir') . '</th><th colspan="5"><strong id="ispag-prepay-total">' . esc_html(self::money($total)) . '</strong></th></tr></tfoot></table>';
             echo '<p><a class="button" href="' . esc_url(wp_nonce_url(admin_url('admin-post.php?action=ispag_prepay_csv&pstatus=' . $filter), 'ispag_prepay_csv')) . '">' . esc_html__('Export CSV', 'creation-reservoir') . '</a></p>';
             if ($can) self::print_table_script();
         }
@@ -390,12 +395,12 @@ class ISPAG_Achat_Prepayment {
         header('Content-Disposition: attachment; filename="supplier-payments-' . $today . '.csv"');
         $out = fopen('php://output', 'w');
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, ['Project', 'Supplier', 'Delivery date', 'Amount', 'Requested payment date', 'Payment date received', 'Status'], ';');
+        fputcsv($out, ['Project', 'Supplier', 'Delivery date', 'Amount', 'Invoice validated in Doxys', 'Requested payment date', 'Payment date received', 'Status'], ';');
         foreach (self::rows() as $r) {
             $status = self::status($r->DesiredDate, $r->PaidDate, $today);
             if (!($filter === 'all' || ($filter === 'open' ? $status !== 'paid' : $status === $filter))) continue;
             $amount = $r->Amount !== null ? (float) $r->Amount : self::order_total((int) $r->Id);
-            fputcsv($out, [stripslashes($r->RefCommande), $r->supplier, $r->delivery ? date('Y-m-d', (int) $r->delivery) : '', number_format($amount, 2, '.', ''), $r->DesiredDate, $r->PaidDate, self::status_label($status)], ';');
+            fputcsv($out, [stripslashes($r->RefCommande), $r->supplier, $r->delivery ? date('Y-m-d', (int) $r->delivery) : '', number_format($amount, 2, '.', ''), $r->DoxysDate, $r->DesiredDate, $r->PaidDate, self::status_label($status)], ';');
         }
         fclose($out);
         exit;

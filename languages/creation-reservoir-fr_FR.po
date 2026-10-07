@@ -523,155 +523,159 @@ msgstr "Rien à appliquer : renseignez au moins une date"
 msgid "Bulk update applied successfully"
 msgstr "Mise à jour groupée appliquée avec succès"
 
-#: classes/class-ispag-achat-prepayment.php:142
+#: classes/class-ispag-achat-prepayment.php:143
 msgid "Invalid value."
 msgstr "Valeur invalide."
 
-#: classes/class-ispag-achat-prepayment.php:153
+#: classes/class-ispag-achat-prepayment.php:154
 msgid "Database update failed."
 msgstr "L'enregistrement en base a échoué."
 
-#: classes/class-ispag-achat-prepayment.php:183
+#: classes/class-ispag-achat-prepayment.php:184
 msgid "Security check failed. Please reload the page."
 msgstr "Échec du contrôle de sécurité. Veuillez recharger la page."
 
-#: classes/class-ispag-achat-prepayment.php:186
+#: classes/class-ispag-achat-prepayment.php:187
 msgid "Unauthorized"
 msgstr "Non autorisé"
 
-#: classes/class-ispag-achat-prepayment.php:193
+#: classes/class-ispag-achat-prepayment.php:194
 msgid "Order not found."
 msgstr "Commande introuvable."
 
-#: classes/class-ispag-achat-prepayment.php:194
+#: classes/class-ispag-achat-prepayment.php:195
 msgid "This supplier does not require payment before delivery."
 msgstr "Ce fournisseur n'exige pas de paiement avant livraison."
 
-#: classes/class-ispag-achat-prepayment.php:195
+#: classes/class-ispag-achat-prepayment.php:196
 msgid "Invalid data"
 msgstr "Données invalides"
 
-#: classes/class-ispag-achat-prepayment.php:216
+#: classes/class-ispag-achat-prepayment.php:217
 msgid "Payment before delivery"
 msgstr "Paiement avant livraison"
 
-#: classes/class-ispag-achat-prepayment.php:219
+#: classes/class-ispag-achat-prepayment.php:220
 msgid "Amount to pay (proforma invoice)"
 msgstr "Montant à payer (facture proforma)"
 
-#: classes/class-ispag-achat-prepayment.php:222
+#: classes/class-ispag-achat-prepayment.php:223
 msgid "Pre-filled with the order total: enter the amount of the proforma invoice when you receive it."
 msgstr "Pré-rempli avec le total de la commande : saisissez le montant de la facture proforma dès que vous la recevez."
 
-#: classes/class-ispag-achat-prepayment.php:224
+#: classes/class-ispag-achat-prepayment.php:225
+msgid "Invoice validated in Doxys"
+msgstr "Facture validée dans Doxys"
+
+#: classes/class-ispag-achat-prepayment.php:227
 msgid "Requested payment date"
 msgstr "Date de paiement souhaitée"
 
-#: classes/class-ispag-achat-prepayment.php:226
+#: classes/class-ispag-achat-prepayment.php:229
 msgid "Payment date received"
 msgstr "Date de paiement réelle"
 
-#: classes/class-ispag-achat-prepayment.php:249
+#: classes/class-ispag-achat-prepayment.php:252
 msgid "Saved"
 msgstr "Enregistré"
 
-#: classes/class-ispag-achat-prepayment.php:264
+#: classes/class-ispag-achat-prepayment.php:267
 msgid "Supplier payments"
 msgstr "Paiements fournisseurs"
 
-#: classes/class-ispag-achat-prepayment.php:288
+#: classes/class-ispag-achat-prepayment.php:291
 msgid "Access denied"
 msgstr "Accès refusé"
 
-#: classes/class-ispag-achat-prepayment.php:305
+#: classes/class-ispag-achat-prepayment.php:308
 msgid "To follow"
 msgstr "À suivre"
 
-#: classes/class-ispag-achat-prepayment.php:306
+#: classes/class-ispag-achat-prepayment.php:309
 msgid "All"
 msgstr "Tous"
 
-#: classes/class-ispag-achat-prepayment.php:308
+#: classes/class-ispag-achat-prepayment.php:311
 msgid "Suppliers who are paid before they deliver (tick \"Payment before delivery\" in the Supplier tab of the company)."
 msgstr "Fournisseurs payés avant de livrer (cocher « Paiement avant livraison » dans l'onglet Fournisseur de l'entreprise)."
 
-#: classes/class-ispag-achat-prepayment.php:309
+#: classes/class-ispag-achat-prepayment.php:312
 msgid "Change a date or an amount directly in the table: it is saved at once. Once the payment has arrived, the goods leave the next day."
 msgstr "Modifiez une date ou un montant directement dans le tableau : c'est enregistré tout de suite. Une fois le paiement arrivé, la marchandise part le lendemain."
 
-#: classes/class-ispag-achat-prepayment.php:310
+#: classes/class-ispag-achat-prepayment.php:313
 msgid "You can see the dates and amounts; only the people in charge of payments can change them."
 msgstr "Vous voyez les dates et les montants ; seules les personnes chargées des paiements peuvent les modifier."
 
-#: classes/class-ispag-achat-prepayment.php:311
+#: classes/class-ispag-achat-prepayment.php:314
 msgid "Saved."
 msgstr "Enregistré."
 
-#: classes/class-ispag-achat-prepayment.php:322
+#: classes/class-ispag-achat-prepayment.php:325
 msgid "No order to show."
 msgstr "Aucune commande à afficher."
 
-#: classes/class-ispag-achat-prepayment.php:326
+#: classes/class-ispag-achat-prepayment.php:329
 msgid "Amount"
 msgstr "Montant"
 
-#: classes/class-ispag-achat-prepayment.php:328
+#: classes/class-ispag-achat-prepayment.php:332
 msgid "Status"
 msgstr "Statut"
 
-#: classes/class-ispag-achat-prepayment.php:341
+#: classes/class-ispag-achat-prepayment.php:346
 msgid "Total shown"
 msgstr "Total affiché"
 
-#: classes/class-ispag-achat-prepayment.php:342
+#: classes/class-ispag-achat-prepayment.php:347
 msgid "Export CSV"
 msgstr "Exporter en CSV"
 
-#: classes/class-ispag-achat-prepayment.php:414
+#: classes/class-ispag-achat-prepayment.php:419
 msgid "Who receives the reminders"
 msgstr "Qui reçoit les rappels"
 
-#: classes/class-ispag-achat-prepayment.php:415
+#: classes/class-ispag-achat-prepayment.php:420
 msgid "Every morning, these people are reminded of each payment that was requested for today or earlier and has not arrived. Nobody ticked: the administrators."
 msgstr "Chaque matin, ces personnes sont rappelées à l'ordre pour chaque paiement demandé pour aujourd'hui ou avant et pas encore arrivé. Personne de coché : les administrateurs."
 
-#: classes/class-ispag-achat-prepayment.php:458
+#: classes/class-ispag-achat-prepayment.php:463
 msgid "Payment overdue (%d days): %s"
 msgstr "Paiement en retard (%d jours) : %s"
 
-#: classes/class-ispag-achat-prepayment.php:459
+#: classes/class-ispag-achat-prepayment.php:464
 msgid "Payment expected today: %s"
 msgstr "Paiement attendu aujourd'hui : %s"
 
-#: classes/class-ispag-achat-prepayment.php:460
+#: classes/class-ispag-achat-prepayment.php:465
 msgid "%1$s: %2$s, requested for %3$s. The goods stay here until the payment has arrived."
 msgstr "%1$s : %2$s, demandé pour le %3$s. La marchandise reste chez le fournisseur tant que le paiement n'est pas arrivé."
 
-#: classes/class-ispag-achat-prepayment.php:479
+#: classes/class-ispag-achat-prepayment.php:484
 msgid "Payment received: %s"
 msgstr "Paiement reçu : %s"
 
-#: classes/class-ispag-achat-prepayment.php:480
+#: classes/class-ispag-achat-prepayment.php:485
 msgid "%1$s: the payment arrived on %2$s. The goods can leave on %3$s."
 msgstr "%1$s : le paiement est arrivé le %2$s. La marchandise peut partir le %3$s."
 
-#: classes/class-ispag-achat-prepayment.php:68
+#: classes/class-ispag-achat-prepayment.php:69
 msgid "To request"
 msgstr "À demander"
 
-#: classes/class-ispag-achat-prepayment.php:69
+#: classes/class-ispag-achat-prepayment.php:70
 msgid "Requested"
 msgstr "Demandé"
 
-#: classes/class-ispag-achat-prepayment.php:70
+#: classes/class-ispag-achat-prepayment.php:71
 msgid "Overdue"
 msgstr "En retard"
 
-#: classes/class-ispag-achat-prepayment.php:71
+#: classes/class-ispag-achat-prepayment.php:72
 msgid "Paid"
 msgstr "Payé"
 
-#: classes/class-ispag-achat-prepayment.php:83
+#: classes/class-ispag-achat-prepayment.php:84
 msgid "Payment received: the goods can leave on %s."
 msgstr "Paiement reçu : la marchandise peut partir le %s."
 
