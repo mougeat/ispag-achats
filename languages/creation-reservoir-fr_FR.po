@@ -421,83 +421,93 @@ msgstr "Validation des plans"
 msgid "Drawing modifications"
 msgstr "Modifications de plans"
 
-#: classes/class-ispag-achat-manager.php:1014
+#: classes/class-ispag-achat-manager.php:1072
 msgid "No purchase found"
 msgstr "Aucun achat trouvé"
 
-#: classes/class-ispag-achat-manager.php:138
+#: classes/class-ispag-achat-manager.php:139
 msgid "Loading"
 msgstr "Chargement"
 
-#: classes/class-ispag-achat-manager.php:139
+#: classes/class-ispag-achat-manager.php:140
 msgid "All projects are loaded"
 msgstr "Tous les projets sont chargés"
 
-#: classes/class-ispag-achat-manager.php:204
+#: classes/class-ispag-achat-manager.php:205
 msgid "Order date"
 msgstr "Date de commande"
 
-#: classes/class-ispag-achat-manager.php:206
+#: classes/class-ispag-achat-manager.php:207
 msgid "Supplier"
 msgstr "Fournisseur"
 
-#: classes/class-ispag-achat-manager.php:207
+#: classes/class-ispag-achat-manager.php:208
 msgid "Order amount"
 msgstr "Montant de la commande"
 
-#: classes/class-ispag-achat-manager.php:208
+#: classes/class-ispag-achat-manager.php:209
 msgid "Order confirmation"
 msgstr "Confirmation de commande"
 
-#: classes/class-ispag-achat-manager.php:209
+#: classes/class-ispag-achat-manager.php:210
 msgid "State"
 msgstr "État"
 
-#: classes/class-ispag-achat-manager.php:318
+#: classes/class-ispag-achat-manager.php:319
 msgid "Unknown"
 msgstr "Inconnu"
 
-#: classes/class-ispag-achat-manager.php:331
+#: classes/class-ispag-achat-manager.php:332
 msgid "by"
 msgstr "par"
 
-#: classes/class-ispag-achat-manager.php:411
+#: classes/class-ispag-achat-manager.php:412
 msgid "Purchase not found."
 msgstr "Achat introuvable."
 
-#: classes/class-ispag-achat-manager.php:451
+#: classes/class-ispag-achat-manager.php:452
 msgid "Bulk update selected articles"
 msgstr "Mettre à jour les articles sélectionnés"
 
-#: classes/class-ispag-achat-manager.php:454
+#: classes/class-ispag-achat-manager.php:455
 msgid "Factory departure date"
 msgstr "Date de départ d'usine"
 
-#: classes/class-ispag-achat-manager.php:458
+#: classes/class-ispag-achat-manager.php:459
 msgid "Delivered on"
 msgstr "Livré le"
 
-#: classes/class-ispag-achat-manager.php:462
+#: classes/class-ispag-achat-manager.php:463
 msgid "Invoiced on"
 msgstr "Facturé le"
 
-#: classes/class-ispag-achat-manager.php:466
+#: classes/class-ispag-achat-manager.php:467
 msgid "Apply changes"
 msgstr "Appliquer les modifications"
 
-#: classes/class-ispag-achat-manager.php:486
+#: classes/class-ispag-achat-manager.php:468
+msgid "Delete selected"
+msgstr "Supprimer la sélection"
+
+#: classes/class-ispag-achat-manager.php:488
 msgid "Unauthorized or empty selection"
 msgstr "Sélection non autorisée ou vide"
 
-#: classes/class-ispag-achat-manager.php:540
+#: classes/class-ispag-achat-manager.php:523
+msgid "%d article deleted"
+msgid_plural "%d articles deleted"
+msgstr[0] "%d article supprimé"
+msgstr[1] "%d articles supprimés"
+
+#: classes/class-ispag-achat-manager.php:598
 msgid "Database error: nothing was saved"
 msgstr "Erreur de base de données : rien n'a été enregistré"
 
-#: classes/class-ispag-achat-manager.php:557
+#: classes/class-ispag-achat-manager.php:615
 msgid "Nothing to apply: fill in at least one date"
 msgstr "Rien à appliquer : renseignez au moins une date"
 
-#: classes/class-ispag-achat-manager.php:561
+#: classes/class-ispag-achat-manager.php:619
 msgid "Bulk update applied successfully"
 msgstr "Mise à jour groupée appliquée avec succès"
 
@@ -1002,101 +1012,109 @@ msgid "pcs"
 msgstr "pcs"
 
 #: includes/js-strings.php:13
+msgid "Delete the %d selected articles? This cannot be undone."
+msgstr "Supprimer les %d articles sélectionnés ? Cette action est irréversible."
+
+#: includes/js-strings.php:14
 msgid "Error"
 msgstr "Erreur"
 
-#: includes/js-strings.php:14
+#: includes/js-strings.php:15
 msgid "Error: "
 msgstr "Erreur : "
 
-#: includes/js-strings.php:15
+#: includes/js-strings.php:16
+msgid "Error while deleting"
+msgstr "Erreur lors de la suppression"
+
+#: includes/js-strings.php:17
 msgid "Network error"
 msgstr "Erreur réseau"
 
-#: includes/js-strings.php:16
+#: includes/js-strings.php:18
 msgid "No article selected"
 msgstr "Aucun article sélectionné"
 
-#: includes/js-strings.php:17
+#: includes/js-strings.php:19
 msgid "No contact found for this supplier."
 msgstr "Aucun contact trouvé pour ce fournisseur."
 
-#: includes/js-strings.php:18
+#: includes/js-strings.php:20
 msgid "Retry"
 msgstr "Réessayer"
 
-#: includes/js-strings.php:20
+#: includes/js-strings.php:22
 msgid "Save failed."
 msgstr "Échec de l'enregistrement."
 
-#: includes/js-strings.php:21
+#: includes/js-strings.php:23
 msgid "The email draft could not be created. Please try again."
 msgstr "Le brouillon d'e-mail n'a pas pu être créé. Veuillez réessayer."
 
-#: includes/js-strings.php:22
+#: includes/js-strings.php:24
 msgid "❌ An unknown network or server error occurred. Please check logs."
 msgstr "❌ Une erreur réseau ou serveur inconnue s'est produite. Consultez les journaux."
 
-#: includes/js-strings.php:23
+#: includes/js-strings.php:25
 msgid "❌ Network error"
 msgstr "❌ Erreur réseau"
 
-#: includes/js-strings.php:24
+#: includes/js-strings.php:26
 msgid "Compare the quote with the order"
 msgstr "Comparer l'offre avec la commande"
 
-#: includes/js-strings.php:25
+#: includes/js-strings.php:27
 msgid "No tank was found in the document."
 msgstr "Aucun réservoir n'a été trouvé dans le document."
 
-#: includes/js-strings.php:26
+#: includes/js-strings.php:28
 msgid "Close"
 msgstr "Fermer"
 
-#: includes/js-strings.php:27
+#: includes/js-strings.php:29
 msgid "This order has no tank to compare with."
 msgstr "Cette commande n'a aucun réservoir à comparer."
 
-#: includes/js-strings.php:28
+#: includes/js-strings.php:30
 msgid "Tank"
 msgstr "Réservoir"
 
-#: includes/js-strings.php:29
+#: includes/js-strings.php:31
 msgid "Tank in the quote"
 msgstr "Réservoir de l'offre"
 
-#: includes/js-strings.php:30
+#: includes/js-strings.php:32
 msgid "Tank of the order"
 msgstr "Réservoir de la commande"
 
-#: includes/js-strings.php:31
+#: includes/js-strings.php:33
 msgid "Field"
 msgstr "Champ"
 
-#: includes/js-strings.php:32
+#: includes/js-strings.php:34
 msgid "In the order"
 msgstr "Dans la commande"
 
-#: includes/js-strings.php:33
+#: includes/js-strings.php:35
 msgid "In the quote"
 msgstr "Dans l'offre"
 
-#: includes/js-strings.php:34
+#: includes/js-strings.php:36
 msgid "Net unit price"
 msgstr "Prix net unitaire"
 
-#: includes/js-strings.php:36
+#: includes/js-strings.php:38
 msgid "Import the selection"
 msgstr "Importer la sélection"
 
-#: includes/js-strings.php:37
+#: includes/js-strings.php:39
 msgid "Select at least one line to import."
 msgstr "Cochez au moins une ligne à importer."
 
-#: includes/js-strings.php:38
+#: includes/js-strings.php:40
 msgid "Saving…"
 msgstr "Enregistrement…"
 
-#: includes/js-strings.php:39
+#: includes/js-strings.php:41
 msgid "Network error."
 msgstr "Erreur réseau."
