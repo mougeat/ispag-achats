@@ -50,6 +50,7 @@ class ISPAG_Achat_Manager
         // Les assets sont chargés à la demande par les shortcodes (voir enqueue_assets()),
         // et non plus sur toutes les pages du site.
         add_filter('ispag_inline_edit_purchase', [self::class, 'handle_inline_edit'], 10, 2);
+        add_action('wp_ajax_ispag_achat_set_manager', [self::class, 'ajax_set_manager']);
         // $logger->log_user_action('achat_manager', 'hooks_registered', [], $user_id);
 
         add_filter('ispag_article_saved_from_purchase', [self::class, 'handle_saved_article'], 10, 3);
@@ -617,6 +618,34 @@ class ISPAG_Achat_Manager
 
         $logger->log_user_action('achat_manager', 'bulk_achat_update_articles_complete', [], $user_id);
         wp_send_json_success(['message' => __('Bulk update applied successfully', 'creation-reservoir'), 'updated' => $affected]);
+    }
+
+    /** Utilisateurs pouvant gérer un achat (droit de modifier les commandes fournisseur), pour la liste « Géré par ». */
+    public static function manager_candidates()
+    {
+        $out = [];
+        foreach (get_users(['orderby' => 'display_name', 'fields' => ['ID', 'display_name']]) as $u) {
+            if (user_can((int) $u->ID, 'edit_supplier_order')) $out[(int) $u->ID] = $u->display_name;
+        }
+        return $out;
+    }
+
+    /** Changer le gestionnaire d'un achat (created_by) : administrateur uniquement. */
+    public static function ajax_set_manager()
+    {
+        if (!current_user_can('manage_options') || !check_ajax_referer('ispag_achat_set_manager', 'nonce', false)) {
+            wp_send_json_error(['message' => __('Unauthorized', 'creation-reservoir')], 403);
+        }
+        global $wpdb;
+        $order_id = absint($_POST['order_id'] ?? 0);
+        $user_id  = absint($_POST['user_id'] ?? 0);
+        $exists   = $order_id ? (int) $wpdb->get_var($wpdb->prepare("SELECT Id FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d", $order_id)) : 0;
+        if (!$exists || !$user_id || !get_userdata($user_id) || !user_can($user_id, 'edit_supplier_order')) {
+            wp_send_json_error(['message' => __('Invalid data', 'creation-reservoir')]);
+        }
+        $wpdb->update($wpdb->prefix . 'achats_commande_liste_fournisseurs', ['created_by' => $user_id], ['Id' => $order_id], ['%d'], ['%d']);
+        ISPAG_Logger::get_instance()->log_db_change('achat_manager', 'achats_commande_liste_fournisseurs', 'SET_MANAGER', ['order_id' => $order_id, 'manager' => $user_id], get_current_user_id());
+        wp_send_json_success(['name' => get_userdata($user_id)->display_name]);
     }
 
     public static function handle_inline_edit($updated, $args)
