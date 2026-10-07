@@ -46,6 +46,7 @@ class ISPAG_Achat_Prepayment {
         add_action('wp_ajax_ispag_prepay_save', [self::class, 'ajax_save']);
         add_action('admin_menu', [self::class, 'admin_menu'], 30);
         add_action('admin_post_ispag_prepay_csv', [self::class, 'export_csv']);
+        add_action('admin_post_ispag_prepay_xlsx', [self::class, 'export_xlsx']);
         add_action('admin_post_ispag_prepay_recipients', [self::class, 'save_recipients']);
         add_action(self::CRON, [self::class, 'send_reminders']);
         add_action('init', [self::class, 'schedule_cron']);
@@ -365,7 +366,8 @@ class ISPAG_Achat_Prepayment {
                     . ' <small class="ispag-prepay-ship" style="color:#16a34a">' . esc_html(self::ship_note($r->PaidDate)) . '</small></td></tr>';
             }
             echo '</tbody><tfoot><tr><th colspan="3">' . esc_html__('Total shown', 'creation-reservoir') . '</th><th colspan="5"><strong id="ispag-prepay-total">' . esc_html(self::money($total)) . '</strong></th></tr></tfoot></table>';
-            echo '<p><a class="button" href="' . esc_url(wp_nonce_url(admin_url('admin-post.php?action=ispag_prepay_csv&pstatus=' . $filter), 'ispag_prepay_csv')) . '">' . esc_html__('Export CSV', 'creation-reservoir') . '</a></p>';
+            echo '<p><a class="button" href="' . esc_url(wp_nonce_url(admin_url('admin-post.php?action=ispag_prepay_csv&pstatus=' . $filter), 'ispag_prepay_csv')) . '">' . esc_html__('Export CSV', 'creation-reservoir') . '</a> '
+                . '<a class="button button-primary" href="' . esc_url(wp_nonce_url(admin_url('admin-post.php?action=ispag_prepay_xlsx&pstatus=' . $filter), 'ispag_prepay_xlsx')) . '">' . esc_html__('Export Excel', 'creation-reservoir') . '</a></p>';
             if ($can) self::print_table_script();
         }
 
@@ -406,6 +408,71 @@ class ISPAG_Achat_Prepayment {
     }
 
     // ------------------------------------------------------------------ CSV et destinataires
+
+    /** Export Excel (.xlsx) des suivis de paiement, avec vraies dates, montants numériques, filtre et total. */
+    public static function export_xlsx() {
+        if (!self::can_view() || !check_admin_referer('ispag_prepay_xlsx') || !class_exists('ZipArchive')) wp_die(esc_html__('Access denied', 'creation-reservoir'));
+        $today  = current_time('Y-m-d');
+        $filter = isset($_GET['pstatus']) ? sanitize_key($_GET['pstatus']) : 'open';
+        $serial = function ($d) { return $d ? (int) round((strtotime($d . ' 12:00:00 UTC') - strtotime('1899-12-30 12:00:00 UTC')) / DAY_IN_SECONDS) : null; };
+        $x = function ($v) { return htmlspecialchars((string) $v, ENT_XML1 | ENT_QUOTES, 'UTF-8'); };
+        $cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        $heads = [__('Project', 'creation-reservoir'), __('Supplier', 'creation-reservoir'), __('Delivery date', 'creation-reservoir'), __('Amount', 'creation-reservoir') . ' (' . self::currency() . ')',
+                  __('Invoice validated in Doxys', 'creation-reservoir'), __('Requested payment date', 'creation-reservoir'), __('Payment date received', 'creation-reservoir'), __('Status', 'creation-reservoir')];
+        $str  = function ($ref, $v, $st = 0) use ($x) { return '<c r="' . $ref . '" s="' . $st . '" t="inlineStr"><is><t>' . $x($v) . '</t></is></c>'; };
+        $rows_xml = '<row r="1">';
+        foreach ($heads as $i => $h) $rows_xml .= $str($cols[$i] . '1', $h, 1);
+        $rows_xml .= '</row>';
+        $n = 1;
+        foreach (self::rows() as $r) {
+            $status = self::status($r->DesiredDate, $r->PaidDate, $today, $r->DoxysDate);
+            if (!($filter === 'all' || ($filter === 'open' ? $status !== 'paid' : $status === $filter))) continue;
+            $n++;
+            $amount = $r->Amount !== null ? (float) $r->Amount : self::order_total((int) $r->Id);
+            $line = $str("A$n", stripslashes($r->RefCommande)) . $str("B$n", $r->supplier);
+            foreach (['C' => $r->delivery ? date('Y-m-d', (int) $r->delivery) : null, 'E' => $r->DoxysDate, 'F' => $r->DesiredDate, 'G' => $r->PaidDate] as $c => $d) {
+                $sv = $serial($d);
+                $line .= $sv === null ? '<c r="' . $c . $n . '" s="2"/>' : '<c r="' . $c . $n . '" s="2"><v>' . $sv . '</v></c>';
+                if ($c === 'C') $line .= '<c r="D' . $n . '" s="3"><v>' . round($amount, 2) . '</v></c>';
+            }
+            $line .= $str("H$n", self::status_label($status));
+            $rows_xml .= '<row r="' . $n . '">' . $line . '</row>';
+        }
+        $t = $n + 1;
+        $rows_xml .= '<row r="' . $t . '">' . $str("A$t", __('Total', 'creation-reservoir'), 1) . '<c r="D' . $t . '" s="4"><f>SUBTOTAL(109,D2:D' . max($n, 2) . ')</f></c></row>';
+        $sheet = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+            . '<cols><col min="1" max="1" width="30" customWidth="1"/><col min="2" max="2" width="28" customWidth="1"/><col min="3" max="7" width="22" customWidth="1"/><col min="8" max="8" width="16" customWidth="1"/></cols>'
+            . '<sheetData>' . $rows_xml . '</sheetData><autoFilter ref="A1:H' . max($n, 1) . '"/></worksheet>';
+        $styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<numFmts count="2"><numFmt numFmtId="164" formatCode="dd\.mm\.yyyy"/><numFmt numFmtId="165" formatCode="#,##0.00"/></numFmts>'
+            . '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+            . '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE5E7EB"/></patternFill></fill></fills>'
+            . '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+            . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+            . '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+            . '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>'
+            . '<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+            . '<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+            . '<xf numFmtId="165" fontId="1" fillId="2" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+        $tmp = wp_tempnam('prepay-xlsx');
+        $zip = new ZipArchive();
+        if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) wp_die(esc_html__('Export failed', 'creation-reservoir'));
+        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
+        $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+        $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' . $x(__('Supplier payments', 'creation-reservoir')) . '" sheetId="1" r:id="rId1"/></sheets></workbook>');
+        $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+        $zip->addFromString('xl/styles.xml', $styles);
+        $zip->addFromString('xl/worksheets/sheet1.xml', $sheet);
+        $zip->close();
+        nocache_headers();
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="supplier-payments-' . $today . '.xlsx"');
+        header('Content-Length: ' . filesize($tmp));
+        readfile($tmp);
+        @unlink($tmp);
+        exit;
+    }
 
     public static function export_csv() {
         if (!self::can_view() || !check_admin_referer('ispag_prepay_csv')) wp_die(esc_html__('Access denied', 'creation-reservoir'));
