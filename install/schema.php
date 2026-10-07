@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}achats_prepayments` (
   `Id` int NOT NULL AUTO_INCREMENT,
   `IdCommande` int NOT NULL,
   `Amount` decimal(12,2) DEFAULT NULL,
+  `DoxysDate` date DEFAULT NULL,
   `DesiredDate` date DEFAULT NULL,
   `PaidDate` date DEFAULT NULL,
   `LastReminder` date DEFAULT NULL,
