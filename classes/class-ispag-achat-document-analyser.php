@@ -361,6 +361,8 @@ class ISPAG_Achat_Document_Analyser extends ISPAG_Document_Analyser {
         if ($analyseType === 'purchase') {
             // Offre fournisseur : on demande aussi le prix net unitaire de chaque cuve (utilisé par la fenêtre de comparaison)
             $prompt .= "Pour chaque réservoir, ajoute le champ \"net_price\" : prix net unitaire (nombre, hors TVA, après remise), et \"qty\" : la quantité.\n";
+            // Piquages : textes tels qu'écrits dans l'offre (pas d'identifiants), car l'offre peut en contenir plus que le configurateur
+            $prompt .= "Pour chaque réservoir, ajoute aussi le champ \"fittings\" : la liste de tous ses piquages / raccords / manchons / brides / stutzen, sous forme d'objets {\"text\": description complète telle qu'écrite dans le document (type, diamètre DN ou pouces, accessoire, usage) SANS la quantité, \"qty\": nombre}.\n";
         }
         $response_data = ISPAG_Mistral::send_to_mistral(null, $prompt, $analyseType, $file_url);
 
