@@ -189,6 +189,15 @@ class ISPAG_Achat_Status_Controller {
         wp_send_json_success($mail);
     }
 
+    /** Adresse du gestionnaire de l'achat à mettre en copie : vide s'il est l'expéditeur, n'a pas d'adresse valide ou est déjà le destinataire. */
+    public static function manager_copy($manager_id, $email_contact) {
+        $manager_id = (int) $manager_id;
+        if ($manager_id <= 0 || $manager_id === (int) get_current_user_id()) return '';
+        $manager = get_user_by('ID', $manager_id);
+        if (!$manager || !is_email($manager->user_email) || strcasecmp($manager->user_email, (string) $email_contact) === 0) return '';
+        return $manager->user_email;
+    }
+
     /**
      * Prépare le mail (destinataire, objet, texte avec balises remplacées) d'un type de message pour une commande.
      *
@@ -204,7 +213,7 @@ class ISPAG_Achat_Status_Controller {
 
         // 1. Récupérer IdFournisseur et EtatCommande
         $achat = $wpdb->get_row($wpdb->prepare("
-            SELECT IdFournisseur, hubspot_deal_id FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d
+            SELECT IdFournisseur, hubspot_deal_id, created_by FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d
         ", $achat_id));
         if (!$achat){
             return new WP_Error('mail', 'Order not found.');
@@ -276,6 +285,9 @@ class ISPAG_Achat_Status_Controller {
         $current_status = $instance->get_current_status($achat_id);
         $next_status = $instance->get_next_status($current_status->Id);
 
+        // 5 bis. Copie au gestionnaire de l'achat (« Géré par ») quand ce n'est pas lui qui envoie le message
+        $email_copy = self::manager_copy((int) ($achat->created_by ?? 0), $email_contact);
+
         // 6. Données du mail
         return [
             'current_status' => $current_status->Id,
@@ -285,7 +297,7 @@ class ISPAG_Achat_Status_Controller {
             'message' => $message,
             'lang' => $lang,
             'email_contact' => $email_contact,
-            'email_copy' => ' ' // à adapter
+            'email_copy' => $email_copy
         ];
     }
 
