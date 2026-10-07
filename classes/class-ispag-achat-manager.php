@@ -465,7 +465,7 @@ class ISPAG_Achat_Manager
             </label>
 
             <button type="button" id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . esc_html__('Apply changes', 'creation-reservoir') . '</button>'
-            . (current_user_can('manage_order') ? ' <button type="button" id="bulk-delete-articles" class="ispag-btn ispag-btn-red-outlined"><span class="dashicons dashicons-trash" style="vertical-align:middle;"></span> ' . esc_html__('Delete selected', 'creation-reservoir') . '</button>' : '') . '
+            . (current_user_can('manage_order') ? ' <button type="button" id="bulk-delete-articles" class="ispag-chip-btn ispag-chip-btn--danger"><span class="dashicons dashicons-trash"></span> ' . esc_html__('Delete articles', 'creation-reservoir') . '</button>' : '') . '
             <div id="ispag-bulk-message" class="bulk_message" style="display:none; margin-top:8px; padding:6px 10px; border-radius:6px;"></div>
         </div>';
     }

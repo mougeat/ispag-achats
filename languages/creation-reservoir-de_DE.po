@@ -486,8 +486,8 @@ msgid "Apply changes"
 msgstr "Änderungen anwenden"
 
 #: classes/class-ispag-achat-manager.php:468
-msgid "Delete selected"
-msgstr "Auswahl löschen"
+msgid "Delete articles"
+msgstr "Artikel löschen"
 
 #: classes/class-ispag-achat-manager.php:488
 msgid "Unauthorized or empty selection"
