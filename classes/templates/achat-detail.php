@@ -99,6 +99,8 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
                         <?php echo esc_html($created_by_name); ?>
                     </span>
                 </div>
+
+                <?php echo ISPAG_Achat_Prepayment::render_card($achat); // paiement avant livraison (fournisseurs concernés seulement) ?>
             </div>
         </div>
 

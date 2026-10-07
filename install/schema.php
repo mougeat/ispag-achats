@@ -107,6 +107,23 @@ CREATE TABLE IF NOT EXISTS `{prefix}achats_etat_commandes_fournisseur` (
 ) ENGINE=InnoDB {charset}
 SQL
     ,
+    // Paiement avant livraison (un seul paiement par commande d'achat) : voir ISPAG_Achat_Prepayment
+    'achats_prepayments' => <<<'SQL'
+CREATE TABLE IF NOT EXISTS `{prefix}achats_prepayments` (
+  `Id` int NOT NULL AUTO_INCREMENT,
+  `IdCommande` int NOT NULL,
+  `Amount` decimal(12,2) DEFAULT NULL,
+  `DesiredDate` date DEFAULT NULL,
+  `PaidDate` date DEFAULT NULL,
+  `LastReminder` date DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updated_by` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`Id`),
+  UNIQUE KEY `uniq_order` (`IdCommande`),
+  KEY `idx_dates` (`DesiredDate`,`PaidDate`)
+) ENGINE=InnoDB {charset}
+SQL
+    ,
     'achats_template_mail' => <<<'SQL'
 CREATE TABLE IF NOT EXISTS `{prefix}achats_template_mail` (
   `Id` int NOT NULL AUTO_INCREMENT,
