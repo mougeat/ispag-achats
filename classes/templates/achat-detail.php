@@ -94,10 +94,33 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
 
                 <div>
                     <strong>👤 <?php echo esc_html__('Managed by', 'creation-reservoir'); ?></strong><br>
-                    <span data-source="purchase" data-name="created_by" data-value="<?php echo esc_attr($achat->created_by); ?>"
-                          data-deal="<?php echo esc_attr($achat->Id); ?>" data-field-type="text" data-readonly="true">
-                        <?php echo esc_html($created_by_name); ?>
-                    </span>
+                    <?php if (current_user_can('manage_options')) : ?>
+                        <select id="ispag-achat-manager-select" data-order="<?php echo (int) $achat->Id; ?>" style="max-width:100%;">
+                            <?php if (!$created_by_user) : ?><option value="">—</option><?php endif; ?>
+                            <?php $candidates = ISPAG_Achat_Manager::manager_candidates(); if ($created_by_user && !isset($candidates[(int) $created_by_user->ID])) $candidates[(int) $created_by_user->ID] = $created_by_user->display_name; ?>
+                            <?php foreach ($candidates as $uid => $uname) : ?>
+                                <option value="<?php echo (int) $uid; ?>" <?php selected((int) $achat->created_by, $uid); ?>><?php echo esc_html($uname); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <script>
+                        (function () {
+                            const sel = document.getElementById('ispag-achat-manager-select');
+                            if (!sel) return;
+                            let previous = sel.value;
+                            sel.addEventListener('change', function () {
+                                if (!sel.value) { sel.value = previous; return; }
+                                const body = new URLSearchParams({action: 'ispag_achat_set_manager', nonce: '<?php echo esc_js(wp_create_nonce('ispag_achat_set_manager')); ?>', order_id: sel.dataset.order, user_id: sel.value});
+                                fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: body})
+                                    .then(r => r.json()).then(function (r) {
+                                        if (r && r.success) { previous = sel.value; sel.style.outline = '2px solid #16a34a'; setTimeout(() => sel.style.outline = '', 1200); }
+                                        else { sel.value = previous; alert((r && r.data && r.data.message) || 'Error'); }
+                                    }).catch(function () { sel.value = previous; });
+                            });
+                        })();
+                        </script>
+                    <?php else : ?>
+                        <span><?php echo esc_html($created_by_name); ?></span>
+                    <?php endif; ?>
                 </div>
 
                 <?php echo ISPAG_Achat_Prepayment::render_card($achat); // paiement avant livraison (fournisseurs concernés seulement) ?>
