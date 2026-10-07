@@ -5,6 +5,7 @@ defined('ABSPATH') || exit;
  * Paiement avant livraison (un seul paiement par commande d'achat).
  *
  *  - Dates suivies : facture validée dans Doxys (logiciel de traitement des factures), paiement souhaité, paiement reçu.
+ *  - La date Doxys est purement informative : seuls le paiement reçu et la date souhaitée pilotent statut et rappels (rappel la veille, le jour J, puis chaque jour de retard).
  *  - Un fournisseur est marqué « paiement avant livraison » dans l'onglet Fournisseur de sa fiche (meta ispag_supplier_prepay).
  *  - Pour ses commandes, une carte « Paiement » apparaît sur la fiche de l'achat : montant (par défaut le total de la commande, modifiable),
  *    date de paiement souhaitée (demandée par ISPAG) et date de paiement réelle (saisie à réception). Payé = la marchandise part le lendemain.
@@ -444,6 +445,7 @@ class ISPAG_Achat_Prepayment {
         if (!class_exists('ISPAG_Notifications_Manager')) return 0;
         global $wpdb;
         $today = current_time('Y-m-d');
+        $tomorrow = date('Y-m-d', strtotime($today . ' +1 day'));
         $p = $wpdb->prefix;
         $rows = (array) $wpdb->get_results($wpdb->prepare(
             "SELECT pp.*, a.RefCommande, f.company_name AS supplier
@@ -453,12 +455,21 @@ class ISPAG_Achat_Prepayment {
               WHERE pp.PaidDate IS NULL AND pp.DesiredDate IS NOT NULL AND pp.DesiredDate <= %s
                 AND (pp.LastReminder IS NULL OR pp.LastReminder < %s)
                 AND EXISTS (SELECT 1 FROM {$p}ispag_companies_meta m WHERE m.company_id = a.IdFournisseur AND m.meta_key = %s AND m.meta_value = '1')",
-            $today, $today, self::META_KEY
+            $tomorrow, $today, self::META_KEY
         ));
         $sent = 0;
         foreach ($rows as $r) {
             $days = (int) floor((strtotime($today) - strtotime($r->DesiredDate)) / DAY_IN_SECONDS);
             $amount = $r->Amount !== null ? (float) $r->Amount : self::order_total((int) $r->IdCommande);
+            if ($days < 0) {
+                $title = sprintf(__('Payment expected tomorrow: %s', 'creation-reservoir'), $r->supplier);
+                $text = sprintf(__('%1$s: %2$s, requested for %3$s. Please check that the payment is on its way.', 'creation-reservoir'),
+                    stripslashes($r->RefCommande), self::money($amount), date_i18n('d.m.Y', strtotime($r->DesiredDate)));
+                ISPAG_Notifications_Manager::send(self::recipients(), 'supplier_payment_due', $title, $text, 'purchase/' . (int) $r->IdCommande . '/', (int) $r->IdCommande, ['order_id' => (int) $r->IdCommande]);
+                $wpdb->update(self::table(), ['LastReminder' => $today], ['IdCommande' => (int) $r->IdCommande], ['%s'], ['%d']);
+                $sent++;
+                continue;
+            }
             $title = $days > 0
                 ? sprintf(__('Payment overdue (%d days): %s', 'creation-reservoir'), $days, $r->supplier)
                 : sprintf(__('Payment expected today: %s', 'creation-reservoir'), $r->supplier);
