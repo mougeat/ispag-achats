@@ -5,6 +5,7 @@ defined('ABSPATH') || exit;
  * Paiement avant livraison (un seul paiement par commande d'achat).
  *
  *  - Dates suivies : facture validée dans Doxys (logiciel de traitement des factures), paiement souhaité, paiement reçu.
+ *  - Les offres (étape « proposal ») et les commandes annulées sont exclues partout (carte, tableau, rappels).
  *  - La date Doxys fait passer le statut à « Validé » (sauf en retard ou payé) mais ne pilote pas les rappels : seuls la date souhaitée et le paiement reçu comptent (rappel la veille, le jour J, puis chaque jour de retard).
  *  - Un fournisseur est marqué « paiement avant livraison » dans l'onglet Fournisseur de sa fiche (meta ispag_supplier_prepay).
  *  - Pour ses commandes, une carte « Paiement » apparaît sur la fiche de l'achat : montant (par défaut le total de la commande, modifiable),
@@ -117,6 +118,22 @@ class ISPAG_Achat_Prepayment {
         return (string) $v === '1';
     }
 
+    /**
+     * Les offres (étapes « proposal » : RFQ, offre fournisseur reçue…) et les commandes annulées
+     * ne sont pas suivies : condition SQL à ajouter sur la table des commandes (alias $a).
+     */
+    private static function tracked_sql($a = 'a') {
+        global $wpdb;
+        return " AND NOT EXISTS (SELECT 1 FROM {$wpdb->prefix}achats_etat_commandes_fournisseur e WHERE e.Id = {$a}.EtatCommande AND (e.steps = 'proposal' OR e.ClassCss = 'order_canceled'))";
+    }
+
+    /** Vrai si la commande est une vraie commande (ni offre, ni annulée). */
+    public static function is_tracked($order_id) {
+        global $wpdb;
+        return (bool) $wpdb->get_var($wpdb->prepare(
+            "SELECT 1 FROM {$wpdb->prefix}achats_commande_liste_fournisseurs a WHERE a.Id = %d" . self::tracked_sql('a'), (int) $order_id));
+    }
+
     public static function get_row($order_id) {
         global $wpdb;
         return $wpdb->get_row($wpdb->prepare('SELECT * FROM ' . self::table() . ' WHERE IdCommande = %d', (int) $order_id));
@@ -196,6 +213,7 @@ class ISPAG_Achat_Prepayment {
         $supplier = $order_id ? (int) $wpdb->get_var($wpdb->prepare("SELECT IdFournisseur FROM {$wpdb->prefix}achats_commande_liste_fournisseurs WHERE Id = %d", $order_id)) : 0;
         if (!$supplier) wp_send_json_error(['message' => __('Order not found.', 'creation-reservoir')]);
         if (!self::supplier_requires($supplier)) wp_send_json_error(['message' => __('This supplier does not require payment before delivery.', 'creation-reservoir')]);
+        if (!self::is_tracked($order_id)) wp_send_json_error(['message' => __('Offers and cancelled orders are not tracked.', 'creation-reservoir')]);
         if (!in_array($field, ['Amount', 'DoxysDate', 'DesiredDate', 'PaidDate'], true)) wp_send_json_error(['message' => __('Invalid data', 'creation-reservoir')]);
 
         $res = self::save($order_id, $field, $value, get_current_user_id());
@@ -208,7 +226,7 @@ class ISPAG_Achat_Prepayment {
     /** Carte « Paiement » (vide si le fournisseur n'exige pas de paiement avant livraison). */
     public static function render_card($achat) {
         if (empty($achat->Id) || !self::supplier_requires((int) ($achat->IdFournisseur ?? 0))) return '';
-        if (!self::can_view()) return '';
+        if (!self::can_view() || !self::is_tracked((int) $achat->Id)) return '';
         $can  = self::can_edit();
         $row  = self::get_row((int) $achat->Id);
         $sum  = self::summary((int) $achat->Id, $row);
@@ -285,7 +303,7 @@ class ISPAG_Achat_Prepayment {
                 FROM {$p}achats_commande_liste_fournisseurs a
                 INNER JOIN {$p}ispag_companies f ON f.Id = a.IdFournisseur
                 LEFT JOIN " . self::table() . " pp ON pp.IdCommande = a.Id
-                WHERE EXISTS (SELECT 1 FROM {$p}ispag_companies_meta m WHERE m.company_id = a.IdFournisseur AND m.meta_key = %s AND m.meta_value = '1')
+                WHERE EXISTS (SELECT 1 FROM {$p}ispag_companies_meta m WHERE m.company_id = a.IdFournisseur AND m.meta_key = %s AND m.meta_value = '1')" . self::tracked_sql('a') . "
                 ORDER BY (pp.PaidDate IS NULL) DESC, COALESCE(pp.DesiredDate, '9999-12-31') ASC, a.Id DESC";
         return (array) $wpdb->get_results($wpdb->prepare($sql, self::META_KEY));
     }
@@ -456,7 +474,7 @@ class ISPAG_Achat_Prepayment {
                INNER JOIN {$p}ispag_companies f ON f.Id = a.IdFournisseur
               WHERE pp.PaidDate IS NULL AND pp.DesiredDate IS NOT NULL AND pp.DesiredDate <= %s
                 AND (pp.LastReminder IS NULL OR pp.LastReminder < %s)
-                AND EXISTS (SELECT 1 FROM {$p}ispag_companies_meta m WHERE m.company_id = a.IdFournisseur AND m.meta_key = %s AND m.meta_value = '1')",
+                AND EXISTS (SELECT 1 FROM {$p}ispag_companies_meta m WHERE m.company_id = a.IdFournisseur AND m.meta_key = %s AND m.meta_value = '1')" . self::tracked_sql('a'),
             $tomorrow, $today, self::META_KEY
         ));
         $sent = 0;
