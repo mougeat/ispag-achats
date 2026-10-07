@@ -52,6 +52,31 @@ class ISPAG_Achat_Quote_Compare {
         return null;
     }
 
+    /** Clé de comparaison d'un diamètre écrit en texte (« DN50 », « 2" »…) : le nombre, ou '' si aucun (même logique que la liste des piquages du configurateur). */
+    public static function dn_key(string $text): string {
+        $t = trim($text);
+        if (preg_match('/DN\s*([0-9]+)/i', $t, $m)) return $m[1];
+        if (preg_match('/([0-9]+(?:\s+[0-9]+\/[0-9]+|[.,\/][0-9]+)?)\s*(?:"|″|”|\'\'|zoll|pouces?|inch)/iu', $t, $m)) return str_replace([' ', ','], ['_', '.'], $m[1]);
+        return '';
+    }
+
+    /** Piquages de l'offre : liste de textes ou d'objets {text|texte|description, qty} → [['text', 'qty', 'dn_key'], …]. */
+    public static function normalize_fittings($raw): array {
+        $out = [];
+        if (!is_array($raw)) return $out;
+        foreach ($raw as $f) {
+            $qty = 1;
+            if (is_array($f)) {
+                $qty = max(1, (int) ($f['qty'] ?? $f['quantity'] ?? $f['quantite'] ?? 1));
+                $f = $f['text'] ?? $f['texte'] ?? $f['description'] ?? $f['label'] ?? '';
+            }
+            $text = trim(wp_strip_all_tags((string) $f));
+            if ($text === '') continue;
+            $out[] = ['text' => mb_substr($text, 0, 160), 'qty' => $qty, 'dn_key' => self::dn_key($text)];
+        }
+        return $out;
+    }
+
     /** Cuves de la commande : ligne d'achat + article du projet + données techniques + prix net actuel. */
     public static function purchase_tanks(int $purchase_id): array {
         global $wpdb;
@@ -74,6 +99,7 @@ class ISPAG_Achat_Quote_Compare {
                 'title'      => wp_strip_all_tags(mb_substr((string) $r->title, 0, 90)),
                 'qty'        => (int) $r->Qty,
                 'net_price'  => $net,
+                'fittings'   => apply_filters('ispag_get_fittings_texts', [], (int) $r->article_id),
                 'values'     => [
                     'type'          => $c->TankType ?? '',
                     'materiau'      => $c->Material ?? '',
@@ -125,6 +151,7 @@ class ISPAG_Achat_Quote_Compare {
             }
             $t = ['title' => (string) ($item['titre'] ?? $item['title'] ?? ''), 'net_price' => $price, 'qty' => isset($item['qty']) ? (int) $item['qty'] : null];
             foreach (self::FIELDS as $key => $_) $t[$key] = $item[$key] ?? ($key === 'max_pressure' ? ($item['pressure'] ?? null) : null);
+            $t['fittings'] = self::normalize_fittings($item['fittings'] ?? $item['piquages'] ?? $item['connections'] ?? []);
             $out[] = $t;
         }
         return $out;
@@ -164,7 +191,7 @@ class ISPAG_Achat_Quote_Compare {
             'materiau'      => __('Material', 'creation-reservoir'),
             'support'       => __('Support', 'creation-reservoir'),
         ];
-        wp_send_json_success(['quotes' => $quotes, 'tanks' => $tanks, 'fields' => $labels, 'currency' => get_option('wpcb_currency', 'CHF')]);
+        wp_send_json_success(['quotes' => $quotes, 'tanks' => $tanks, 'fields' => $labels, 'fitting_options' => apply_filters('ispag_get_fitting_options', ['diameters' => [], 'accessories' => []]), 'currency' => get_option('wpcb_currency', 'CHF')]);
     }
 
     /** Enregistre les champs techniques cochés (même circuit que l'ancien import) et le prix net de la ligne d'achat. */
@@ -194,6 +221,17 @@ class ISPAG_Achat_Quote_Compare {
                 wp_send_json_error(['message' => $res['message'] ?? 'Error during the technical update.']);
             }
             $messages[] = sprintf('%d field(s)', count($clean));
+        }
+        $fit_rows = json_decode((string) wp_unslash($_POST['fittings'] ?? '[]'), true);
+        if (is_array($fit_rows) && $fit_rows && $line->IdCommandeClient) {
+            $rows = [];
+            foreach ($fit_rows as $r) {
+                if (!is_array($r)) continue;
+                $rows[] = ['diameter' => absint($r['diameter'] ?? 0), 'accessory' => absint($r['accessory'] ?? 0), 'usage' => sanitize_text_field((string) ($r['usage'] ?? '')), 'qty' => max(1, absint($r['qty'] ?? 1))];
+            }
+            $added = (int) apply_filters('ispag_add_fittings', 0, (int) $line->IdCommandeClient, $rows);
+            if (!$added) wp_send_json_error(['message' => 'No fitting could be added (check the diameter).']);
+            $messages[] = sprintf('%d fitting(s)', $added);
         }
         if ($net_price !== null && $net_price >= 0) {
             // prix net = prix unitaire sans remise (la remise est déjà dans le prix net de l'offre)

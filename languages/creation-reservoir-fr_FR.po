@@ -433,95 +433,103 @@ msgstr "Validation des plans"
 msgid "Drawing modifications"
 msgstr "Modifications de plans"
 
-#: classes/class-ispag-achat-manager.php:1077
+#: classes/class-ispag-achat-manager.php:1106
 msgid "No purchase found"
 msgstr "Aucun achat trouvé"
 
-#: classes/class-ispag-achat-manager.php:139
+#: classes/class-ispag-achat-manager.php:140
 msgid "Loading"
 msgstr "Chargement"
 
-#: classes/class-ispag-achat-manager.php:140
+#: classes/class-ispag-achat-manager.php:141
 msgid "All projects are loaded"
 msgstr "Tous les projets sont chargés"
 
-#: classes/class-ispag-achat-manager.php:205
+#: classes/class-ispag-achat-manager.php:206
 msgid "Order date"
 msgstr "Date de commande"
 
-#: classes/class-ispag-achat-manager.php:207
+#: classes/class-ispag-achat-manager.php:208
 msgid "Supplier"
 msgstr "Fournisseur"
 
-#: classes/class-ispag-achat-manager.php:208
+#: classes/class-ispag-achat-manager.php:209
 msgid "Order amount"
 msgstr "Montant de la commande"
 
-#: classes/class-ispag-achat-manager.php:209
+#: classes/class-ispag-achat-manager.php:210
 msgid "Order confirmation"
 msgstr "Confirmation de commande"
 
-#: classes/class-ispag-achat-manager.php:210
+#: classes/class-ispag-achat-manager.php:211
 msgid "State"
 msgstr "État"
 
-#: classes/class-ispag-achat-manager.php:319
+#: classes/class-ispag-achat-manager.php:320
 msgid "Unknown"
 msgstr "Inconnu"
 
-#: classes/class-ispag-achat-manager.php:332
+#: classes/class-ispag-achat-manager.php:333
 msgid "by"
 msgstr "par"
 
-#: classes/class-ispag-achat-manager.php:412
+#: classes/class-ispag-achat-manager.php:413
 msgid "Purchase not found."
 msgstr "Achat introuvable."
 
-#: classes/class-ispag-achat-manager.php:452
+#: classes/class-ispag-achat-manager.php:453
 msgid "Bulk update selected articles"
 msgstr "Mettre à jour les articles sélectionnés"
 
-#: classes/class-ispag-achat-manager.php:455
+#: classes/class-ispag-achat-manager.php:456
 msgid "Factory departure date"
 msgstr "Date de départ d'usine"
 
-#: classes/class-ispag-achat-manager.php:459
+#: classes/class-ispag-achat-manager.php:460
 msgid "Delivered on"
 msgstr "Livré le"
 
-#: classes/class-ispag-achat-manager.php:463
+#: classes/class-ispag-achat-manager.php:464
 msgid "Invoiced on"
 msgstr "Facturé le"
 
-#: classes/class-ispag-achat-manager.php:467
+#: classes/class-ispag-achat-manager.php:468
 msgid "Delete articles"
 msgstr "Supprimer les articles"
 
-#: classes/class-ispag-achat-manager.php:468
+#: classes/class-ispag-achat-manager.php:469
 msgid "Apply changes"
 msgstr "Appliquer les modifications"
 
-#: classes/class-ispag-achat-manager.php:488
+#: classes/class-ispag-achat-manager.php:489
 msgid "Unauthorized or empty selection"
 msgstr "Sélection non autorisée ou vide"
 
-#: classes/class-ispag-achat-manager.php:523
+#: classes/class-ispag-achat-manager.php:524
 msgid "%d article deleted"
 msgid_plural "%d articles deleted"
 msgstr[0] "%d article supprimé"
 msgstr[1] "%d articles supprimés"
 
-#: classes/class-ispag-achat-manager.php:598
+#: classes/class-ispag-achat-manager.php:599
 msgid "Database error: nothing was saved"
 msgstr "Erreur de base de données : rien n'a été enregistré"
 
-#: classes/class-ispag-achat-manager.php:615
+#: classes/class-ispag-achat-manager.php:616
 msgid "Nothing to apply: fill in at least one date"
 msgstr "Rien à appliquer : renseignez au moins une date"
 
-#: classes/class-ispag-achat-manager.php:619
+#: classes/class-ispag-achat-manager.php:620
 msgid "Bulk update applied successfully"
 msgstr "Mise à jour groupée appliquée avec succès"
+
+#: classes/class-ispag-achat-manager.php:637
+msgid "Unauthorized"
+msgstr "Non autorisé"
+
+#: classes/class-ispag-achat-manager.php:644
+msgid "Invalid data"
+msgstr "Données invalides"
 
 #: classes/class-ispag-achat-prepayment.php:164
 msgid "Invalid value."
@@ -535,10 +543,6 @@ msgstr "L'enregistrement en base a échoué."
 msgid "Security check failed. Please reload the page."
 msgstr "Échec du contrôle de sécurité. Veuillez recharger la page."
 
-#: classes/class-ispag-achat-prepayment.php:208
-msgid "Unauthorized"
-msgstr "Non autorisé"
-
 #: classes/class-ispag-achat-prepayment.php:215
 msgid "Order not found."
 msgstr "Commande introuvable."
@@ -550,10 +554,6 @@ msgstr "Ce fournisseur n'exige pas de paiement avant livraison."
 #: classes/class-ispag-achat-prepayment.php:217
 msgid "Offers and cancelled orders are not tracked."
 msgstr "Les offres et les commandes annulées ne sont pas suivies."
-
-#: classes/class-ispag-achat-prepayment.php:218
-msgid "Invalid data"
-msgstr "Données invalides"
 
 #: classes/class-ispag-achat-prepayment.php:239
 msgid "Payment before delivery"
@@ -723,43 +723,43 @@ msgstr "Adresse de livraison"
 msgid "Total"
 msgstr "Total"
 
-#: classes/class-ispag-achat-quote-compare.php:156
+#: classes/class-ispag-achat-quote-compare.php:183
 msgid "Diameter (mm)"
 msgstr "Diamètre (mm)"
 
-#: classes/class-ispag-achat-quote-compare.php:157
+#: classes/class-ispag-achat-quote-compare.php:184
 msgid "Volume (L)"
 msgstr "Volume (L)"
 
-#: classes/class-ispag-achat-quote-compare.php:158
+#: classes/class-ispag-achat-quote-compare.php:185
 msgid "Height (mm)"
 msgstr "Hauteur (mm)"
 
-#: classes/class-ispag-achat-quote-compare.php:159
+#: classes/class-ispag-achat-quote-compare.php:186
 msgid "Design pressure (bar)"
 msgstr "Pression de service (bar)"
 
-#: classes/class-ispag-achat-quote-compare.php:160
+#: classes/class-ispag-achat-quote-compare.php:187
 msgid "Test pressure (bar)"
 msgstr "Pression d'essai (bar)"
 
-#: classes/class-ispag-achat-quote-compare.php:161
+#: classes/class-ispag-achat-quote-compare.php:188
 msgid "Temperature (°C)"
 msgstr "Température (°C)"
 
-#: classes/class-ispag-achat-quote-compare.php:162
+#: classes/class-ispag-achat-quote-compare.php:189
 msgid "Ground clearance (mm)"
 msgstr "Garde au sol (mm)"
 
-#: classes/class-ispag-achat-quote-compare.php:163
+#: classes/class-ispag-achat-quote-compare.php:190
 msgid "Type"
 msgstr "Type"
 
-#: classes/class-ispag-achat-quote-compare.php:164
+#: classes/class-ispag-achat-quote-compare.php:191
 msgid "Material"
 msgstr "Matériau"
 
-#: classes/class-ispag-achat-quote-compare.php:165
+#: classes/class-ispag-achat-quote-compare.php:192
 msgid "Support"
 msgstr "Support"
 
@@ -1059,43 +1059,47 @@ msgstr "Logistique et stockage - %s"
 msgid "Logistics and storage - Carry Box"
 msgstr "Logistique et stockage - Carry Box"
 
-#: classes/templates/achat-detail.php:110
+#: classes/templates/achat-detail.php:101
+msgid "Change the manager"
+msgstr "Changer le gestionnaire"
+
+#: classes/templates/achat-detail.php:157
 msgid "To project"
 msgstr "Vers le projet"
 
-#: classes/templates/achat-detail.php:111
+#: classes/templates/achat-detail.php:158
 msgid "To purchase list"
 msgstr "Vers la liste d'achats"
 
-#: classes/templates/achat-detail.php:129
+#: classes/templates/achat-detail.php:176
 msgid "Articles"
 msgstr "Articles"
 
-#: classes/templates/achat-detail.php:130
+#: classes/templates/achat-detail.php:177
 msgid "Details"
 msgstr "Détails"
 
-#: classes/templates/achat-detail.php:131
+#: classes/templates/achat-detail.php:178
 msgid "Follow up"
 msgstr "Suivi"
 
-#: classes/templates/achat-detail.php:132
+#: classes/templates/achat-detail.php:179
 msgid "Document flow"
 msgstr "Flux documentaire"
 
-#: classes/templates/achat-detail.php:147
+#: classes/templates/achat-detail.php:194
 msgid "Display / Mask panel"
 msgstr "Afficher / Masquer le panneau"
 
-#: classes/templates/achat-detail.php:148
+#: classes/templates/achat-detail.php:195
 msgid "Mask panel"
 msgstr "Masquer le panneau"
 
-#: classes/templates/achat-detail.php:170
+#: classes/templates/achat-detail.php:217
 msgid "Open the project"
 msgstr "Ouvrir le projet"
 
-#: classes/templates/achat-detail.php:171
+#: classes/templates/achat-detail.php:218
 msgid "Deal ID"
 msgstr "ID de la transaction"
 
@@ -1310,3 +1314,39 @@ msgstr "Enregistrement…"
 #: includes/js-strings.php:41
 msgid "Network error."
 msgstr "Erreur réseau."
+
+#: includes/js-strings.php:42
+msgid "Fittings"
+msgstr "Piquages"
+
+#: includes/js-strings.php:43
+msgid "No fitting found in the quote for this tank."
+msgstr "Aucun piquage trouvé dans l'offre pour cette cuve."
+
+#: includes/js-strings.php:44
+msgid "Add to the order"
+msgstr "Ajouter à la commande"
+
+#: includes/js-strings.php:45
+msgid "Already in the order"
+msgstr "Déjà dans la commande"
+
+#: includes/js-strings.php:46
+msgid "Not in the order"
+msgstr "Absent de la commande"
+
+#: includes/js-strings.php:47
+msgid "Quantity to add"
+msgstr "Quantité à ajouter"
+
+#: includes/js-strings.php:48
+msgid "Choose the diameter of each fitting to add."
+msgstr "Choisissez le diamètre de chaque piquage à ajouter."
+
+#: includes/js-strings.php:49
+msgid "-- Ø --"
+msgstr "-- Ø --"
+
+#: includes/js-strings.php:50
+msgid "-- Accessories --"
+msgstr "-- Accessoires --"

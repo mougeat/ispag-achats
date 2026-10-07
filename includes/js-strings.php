@@ -39,6 +39,15 @@ if (!function_exists('ispag_achats_js_strings')) {
         'Select at least one line to import.' => __('Select at least one line to import.', 'creation-reservoir'),
         'Saving…' => __('Saving…', 'creation-reservoir'),
         'Network error.' => __('Network error.', 'creation-reservoir'),
+        'Fittings' => __('Fittings', 'creation-reservoir'),
+        'No fitting found in the quote for this tank.' => __('No fitting found in the quote for this tank.', 'creation-reservoir'),
+        'Add to the order' => __('Add to the order', 'creation-reservoir'),
+        'Already in the order' => __('Already in the order', 'creation-reservoir'),
+        'Not in the order' => __('Not in the order', 'creation-reservoir'),
+        'Quantity to add' => __('Quantity to add', 'creation-reservoir'),
+        'Choose the diameter of each fitting to add.' => __('Choose the diameter of each fitting to add.', 'creation-reservoir'),
+        '-- Ø --' => __('-- Ø --', 'creation-reservoir'),
+        '-- Accessories --' => __('-- Accessories --', 'creation-reservoir'),
         ];
     }
 

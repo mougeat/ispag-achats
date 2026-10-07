@@ -433,95 +433,103 @@ msgstr "Zeichnungsfreigabe"
 msgid "Drawing modifications"
 msgstr "Zeichnungsänderungen"
 
-#: classes/class-ispag-achat-manager.php:1077
+#: classes/class-ispag-achat-manager.php:1106
 msgid "No purchase found"
 msgstr "Kein Einkauf gefunden"
 
-#: classes/class-ispag-achat-manager.php:139
+#: classes/class-ispag-achat-manager.php:140
 msgid "Loading"
 msgstr "Wird geladen"
 
-#: classes/class-ispag-achat-manager.php:140
+#: classes/class-ispag-achat-manager.php:141
 msgid "All projects are loaded"
 msgstr "Alle Projekte sind geladen"
 
-#: classes/class-ispag-achat-manager.php:205
+#: classes/class-ispag-achat-manager.php:206
 msgid "Order date"
 msgstr "Bestelldatum"
 
-#: classes/class-ispag-achat-manager.php:207
+#: classes/class-ispag-achat-manager.php:208
 msgid "Supplier"
 msgstr "Lieferant"
 
-#: classes/class-ispag-achat-manager.php:208
+#: classes/class-ispag-achat-manager.php:209
 msgid "Order amount"
 msgstr "Bestellbetrag"
 
-#: classes/class-ispag-achat-manager.php:209
+#: classes/class-ispag-achat-manager.php:210
 msgid "Order confirmation"
 msgstr "Auftragsbestätigung"
 
-#: classes/class-ispag-achat-manager.php:210
+#: classes/class-ispag-achat-manager.php:211
 msgid "State"
 msgstr "Status"
 
-#: classes/class-ispag-achat-manager.php:319
+#: classes/class-ispag-achat-manager.php:320
 msgid "Unknown"
 msgstr "Unbekannt"
 
-#: classes/class-ispag-achat-manager.php:332
+#: classes/class-ispag-achat-manager.php:333
 msgid "by"
 msgstr "von"
 
-#: classes/class-ispag-achat-manager.php:412
+#: classes/class-ispag-achat-manager.php:413
 msgid "Purchase not found."
 msgstr "Einkauf nicht gefunden."
 
-#: classes/class-ispag-achat-manager.php:452
+#: classes/class-ispag-achat-manager.php:453
 msgid "Bulk update selected articles"
 msgstr "Ausgewählte Artikel aktualisieren"
 
-#: classes/class-ispag-achat-manager.php:455
+#: classes/class-ispag-achat-manager.php:456
 msgid "Factory departure date"
 msgstr "Datum Abgang ab Werk"
 
-#: classes/class-ispag-achat-manager.php:459
+#: classes/class-ispag-achat-manager.php:460
 msgid "Delivered on"
 msgstr "Geliefert am"
 
-#: classes/class-ispag-achat-manager.php:463
+#: classes/class-ispag-achat-manager.php:464
 msgid "Invoiced on"
 msgstr "Verrechnet am"
 
-#: classes/class-ispag-achat-manager.php:467
+#: classes/class-ispag-achat-manager.php:468
 msgid "Delete articles"
 msgstr "Artikel löschen"
 
-#: classes/class-ispag-achat-manager.php:468
+#: classes/class-ispag-achat-manager.php:469
 msgid "Apply changes"
 msgstr "Änderungen anwenden"
 
-#: classes/class-ispag-achat-manager.php:488
+#: classes/class-ispag-achat-manager.php:489
 msgid "Unauthorized or empty selection"
 msgstr "Auswahl nicht zulässig oder leer"
 
-#: classes/class-ispag-achat-manager.php:523
+#: classes/class-ispag-achat-manager.php:524
 msgid "%d article deleted"
 msgid_plural "%d articles deleted"
 msgstr[0] "%d Artikel gelöscht"
 msgstr[1] "%d Artikel gelöscht"
 
-#: classes/class-ispag-achat-manager.php:598
+#: classes/class-ispag-achat-manager.php:599
 msgid "Database error: nothing was saved"
 msgstr "Datenbankfehler: Es wurde nichts gespeichert"
 
-#: classes/class-ispag-achat-manager.php:615
+#: classes/class-ispag-achat-manager.php:616
 msgid "Nothing to apply: fill in at least one date"
 msgstr "Nichts anzuwenden: Geben Sie mindestens ein Datum an"
 
-#: classes/class-ispag-achat-manager.php:619
+#: classes/class-ispag-achat-manager.php:620
 msgid "Bulk update applied successfully"
 msgstr "Sammelaktualisierung erfolgreich angewendet"
+
+#: classes/class-ispag-achat-manager.php:637
+msgid "Unauthorized"
+msgstr "Nicht autorisiert"
+
+#: classes/class-ispag-achat-manager.php:644
+msgid "Invalid data"
+msgstr "Ungültige Daten"
 
 #: classes/class-ispag-achat-prepayment.php:164
 msgid "Invalid value."
@@ -535,10 +543,6 @@ msgstr "Die Aktualisierung der Datenbank ist fehlgeschlagen."
 msgid "Security check failed. Please reload the page."
 msgstr "Sicherheitsprüfung fehlgeschlagen. Bitte laden Sie die Seite neu."
 
-#: classes/class-ispag-achat-prepayment.php:208
-msgid "Unauthorized"
-msgstr "Nicht autorisiert"
-
 #: classes/class-ispag-achat-prepayment.php:215
 msgid "Order not found."
 msgstr "Bestellung nicht gefunden."
@@ -550,10 +554,6 @@ msgstr "Dieser Lieferant verlangt keine Zahlung vor der Lieferung."
 #: classes/class-ispag-achat-prepayment.php:217
 msgid "Offers and cancelled orders are not tracked."
 msgstr "Angebote und stornierte Bestellungen werden nicht verfolgt."
-
-#: classes/class-ispag-achat-prepayment.php:218
-msgid "Invalid data"
-msgstr "Ungültige Daten"
 
 #: classes/class-ispag-achat-prepayment.php:239
 msgid "Payment before delivery"
@@ -723,43 +723,43 @@ msgstr "Lieferadresse"
 msgid "Total"
 msgstr "Total"
 
-#: classes/class-ispag-achat-quote-compare.php:156
+#: classes/class-ispag-achat-quote-compare.php:183
 msgid "Diameter (mm)"
 msgstr "Durchmesser (mm)"
 
-#: classes/class-ispag-achat-quote-compare.php:157
+#: classes/class-ispag-achat-quote-compare.php:184
 msgid "Volume (L)"
 msgstr "Volumen (L)"
 
-#: classes/class-ispag-achat-quote-compare.php:158
+#: classes/class-ispag-achat-quote-compare.php:185
 msgid "Height (mm)"
 msgstr "Höhe (mm)"
 
-#: classes/class-ispag-achat-quote-compare.php:159
+#: classes/class-ispag-achat-quote-compare.php:186
 msgid "Design pressure (bar)"
 msgstr "Betriebsdruck (bar)"
 
-#: classes/class-ispag-achat-quote-compare.php:160
+#: classes/class-ispag-achat-quote-compare.php:187
 msgid "Test pressure (bar)"
 msgstr "Prüfdruck (bar)"
 
-#: classes/class-ispag-achat-quote-compare.php:161
+#: classes/class-ispag-achat-quote-compare.php:188
 msgid "Temperature (°C)"
 msgstr "Temperatur (°C)"
 
-#: classes/class-ispag-achat-quote-compare.php:162
+#: classes/class-ispag-achat-quote-compare.php:189
 msgid "Ground clearance (mm)"
 msgstr "Bodenfreiheit (mm)"
 
-#: classes/class-ispag-achat-quote-compare.php:163
+#: classes/class-ispag-achat-quote-compare.php:190
 msgid "Type"
 msgstr "Typ"
 
-#: classes/class-ispag-achat-quote-compare.php:164
+#: classes/class-ispag-achat-quote-compare.php:191
 msgid "Material"
 msgstr "Material"
 
-#: classes/class-ispag-achat-quote-compare.php:165
+#: classes/class-ispag-achat-quote-compare.php:192
 msgid "Support"
 msgstr "Support"
 
@@ -1059,43 +1059,47 @@ msgstr "Logistik und Lagerung - %s"
 msgid "Logistics and storage - Carry Box"
 msgstr "Logistik und Lagerung - Carry Box"
 
-#: classes/templates/achat-detail.php:110
+#: classes/templates/achat-detail.php:101
+msgid "Change the manager"
+msgstr "Verantwortlichen ändern"
+
+#: classes/templates/achat-detail.php:157
 msgid "To project"
 msgstr "Zum Projekt"
 
-#: classes/templates/achat-detail.php:111
+#: classes/templates/achat-detail.php:158
 msgid "To purchase list"
 msgstr "Zur Einkaufsliste"
 
-#: classes/templates/achat-detail.php:129
+#: classes/templates/achat-detail.php:176
 msgid "Articles"
 msgstr "Artikel"
 
-#: classes/templates/achat-detail.php:130
+#: classes/templates/achat-detail.php:177
 msgid "Details"
 msgstr "Details"
 
-#: classes/templates/achat-detail.php:131
+#: classes/templates/achat-detail.php:178
 msgid "Follow up"
 msgstr "Nachverfolgung"
 
-#: classes/templates/achat-detail.php:132
+#: classes/templates/achat-detail.php:179
 msgid "Document flow"
 msgstr "Dokumentenfluss"
 
-#: classes/templates/achat-detail.php:147
+#: classes/templates/achat-detail.php:194
 msgid "Display / Mask panel"
 msgstr "Panel ein- / ausblenden"
 
-#: classes/templates/achat-detail.php:148
+#: classes/templates/achat-detail.php:195
 msgid "Mask panel"
 msgstr "Panel ausblenden"
 
-#: classes/templates/achat-detail.php:170
+#: classes/templates/achat-detail.php:217
 msgid "Open the project"
 msgstr "Projekt öffnen"
 
-#: classes/templates/achat-detail.php:171
+#: classes/templates/achat-detail.php:218
 msgid "Deal ID"
 msgstr "Deal-ID"
 
@@ -1310,3 +1314,39 @@ msgstr "Wird gespeichert…"
 #: includes/js-strings.php:41
 msgid "Network error."
 msgstr "Netzwerkfehler."
+
+#: includes/js-strings.php:42
+msgid "Fittings"
+msgstr "Stutzen"
+
+#: includes/js-strings.php:43
+msgid "No fitting found in the quote for this tank."
+msgstr "Kein Stutzen im Angebot für diesen Tank gefunden."
+
+#: includes/js-strings.php:44
+msgid "Add to the order"
+msgstr "Zur Bestellung hinzufügen"
+
+#: includes/js-strings.php:45
+msgid "Already in the order"
+msgstr "Bereits in der Bestellung"
+
+#: includes/js-strings.php:46
+msgid "Not in the order"
+msgstr "Nicht in der Bestellung"
+
+#: includes/js-strings.php:47
+msgid "Quantity to add"
+msgstr "Hinzuzufügende Menge"
+
+#: includes/js-strings.php:48
+msgid "Choose the diameter of each fitting to add."
+msgstr "Wählen Sie den Durchmesser jedes hinzuzufügenden Stutzens."
+
+#: includes/js-strings.php:49
+msgid "-- Ø --"
+msgstr "-- Ø --"
+
+#: includes/js-strings.php:50
+msgid "-- Accessories --"
+msgstr "-- Zubehör --"

@@ -25,7 +25,11 @@ window.ispagT = window.ispagT || function (s) { return s; }; // traductions des 
     '#ispag-quote-modal .qc-score{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;background:#e6f4ea;color:#1e7b34}' +
     '#ispag-quote-modal .qc-score.mid{background:#fff3cd;color:#8a6d00}#ispag-quote-modal .qc-score.low{background:#fde8ea;color:#b32d2e}' +
     '#ispag-quote-modal .qc-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid #e5e7eb}' +
-    '#ispag-quote-modal .qc-msg{color:#b32d2e;font-size:13px;margin-top:8px}';
+    '#ispag-quote-modal .qc-msg{color:#b32d2e;font-size:13px;margin-top:8px}' +
+    '#ispag-quote-modal .qc-fit h4{margin:18px 0 6px;font-size:14px}#ispag-quote-modal .qc-fit ul{margin:0 0 8px;padding-left:18px;font-size:13px;color:#374151}' +
+    '#ispag-quote-modal .qc-fit-row{display:grid;grid-template-columns:24px 1fr 64px 1fr 1fr;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eef0f2;font-size:13px}' +
+    '#ispag-quote-modal .qc-fit-row small{display:block;color:#6b7280}#ispag-quote-modal .qc-fit-row input[type=number]{width:100%}' +
+    '@media(max-width:640px){#ispag-quote-modal .qc-fit-row{grid-template-columns:24px 1fr}}';
 
   function scoreBadge(s) { return '<span class="qc-score ' + (s >= 70 ? '' : (s >= 40 ? 'mid' : 'low')) + '">' + s + ' %</span>'; }
 
@@ -47,7 +51,7 @@ window.ispagT = window.ispagT || function (s) { return s; }; // traductions des 
       '<label>' + esc(T('Tank in the quote')) + '<select id="qc-quote">' + qOpts + '</select></label>' +
       '<label>' + esc(T('Tank of the order')) + ' <span id="qc-score"></span><select id="qc-tank"></select></label></div>' +
       '<table><thead><tr><th style="width:34px"></th><th>' + esc(T('Field')) + '</th><th>' + esc(T('In the order')) + '</th><th>' + esc(T('In the quote')) + '</th></tr></thead><tbody id="qc-rows"></tbody></table>' +
-      '<div class="qc-msg" id="qc-msg" style="display:none"></div>');
+      '<div class="qc-fit" id="qc-fit"></div><div class="qc-msg" id="qc-msg" style="display:none"></div>');
     $foot.html('<button type="button" class="ispag-btn ispag-btn-grey-outlined qc-cancel">' + esc(T('Cancel')) + '</button><button type="button" class="ispag-btn ispag-btn-red-outlined" id="qc-import">' + esc(T('Import the selection')) + '</button>');
 
     function fillTanks(qi) {
@@ -60,6 +64,48 @@ window.ispagT = window.ispagT || function (s) { return s; }; // traductions des 
         $t.append($('<option>').val(ti).text(t.title + ' — ' + (scores[ti] || 0) + ' %'));
       });
       $t.val(q.suggested != null ? q.suggested : order[0]);
+    }
+
+    const opts = data.fitting_options || { diameters: [], accessories: [] };
+    const FLANGE = /bride|flansch|flange/i;
+
+    /** Meilleur diamètre de la liste pour le texte de l'offre : même DN, et même famille (bride / fileté) si reconnaissable. */
+    function guessDiameter(f) {
+      if (!f.dn_key) return '';
+      const same = opts.diameters.filter(function (d) { return d.dn_key === f.dn_key; });
+      if (!same.length) return '';
+      const wantFlange = FLANGE.test(f.text);
+      const pick = same.filter(function (d) { return FLANGE.test(d.label) === wantFlange; });
+      return (pick[0] || same[0]).id;
+    }
+
+    function renderFittings() {
+      const q = quotes[+$m.find('#qc-quote').val()], t = tanks[+$m.find('#qc-tank').val()];
+      const inOrder = t.fittings || [], inQuote = q.fittings || [];
+      const left = {};
+      inOrder.forEach(function (f) { if (f.dn_key) left[f.dn_key] = (left[f.dn_key] || 0) + f.qty; });
+      let html = '<h4>' + esc(T('Fittings')) + '</h4>';
+      html += '<strong style="font-size:12px;color:#6b7280">' + esc(T('In the order')) + '</strong><ul>' +
+        (inOrder.length ? inOrder.map(function (f) { return '<li>' + esc(f.qty + ' × ' + f.text) + '</li>'; }).join('') : '<li>—</li>') + '</ul>';
+      html += '<strong style="font-size:12px;color:#6b7280">' + esc(T('In the quote')) + '</strong>';
+      if (!inQuote.length) html += '<p style="font-size:13px;color:#6b7280;margin:4px 0">' + esc(T('No fitting found in the quote for this tank.')) + '</p>';
+      const dOpts = '<option value="">' + esc(T('-- Ø --')) + '</option>' + opts.diameters.map(function (d) { return '<option value="' + d.id + '">' + esc(d.label) + '</option>'; }).join('');
+      const aOpts = '<option value="0">' + esc(T('-- Accessories --')) + '</option>' + opts.accessories.map(function (a) { return '<option value="' + a.id + '">' + esc(a.label) + '</option>'; }).join('');
+      inQuote.forEach(function (f, i) {
+        let extra = f.qty, known = 0;
+        if (f.dn_key) { known = Math.min(f.qty, left[f.dn_key] || 0); left[f.dn_key] = (left[f.dn_key] || 0) - known; extra = f.qty - known; }
+        const check = f.dn_key && extra > 0;
+        html += '<div class="qc-fit-row" data-i="' + i + '"><input type="checkbox" class="qc-fit-add"' + (check ? ' checked' : '') + ' title="' + esc(T('Add to the order')) + '">' +
+          '<div>' + esc(f.qty + ' × ' + f.text) + '<small>' + esc(known ? T('Already in the order') + ' : ' + known : T('Not in the order')) + '</small></div>' +
+          '<input type="number" class="qc-fit-qty" min="1" max="20" value="' + Math.max(1, extra) + '" title="' + esc(T('Quantity to add')) + '">' +
+          '<select class="qc-fit-dia">' + dOpts + '</select><select class="qc-fit-acc">' + aOpts + '</select></div>';
+        // diamètre proposé
+      });
+      $m.find('#qc-fit').html(html);
+      $m.find('.qc-fit-row').each(function () {
+        const f = inQuote[+this.getAttribute('data-i')], g = guessDiameter(f);
+        if (g) $(this).find('.qc-fit-dia').val(String(g));
+      });
     }
 
     function render() {
@@ -81,6 +127,7 @@ window.ispagT = window.ispagT || function (s) { return s; }; // traductions des 
         '<td><strong>' + esc(T('Net unit price')) + '</strong> (' + esc(cur) + ')</td><td>' + fmt(t.net_price) + '</td><td>' + (hasP ? fmt(np) : '—') + '</td></tr>';
       $m.find('#qc-rows').html(rows);
       $m.find('#qc-msg').hide();
+      renderFittings();
     }
 
     $m.on('change', '#qc-quote', function () { fillTanks(+this.value); render(); });
@@ -92,9 +139,17 @@ window.ispagT = window.ispagT || function (s) { return s; }; // traductions des 
       const fields = {};
       $m.find('.qc-field:checked').each(function () { fields[$(this).data('key')] = $(this).attr('data-val'); });
       const price = $m.find('#qc-price:checked').attr('data-val');
-      if (!Object.keys(fields).length && !price) { $m.find('#qc-msg').text(T('Select at least one line to import.')).show(); return; }
+      const fits = []; let fitErr = false;
+      $m.find('.qc-fit-row').each(function () {
+        if (!$(this).find('.qc-fit-add').is(':checked')) return;
+        const f = (q.fittings || [])[+this.getAttribute('data-i')], dia = $(this).find('.qc-fit-dia').val();
+        if (!dia) { fitErr = true; return; }
+        fits.push({ diameter: dia, accessory: $(this).find('.qc-fit-acc').val(), usage: f.text.substring(0, 60), qty: $(this).find('.qc-fit-qty').val() });
+      });
+      if (fitErr) { $m.find('#qc-msg').text(T('Choose the diameter of each fitting to add.')).show(); return; }
+      if (!Object.keys(fields).length && !price && !fits.length) { $m.find('#qc-msg').text(T('Select at least one line to import.')).show(); return; }
       const $b = $(this).prop('disabled', true).text(T('Saving…'));
-      $.post(ajaxurl, { action: 'ispag_achat_quote_import', nonce: (window.ispagVars || {}).quote_nonce, purchase_id: purchaseId, deal_id: dealId || 0, line_id: t.line_id, fields: fields, net_price: price || '' }, function (resp) {
+      $.post(ajaxurl, { action: 'ispag_achat_quote_import', nonce: (window.ispagVars || {}).quote_nonce, purchase_id: purchaseId, deal_id: dealId || 0, line_id: t.line_id, fields: fields, net_price: price || '', fittings: JSON.stringify(fits) }, function (resp) {
         if (resp && resp.success) {
           close();
           $('#articles').removeData('loaded').removeAttr('data-loaded');
