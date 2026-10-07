@@ -308,8 +308,11 @@ class ISPAG_Achat_Status_Controller {
         // error_log('[SEND MAIL DEBUG] Langue active avant récup articles: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
 
         // 3. Récupérer données de l'achat et articles (maintenant en bonne langue)
+        // Par identifiant : get_achats() prend une RECHERCHE (le nombre était comparé en « LIKE » à la référence, au numéro, à l'état… et la commande la plus récente qui
+        // correspondait était prise : le courriel parlait alors d'un autre projet que la commande ouverte).
         $repo = new ISPAG_Achat_Repository();
-        $achat = $repo->get_achats(null, true, $achat_id, '', 0, 1)[0];
+        $achat = $repo->get_achat_by_id(null, $achat_id);
+        if (!$achat) wp_send_json_error(['message' => 'Commande introuvable.']);
         $articles = (new ISPAG_Achat_Article_Repository())->get_articles_by_order(null, $achat_id, $lang);
 
         // 4. Construire la liste des produits avec traduction explicite
