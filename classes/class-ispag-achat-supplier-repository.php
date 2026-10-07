@@ -38,6 +38,7 @@ class ISPAG_Achat_Supplier_Repository {
         'postal_code'    => 'ispag_company_postal_code',
         'city'           => 'ispag_company_city',
         'country'        => 'ispag_company_country',
+        'prepay'         => 'ispag_supplier_prepay',   // « paiement avant livraison » (voir ISPAG_Achat_Prepayment)
         'delivery_days'  => 'ispag_supplier_delivery_days',
         'transport_time' => 'ispag_supplier_transport_time',
         'image'          => 'ispag_supplier_image',
