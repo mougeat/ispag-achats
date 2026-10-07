@@ -174,7 +174,7 @@ class ISPAG_Achat_Renderer {
     }
 
     public static function reload_article_row($html, $article_id){
-
+        $t0 = microtime(true);
         $article = apply_filters('ispag_get_purchse_article_by_id', null, $article_id);
 
         if (!$article) { 
@@ -186,7 +186,9 @@ class ISPAG_Achat_Renderer {
         
         $html = ob_get_clean();
         echo $html;
-
+        if (class_exists('ISPAG_Logger') && method_exists('ISPAG_Logger', 'timing')) {
+            ISPAG_Logger::get_instance()->timing('achat_renderer', 'reload_article_row (article ' . (int) $article_id . ')', $t0, get_current_user_id());
+        }
     }
     public static function render_article_block($article){
         $id = (int) $article->Id;
@@ -305,7 +307,7 @@ class ISPAG_Achat_Renderer {
         $repo = new ISPAG_Achat_Article_Repository();
         $is_new = false;
         if($article_id){
-            $article = $repo->get_article_by_id(null, $article_id);
+            $article = $repo->get_article_by_id(null, $article_id, true);   // version allégée : le formulaire n'utilise ni le plan, ni les documents, ni le texte de soudure
         } 
         elseif($article){
 

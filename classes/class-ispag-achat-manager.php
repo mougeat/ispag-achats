@@ -772,6 +772,7 @@ class ISPAG_Achat_Manager
 
     public static function handle_saved_article($html, $article_id, $post_data) {
         global $wpdb;
+        $t0 = microtime(true);
 
         $table_purchase = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
         $table_project  = $wpdb->prefix . 'achats_details_commande';
@@ -835,6 +836,10 @@ class ISPAG_Achat_Manager
         $achat_of_article = (int) $wpdb->get_var($wpdb->prepare("SELECT IdCommande FROM {$table_purchase} WHERE Id = %d", $article_id));
         if ($achat_of_article) {
             do_action('ispag_check_auto_status_for_achat', $achat_of_article);
+        }
+
+        if (class_exists('ISPAG_Logger') && method_exists('ISPAG_Logger', 'timing')) {
+            ISPAG_Logger::get_instance()->timing('achat_manager', 'handle_saved_article incl. automatic status check (article ' . (int) $article_id . ')', $t0, get_current_user_id());
         }
 
         return ['success' => true, 'message' => 'Update OK'];

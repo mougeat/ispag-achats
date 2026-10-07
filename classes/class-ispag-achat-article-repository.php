@@ -119,7 +119,8 @@ class ISPAG_Achat_Article_Repository {
     // ENRICHISSEMENT PHP COMMUN
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function enrich_article(object &$article, $lang = null): void {
+    /** @param bool $light true pour la fenêtre d'édition : ni plan, ni texte de soudure, ni documents, ni fiche technique complète (non utilisés par le formulaire). */
+    private function enrich_article(object &$article, $lang = null, $light = false): void {
         $switched = false;
         if ($lang) {
             if (function_exists('pll_set_language')) pll_set_language($lang);
@@ -144,15 +145,19 @@ class ISPAG_Achat_Article_Repository {
 
 
                     // $tank_repo = new ISPAG_Tank_Repository();
-                    $tank_data = ISPAG_Tank_Repository::get_tank_details($article->IdCommandeClient);
+                    $tank_data = $light ? null : ISPAG_Tank_Repository::get_tank_details($article->IdCommandeClient);
 
                     $article->RefSurMesure              = apply_filters('ispag_get_tank_title',               $article->RefSurMesure, $article->IdCommandeClient);
                     $article->DescSurMesure             = apply_filters('ispag_get_tank_description',         $article->DescSurMesure, $article->IdCommandeClient, true, $lang);
-                    $article->last_drawing_url          = apply_filters('ispag_get_last_drawing_url',         '', $article->IdCommandeClient);
+                    if (!$light) {
+                        $article->last_drawing_url          = apply_filters('ispag_get_last_drawing_url',         '', $article->IdCommandeClient);
+                    }
                     $article->DrawingApproved           = apply_filters('ispag_get_drawing_approval',         '', $article->IdCommandeClient);
-                    $article->last_doc_type             = apply_filters('ispag_get_if_last_drawing_or_modif', '', $article->IdCommandeClient);
-                    $article->welding_text_informations = apply_filters('ispag_get_welding_text',             null, $article->Article ?? null, $article->IdCommandeClient);
-                    $article->tank_on_site_welded       = apply_filters('ispag_get_tank_on_site_welded',      $article->Article ?? null, $article->IdCommandeClient);
+                    if (!$light) {
+                        $article->last_doc_type             = apply_filters('ispag_get_if_last_drawing_or_modif', '', $article->IdCommandeClient);
+                        $article->welding_text_informations = apply_filters('ispag_get_welding_text',             null, $article->Article ?? null, $article->IdCommandeClient);
+                        $article->tank_on_site_welded       = apply_filters('ispag_get_tank_on_site_welded',      $article->Article ?? null, $article->IdCommandeClient);
+                    }
                     $article->image                     = apply_filters('ispag_get_tank_svg',                 null, $article->IdCommandeClient, false);
 
                     if ($tank_data) {
@@ -178,7 +183,7 @@ class ISPAG_Achat_Article_Repository {
 
             // Documents de l'article du projet (documentation, note de calcul…), visibles comme dans le projet
             $article->documents = [];
-            if (!empty($article->IdCommandeClient) && class_exists('ISPAG_Article_Repository')) {
+            if (!$light && !empty($article->IdCommandeClient) && class_exists('ISPAG_Article_Repository')) {
                 $deal_id = (int) $this->wpdb->get_var($this->wpdb->prepare(
                     "SELECT hubspot_deal_id FROM {$this->wpdb->prefix}achats_details_commande WHERE Id = %d", (int) $article->IdCommandeClient
                 ));
@@ -203,6 +208,7 @@ class ISPAG_Achat_Article_Repository {
 
     public function get_articles_by_order($html, $order_id, $lang = null) {
         if (empty($order_id) || !is_numeric($order_id)) return [];
+        $t0 = microtime(true);
 
         $today = current_time('Y-m-d');
 
@@ -234,6 +240,11 @@ class ISPAG_Achat_Article_Repository {
             $this->enrich_article($article, $lang);
         }
 
+        // Durée de chargement des articles d'un achat (journal ispag_achat_article_repository.log) : permet de voir si les réservoirs ralentissent la page
+        if (class_exists('ISPAG_Logger') && method_exists('ISPAG_Logger', 'timing')) {
+            ISPAG_Logger::get_instance()->timing('achat_article_repository', 'get_articles_by_order (order ' . (int) $order_id . ', ' . count($results) . ' articles)', $t0, get_current_user_id());
+        }
+
         return $results;
     }
 
@@ -244,7 +255,7 @@ class ISPAG_Achat_Article_Repository {
         return $this->get_article_by_id(null, $id_result);
     }
 
-    public function get_article_by_id($html, $id) {
+    public function get_article_by_id($html, $id, $light = false) {
         $today = current_time('Y-m-d');
 
         $sql = $this->wpdb->prepare(
@@ -266,7 +277,7 @@ class ISPAG_Achat_Article_Repository {
         $row = $this->wpdb->get_row($sql);
         if (!$row) return null;
 
-        $this->enrich_article($row);
+        $this->enrich_article($row, null, (bool) $light);
 
         return $row;
     }
