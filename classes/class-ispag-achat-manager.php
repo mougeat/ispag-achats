@@ -56,6 +56,7 @@ class ISPAG_Achat_Manager
         add_action('ispag_achat_set_article_as_delivered', [self::$instance, 'set_article_as_delivered'], 10, 3);
         add_filter('ispag_bulk_selected_article', [self::class, 'bulk_selected_article'], 10, 2);
         add_action('wp_ajax_ispag_bulk_achat_update_articles', [self::class, 'bulk_achat_update_articles']);
+        add_action('wp_ajax_ispag_bulk_achat_delete_articles', [self::class, 'bulk_achat_delete_articles']);
         add_action('wp_ajax_ispag_delete_achat', [self::class, 'delete_achat']);
         add_action('wp_ajax_ispag_save_confirmed_data', [self::class, 'ispag_save_confirmed_data_handler']);
         add_action('wp_ajax_ispag_achat_load_tab', [self::class, 'ajax_load_tab']);
@@ -463,9 +464,66 @@ class ISPAG_Achat_Manager
                 <input type="date" id="bulk-invoiced-date">
             </label>
 
-            <button type="button" id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . esc_html__('Apply changes', 'creation-reservoir') . '</button>
+            <button type="button" id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . esc_html__('Apply changes', 'creation-reservoir') . '</button>'
+            . (current_user_can('manage_order') ? ' <button type="button" id="bulk-delete-articles" class="ispag-btn ispag-btn-red-outlined"><span class="dashicons dashicons-trash" style="vertical-align:middle;"></span> ' . esc_html__('Delete selected', 'creation-reservoir') . '</button>' : '') . '
             <div id="ispag-bulk-message" class="bulk_message" style="display:none; margin-top:8px; padding:6px 10px; border-radius:6px;"></div>
         </div>';
+    }
+
+    /**
+     * Supprime plusieurs lignes d'une commande fournisseur d'un coup, réservé à manage_order (les autres actions groupées
+     * restent ouvertes à edit_supplier_order). Seules les lignes de la commande indiquée sont concernées.
+     */
+    public static function bulk_achat_delete_articles()
+    {
+        $user_id = get_current_user_id();
+        $logger = ISPAG_Logger::get_instance();
+        $logger->log_user_action('achat_manager', 'bulk_achat_delete_articles_start', [], $user_id);
+
+        check_ajax_referer('ispag_bulk_update');
+
+        if (!current_user_can('manage_order'))
+        {
+            $logger->log('achat_manager', 'ERROR: Unauthorized bulk delete', $user_id);
+            wp_send_json_error(['message' => __('Unauthorized or empty selection', 'creation-reservoir')]);
+        }
+
+        $achat_id = intval($_POST['achat_id'] ?? 0);
+        $raw = $_POST['articles'] ?? '';
+        $ids = is_array($raw) ? array_map('intval', $raw) : array_map('intval', explode(',', (string) $raw));
+        $ids = array_values(array_unique(array_filter($ids)));
+        if (!$achat_id || !$ids)
+        {
+            wp_send_json_error(['message' => __('Unauthorized or empty selection', 'creation-reservoir')]);
+        }
+
+        global $wpdb;
+        $t = $wpdb->prefix . 'achats_articles_cmd_fournisseurs';
+        $in = implode(',', $ids);
+        // uniquement les lignes de cette commande
+        $valid = array_map('intval', (array) $wpdb->get_col($wpdb->prepare("SELECT Id FROM {$t} WHERE IdCommande = %d AND Id IN ({$in})", $achat_id)));
+        if (!$valid)
+        {
+            wp_send_json_error(['message' => __('Unauthorized or empty selection', 'creation-reservoir')]);
+        }
+
+        $deleted = 0;
+        foreach ($valid as $id)
+        {
+            $ok = $wpdb->delete($t, ['Id' => $id], ['%d']);
+            if (!$ok) continue;
+            $deleted++;
+            $wpdb->delete($wpdb->prefix . 'achats_historique', ['Historique' => $id], ['%d']);
+        }
+        $logger->log_db_change('achat_manager', $t, 'BULK_DELETE', ['achat_id' => $achat_id, 'requested' => $ids, 'deleted' => $valid, 'count' => $deleted], $user_id);
+
+        if ($deleted > 0) do_action('ispag_check_auto_status_for_achat', $achat_id);
+
+        wp_send_json_success([
+            'message' => sprintf(_n('%d article deleted', '%d articles deleted', $deleted, 'creation-reservoir'), $deleted),
+            'deleted' => $deleted,
+            'ids' => $valid,
+        ]);
     }
 
     public static function bulk_achat_update_articles()

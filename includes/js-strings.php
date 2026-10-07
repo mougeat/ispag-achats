@@ -10,8 +10,10 @@ defined('ABSPATH') || exit;
 if (!function_exists('ispag_achats_js_strings')) {
     function ispag_achats_js_strings() {
         return [
+        'Delete the %d selected articles? This cannot be undone.' => __('Delete the %d selected articles? This cannot be undone.', 'creation-reservoir'),
         'Error' => __('Error', 'creation-reservoir'),
         'Error: ' => __('Error: ', 'creation-reservoir'),
+        'Error while deleting' => __('Error while deleting', 'creation-reservoir'),
         'Network error' => __('Network error', 'creation-reservoir'),
         'No article selected' => __('No article selected', 'creation-reservoir'),
         'No contact found for this supplier.' => __('No contact found for this supplier.', 'creation-reservoir'),

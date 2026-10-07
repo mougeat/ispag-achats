@@ -335,6 +335,43 @@ jQuery(function ($) {
         }).always(function () { $btn.prop('disabled', false); });
     });
 
+    // --- Suppression en masse (manage_order) ---
+    $(document).on('click', '#bulk-delete-articles', async function () {
+        const $bulk = $(this).closest('.ispag-bulk-actions');
+        if (!$bulk.is('[data-achat-id]')) { return; }   // fiche projet : géré par ispag-project-manager
+        const $msg = $('#ispag-bulk-message');
+        const ids = $('.ispag-article .ispag-article-checkbox:checked').map(function () { return $(this).data('article-id'); }).get();
+        if (!ids.length) { alert(ispagT('No article selected')); return; }
+
+        const confirmed = await ispagConfirm(
+            ispagT('Delete the %d selected articles? This cannot be undone.').replace('%d', ids.length),
+            { labelOk: ispag_texts.delete, labelCancel: ispag_texts.cancel, danger: true }
+        );
+        if (!confirmed) { return; }
+
+        const $btn = $(this).prop('disabled', true);
+        $.post(ajaxurl, {
+            action: 'ispag_bulk_achat_delete_articles',
+            articles: ids.join(','),
+            achat_id: $('#achat-id').val(),
+            _ajax_nonce: (window.ispagVars || {}).bulk_nonce
+        }).done(function (response) {
+            const ok = response && response.success;
+            $msg.text((response && response.data && response.data.message) || (ok ? 'Done' : ispagT('Error while deleting')))
+                .css({ display: 'block', background: ok ? '#d4edda' : '#f8d7da', color: ok ? '#155724' : '#721c24' });
+            if (ok) {
+                ((response.data && response.data.ids) || ids).forEach(function (id) {
+                    $('.ispag-article .ispag-article-checkbox[data-article-id="' + id + '"]').closest('.ispag-article').remove();
+                });
+                $('#select-all-articles').prop('checked', false);
+                setTimeout(function () { $msg.hide(); $bulk.hide(); }, 2500);
+                $(document).trigger('ispag:achat-articles-changed');
+            }
+        }).fail(function () {
+            $msg.text(ispagT('Network error')).css({ display: 'block', background: '#f8d7da', color: '#721c24' });
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+
     // --- Contacts du fournisseur : choisir / changer / retirer un contact ---
     $(document).on('click keydown', '.ispag-sc-edit', function (e) {
         if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
