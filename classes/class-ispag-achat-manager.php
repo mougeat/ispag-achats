@@ -464,8 +464,8 @@ class ISPAG_Achat_Manager
                 <input type="date" id="bulk-invoiced-date">
             </label>
 
-            <button type="button" id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . esc_html__('Apply changes', 'creation-reservoir') . '</button>'
-            . (current_user_can('manage_order') ? ' <button type="button" id="bulk-delete-articles" class="ispag-chip-btn ispag-chip-btn--danger"><span class="dashicons dashicons-trash"></span> ' . esc_html__('Delete articles', 'creation-reservoir') . '</button>' : '') . '
+            ' . (current_user_can('manage_order') ? '<button type="button" id="bulk-delete-articles" class="ispag-chip-btn ispag-chip-btn--danger" style="display:block;margin:8px 0;"><span class="dashicons dashicons-trash"></span> ' . esc_html__('Delete articles', 'creation-reservoir') . '</button>' : '') . '
+            <button type="button" id="apply-bulk-update" class="ispag-btn ispag-btn-green">' . esc_html__('Apply changes', 'creation-reservoir') . '</button>
             <div id="ispag-bulk-message" class="bulk_message" style="display:none; margin-top:8px; padding:6px 10px; border-radius:6px;"></div>
         </div>';
     }
