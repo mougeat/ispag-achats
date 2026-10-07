@@ -5,6 +5,7 @@ defined('ABSPATH') || exit;
  * Paiement avant livraison (un seul paiement par commande d'achat).
  *
  *  - Dates suivies : facture validée dans Doxys (logiciel de traitement des factures), paiement souhaité, paiement reçu.
+ *  - La date Doxys fait passer le statut à « Validé » (sauf en retard ou payé) mais ne pilote pas les rappels : seuls la date souhaitée et le paiement reçu comptent (rappel la veille, le jour J, puis chaque jour de retard).
  *  - Un fournisseur est marqué « paiement avant livraison » dans l'onglet Fournisseur de sa fiche (meta ispag_supplier_prepay).
  *  - Pour ses commandes, une carte « Paiement » apparaît sur la fiche de l'achat : montant (par défaut le total de la commande, modifiable),
  *    date de paiement souhaitée (demandée par ISPAG) et date de paiement réelle (saisie à réception). Payé = la marchandise part le lendemain.
@@ -23,7 +24,7 @@ class ISPAG_Achat_Prepayment {
     const PAGE            = 'ispag-prepayments';
     const OPT_RECIPIENTS  = 'ispag_prepay_recipients';   // ids des utilisateurs qui reçoivent les rappels (vide : les administrateurs)
     const CRON            = 'ispag_prepay_reminder';
-    const STATUSES        = ['to_request', 'requested', 'overdue', 'paid'];
+    const STATUSES        = ['to_request', 'validated', 'requested', 'overdue', 'paid'];
 
     /** Saisir ou modifier le montant (facture proforma) et les dates. */
     public static function can_edit() {
@@ -58,15 +59,17 @@ class ISPAG_Achat_Prepayment {
     // ------------------------------------------------------------------ logique
 
     /** Statut d'un paiement d'après ses dates (Y-m-d ou vide) et la date du jour. */
-    public static function status($desired, $paid, $today) {
+    public static function status($desired, $paid, $today, $doxys = '') {
         if (!empty($paid)) return 'paid';
-        if (empty($desired)) return 'to_request';
-        return $desired < $today ? 'overdue' : 'requested';
+        if (!empty($desired) && $desired < $today) return 'overdue';
+        if (!empty($doxys)) return 'validated';
+        return empty($desired) ? 'to_request' : 'requested';
     }
 
     public static function status_label($status) {
         $labels = [
             'to_request' => __('To request', 'creation-reservoir'),
+            'validated'  => __('Validated', 'creation-reservoir'),
             'requested'  => __('Requested', 'creation-reservoir'),
             'overdue'    => __('Overdue', 'creation-reservoir'),
             'paid'       => __('Paid', 'creation-reservoir'),
@@ -75,7 +78,7 @@ class ISPAG_Achat_Prepayment {
     }
 
     public static function status_color($status) {
-        return ['to_request' => '#6b7280', 'requested' => '#2563eb', 'overdue' => '#dc2626', 'paid' => '#16a34a'][$status] ?? '#6b7280';
+        return ['to_request' => '#6b7280', 'validated' => '#7c3aed', 'requested' => '#2563eb', 'overdue' => '#dc2626', 'paid' => '#16a34a'][$status] ?? '#6b7280';
     }
 
     /** « Marchandise libérée : départ le jj.mm.aaaa » (lendemain du paiement), vide si pas payé. */
@@ -165,7 +168,7 @@ class ISPAG_Achat_Prepayment {
     public static function summary($order_id, $row = null) {
         $row = $row ?: self::get_row($order_id);
         $today = current_time('Y-m-d');
-        $status = self::status($row->DesiredDate ?? '', $row->PaidDate ?? '', $today);
+        $status = self::status($row->DesiredDate ?? '', $row->PaidDate ?? '', $today, $row->DoxysDate ?? '');
         $amount = ($row && $row->Amount !== null) ? (float) $row->Amount : self::order_total($order_id);
         return [
             'status'       => $status,
@@ -297,7 +300,7 @@ class ISPAG_Achat_Prepayment {
         $items  = [];
         $total  = 0.0;
         foreach ($all as $r) {
-            $r->status = self::status($r->DesiredDate, $r->PaidDate, $today);
+            $r->status = self::status($r->DesiredDate, $r->PaidDate, $today, $r->DoxysDate);
             $r->amount_value = $r->Amount !== null ? (float) $r->Amount : self::order_total((int) $r->Id);
             $counts[$r->status]++;
             $show = $filter === 'all' || ($filter === 'open' ? $r->status !== 'paid' : $r->status === $filter);
@@ -305,7 +308,7 @@ class ISPAG_Achat_Prepayment {
         }
         $nonce = wp_create_nonce(self::NONCE);
         $base  = admin_url('admin.php?page=' . self::PAGE);
-        $tabs  = ['open' => __('To follow', 'creation-reservoir'), 'to_request' => self::status_label('to_request'), 'requested' => self::status_label('requested'),
+        $tabs  = ['open' => __('To follow', 'creation-reservoir'), 'to_request' => self::status_label('to_request'), 'validated' => self::status_label('validated'), 'requested' => self::status_label('requested'),
                   'overdue' => self::status_label('overdue'), 'paid' => self::status_label('paid'), 'all' => __('All', 'creation-reservoir')];
         echo '<div class="wrap"><h1>' . esc_html__('Supplier payments', 'creation-reservoir') . '</h1>';
         echo '<p class="description">' . esc_html__('Suppliers who are paid before they deliver (tick "Payment before delivery" in the Supplier tab of the company).', 'creation-reservoir') . ' '
@@ -397,7 +400,7 @@ class ISPAG_Achat_Prepayment {
         fwrite($out, "\xEF\xBB\xBF");
         fputcsv($out, ['Project', 'Supplier', 'Delivery date', 'Amount', 'Invoice validated in Doxys', 'Requested payment date', 'Payment date received', 'Status'], ';');
         foreach (self::rows() as $r) {
-            $status = self::status($r->DesiredDate, $r->PaidDate, $today);
+            $status = self::status($r->DesiredDate, $r->PaidDate, $today, $r->DoxysDate);
             if (!($filter === 'all' || ($filter === 'open' ? $status !== 'paid' : $status === $filter))) continue;
             $amount = $r->Amount !== null ? (float) $r->Amount : self::order_total((int) $r->Id);
             fputcsv($out, [stripslashes($r->RefCommande), $r->supplier, $r->delivery ? date('Y-m-d', (int) $r->delivery) : '', number_format($amount, 2, '.', ''), $r->DoxysDate, $r->DesiredDate, $r->PaidDate, self::status_label($status)], ';');
@@ -444,6 +447,7 @@ class ISPAG_Achat_Prepayment {
         if (!class_exists('ISPAG_Notifications_Manager')) return 0;
         global $wpdb;
         $today = current_time('Y-m-d');
+        $tomorrow = date('Y-m-d', strtotime($today . ' +1 day'));
         $p = $wpdb->prefix;
         $rows = (array) $wpdb->get_results($wpdb->prepare(
             "SELECT pp.*, a.RefCommande, f.company_name AS supplier
@@ -453,12 +457,21 @@ class ISPAG_Achat_Prepayment {
               WHERE pp.PaidDate IS NULL AND pp.DesiredDate IS NOT NULL AND pp.DesiredDate <= %s
                 AND (pp.LastReminder IS NULL OR pp.LastReminder < %s)
                 AND EXISTS (SELECT 1 FROM {$p}ispag_companies_meta m WHERE m.company_id = a.IdFournisseur AND m.meta_key = %s AND m.meta_value = '1')",
-            $today, $today, self::META_KEY
+            $tomorrow, $today, self::META_KEY
         ));
         $sent = 0;
         foreach ($rows as $r) {
             $days = (int) floor((strtotime($today) - strtotime($r->DesiredDate)) / DAY_IN_SECONDS);
             $amount = $r->Amount !== null ? (float) $r->Amount : self::order_total((int) $r->IdCommande);
+            if ($days < 0) {
+                $title = sprintf(__('Payment expected tomorrow: %s', 'creation-reservoir'), $r->supplier);
+                $text = sprintf(__('%1$s: %2$s, requested for %3$s. Please check that the payment is on its way.', 'creation-reservoir'),
+                    stripslashes($r->RefCommande), self::money($amount), date_i18n('d.m.Y', strtotime($r->DesiredDate)));
+                ISPAG_Notifications_Manager::send(self::recipients(), 'supplier_payment_due', $title, $text, 'purchase/' . (int) $r->IdCommande . '/', (int) $r->IdCommande, ['order_id' => (int) $r->IdCommande]);
+                $wpdb->update(self::table(), ['LastReminder' => $today], ['IdCommande' => (int) $r->IdCommande], ['%s'], ['%d']);
+                $sent++;
+                continue;
+            }
             $title = $days > 0
                 ? sprintf(__('Payment overdue (%d days): %s', 'creation-reservoir'), $days, $r->supplier)
                 : sprintf(__('Payment expected today: %s', 'creation-reservoir'), $r->supplier);
