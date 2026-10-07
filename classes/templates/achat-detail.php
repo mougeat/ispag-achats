@@ -95,27 +95,51 @@ $lazy_skeleton = '<div class="ispag-skeleton-wrapper" aria-hidden="true">'
                 <div>
                     <strong>👤 <?php echo esc_html__('Managed by', 'creation-reservoir'); ?></strong><br>
                     <?php if (current_user_can('manage_options')) : ?>
-                        <select id="ispag-achat-manager-select" data-order="<?php echo (int) $achat->Id; ?>" style="max-width:100%;">
-                            <?php if (!$created_by_user) : ?><option value="">—</option><?php endif; ?>
-                            <?php $candidates = ISPAG_Achat_Manager::manager_candidates(); if ($created_by_user && !isset($candidates[(int) $created_by_user->ID])) $candidates[(int) $created_by_user->ID] = $created_by_user->display_name; ?>
-                            <?php foreach ($candidates as $uid => $uname) : ?>
-                                <option value="<?php echo (int) $uid; ?>" <?php selected((int) $achat->created_by, $uid); ?>><?php echo esc_html($uname); ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?php $candidates = ISPAG_Achat_Manager::manager_candidates(); if ($created_by_user && !isset($candidates[(int) $created_by_user->ID])) $candidates[(int) $created_by_user->ID] = $created_by_user->display_name; ?>
+                        <span id="ispag-achat-manager" data-order="<?php echo (int) $achat->Id; ?>" data-value="<?php echo (int) $achat->created_by; ?>">
+                            <span class="ispag-manager-name"><?php echo esc_html($created_by_name); ?></span>
+                            <span class="ispag-manager-edit" role="button" tabindex="0" title="<?php echo esc_attr__('Change the manager', 'creation-reservoir'); ?>" style="cursor:pointer; margin-left:4px;">✏️</span>
+                        </span>
                         <script>
                         (function () {
-                            const sel = document.getElementById('ispag-achat-manager-select');
-                            if (!sel) return;
-                            let previous = sel.value;
-                            sel.addEventListener('change', function () {
-                                if (!sel.value) { sel.value = previous; return; }
-                                const body = new URLSearchParams({action: 'ispag_achat_set_manager', nonce: '<?php echo esc_js(wp_create_nonce('ispag_achat_set_manager')); ?>', order_id: sel.dataset.order, user_id: sel.value});
-                                fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: body})
-                                    .then(r => r.json()).then(function (r) {
-                                        if (r && r.success) { previous = sel.value; sel.style.outline = '2px solid #16a34a'; setTimeout(() => sel.style.outline = '', 1200); }
-                                        else { sel.value = previous; alert((r && r.data && r.data.message) || 'Error'); }
-                                    }).catch(function () { sel.value = previous; });
-                            });
+                            const box = document.getElementById('ispag-achat-manager');
+                            if (!box) return;
+                            const users = <?php echo wp_json_encode(array_map(function ($id, $n) { return ['id' => $id, 'name' => $n]; }, array_keys($candidates), array_values($candidates))); ?>;
+                            const nameEl = box.querySelector('.ispag-manager-name');
+                            const editEl = box.querySelector('.ispag-manager-edit');
+                            function startEdit() {
+                                const current = box.dataset.value;
+                                const sel = document.createElement('select');
+                                sel.style.maxWidth = '100%';
+                                users.forEach(function (u) {
+                                    const o = document.createElement('option');
+                                    o.value = u.id; o.textContent = u.name; o.selected = String(u.id) === current;
+                                    sel.appendChild(o);
+                                });
+                                nameEl.style.display = 'none'; editEl.style.display = 'none';
+                                box.appendChild(sel); sel.focus();
+                                let done = false;
+                                function close() { if (done) return; done = true; sel.remove(); nameEl.style.display = ''; editEl.style.display = ''; }
+                                sel.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+                                sel.addEventListener('blur', function () { setTimeout(close, 150); });
+                                sel.addEventListener('change', function () {
+                                    if (sel.value === current) { close(); return; }
+                                    const body = new URLSearchParams({action: 'ispag_achat_set_manager', nonce: '<?php echo esc_js(wp_create_nonce('ispag_achat_set_manager')); ?>', order_id: box.dataset.order, user_id: sel.value});
+                                    const chosen = sel.value;
+                                    fetch('<?php echo esc_url(admin_url('admin-ajax.php')); ?>', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: body})
+                                        .then(r => r.json()).then(function (r) {
+                                            if (r && r.success) {
+                                                box.dataset.value = chosen; nameEl.textContent = r.data.name;
+                                                nameEl.style.color = '#27ae60'; setTimeout(() => nameEl.style.color = '', 1000);
+                                            } else {
+                                                alert((r && r.data && r.data.message) || 'Error');
+                                            }
+                                            close();
+                                        }).catch(close);
+                                });
+                            }
+                            editEl.addEventListener('click', startEdit);
+                            editEl.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startEdit(); } });
                         })();
                         </script>
                     <?php else : ?>
