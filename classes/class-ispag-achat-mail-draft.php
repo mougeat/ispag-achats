@@ -124,9 +124,17 @@ class ISPAG_Achat_Mail_Draft {
         // Isolation / soudure sur site : le document remis au sous-traitant est un « bon de travail » (validé à la fin des travaux)
         $work_order = self::is_site_work_order($achat_id);
         $title = $work_order ? __('Work order', 'creation-reservoir') : __('Delivery note', 'creation-reservoir');
+        // La référence de la commande est « numéro - nom du projet » : sans numéro enregistré, on le lit au début de la référence au lieu de laisser la ligne vide
+        $ref_parts   = explode(' - ', stripslashes((string) ($achat->RefCommande ?? '')), 2);
+        $project_num = trim((string) ($achat->NrCommande ?? ''));
+        $project_ref = trim((string) ($achat->RefCommande ?? ''));
+        if ($project_num === '' && count($ref_parts) === 2 && trim($ref_parts[0]) !== '') {
+            $project_num = trim($ref_parts[0]);
+            $project_ref = trim($ref_parts[1]);
+        }
         $project_header = [
-            __('Project', 'creation-reservoir')         => $achat->RefCommande ?? '',
-            __('Project number', 'creation-reservoir')  => $achat->NrCommande ?? '',
+            __('Project', 'creation-reservoir')         => $project_ref,
+            __('Project number', 'creation-reservoir')  => $project_num,
             __('Delivery date', 'creation-reservoir')   => date('d.m.Y'),
         ];
         $table_header = [
