@@ -273,8 +273,8 @@ class ISPAG_Achat_Status_Controller {
         }
 
         // 5. Remplacer les tags
-        $subject = self::replace_text($template->subject, $achat_id, $contact_id, $lang);
-        $message = self::replace_text($template->message, $achat_id, $contact_id, $lang);
+        $subject = self::replace_text($template->subject, $achat_id, $contact_id, $lang, (string) $message_type);
+        $message = self::replace_text($template->message, $achat_id, $contact_id, $lang, (string) $message_type);
 
         $subject = html_entity_decode($subject, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $message = html_entity_decode($message, ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -302,7 +302,7 @@ class ISPAG_Achat_Status_Controller {
     }
 
     
-    public static function replace_text($text, $achat_id, $contact_id, $lang) {
+    public static function replace_text($text, $achat_id, $contact_id, $lang, $message_type = '') {
         // 1. Récupérer contact et langue
         $user = get_user_by('ID', $contact_id);
         if (!$user) wp_send_json_error(['message' => 'Contact utilisateur introuvable.']);
@@ -315,6 +315,8 @@ class ISPAG_Achat_Status_Controller {
         if ($lang) {
             if (function_exists('pll_set_language')) pll_set_language($lang);
             $switched = (bool) switch_to_locale($lang);
+            // Textes des plugins dans la langue du fournisseur, même si le chargement automatique ne les retrouve pas
+            if (class_exists('ISPAG_Tank_Description')) ISPAG_Tank_Description::load_plugin_translations($lang);
         }
 
         // error_log('[SEND MAIL DEBUG] Langue active avant récup articles: ' . (function_exists('pll_current_language') ? pll_current_language() : get_locale()));
@@ -330,6 +332,8 @@ class ISPAG_Achat_Status_Controller {
         // 4. Construire la liste des produits avec traduction explicite
         $product_list = "\n";
         $last_group = null;
+        // Demande d'offre : la quantité est écrite juste après le titre, avant le texte
+        $is_rfq = (bool) preg_match('/rfq|quotation|request/i', (string) $message_type);
 
         foreach ($articles as $article) {
             $group = trim($article->Groupe ?? '');
@@ -345,6 +349,9 @@ class ISPAG_Achat_Status_Controller {
                 if ($last_group !== null) $product_list .= "\n--------------\n\n";
                 $product_list .= "🟢 $group\n\n";
                 $last_group = $group;
+            }
+            if ($is_rfq && isset($article->Qty) && (float) $article->Qty > 0) {
+                $product_list .= __('Quantity', 'creation-reservoir') . ' : ' . (float) $article->Qty . "\n\n";
             }
             $product_list .= $desc . "\n";
         }

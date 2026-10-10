@@ -157,10 +157,6 @@ msgstr "Référence"
 msgid "Description"
 msgstr "Description"
 
-#: classes/class-ispag-achat-mail-draft.php:143
-msgid "Quantity"
-msgstr "Quantité"
-
 #: classes/class-ispag-achat-mail-draft.php:169
 msgid "Please find the work order attached. Once the work is finished, please scan the QR code on the work order and validate the work carried out, or send us the signed work order back."
 msgstr "Veuillez trouver ci-joint le bon de travail. Une fois les travaux terminés, merci de scanner le QR code figurant sur le bon de travail et de valider les travaux effectués, ou de nous retourner le bon de travail signé."
@@ -942,6 +938,10 @@ msgstr "Réglages des achats"
 #: classes/class-ispag-achat-settings.php:86
 msgid "Not authorized"
 msgstr "Non autorisé"
+
+#: classes/class-ispag-achat-status-controller.php:354
+msgid "Quantity"
+msgstr "Quantité"
 
 #: classes/class-ispag-achat-status-render.php:167
 msgid "No steps defined."
