@@ -38,7 +38,7 @@ class ISPAG_Achat_Add_Product {
         $supplier_id = self::guard($achat_id);
         $q           = sanitize_text_field(wp_unslash($_POST['q'] ?? ''));
 
-        $res = ISPAG_Standard_Article_Service::search(['supplier' => $supplier_id, 'search' => $q, 'page' => 1]);
+        $res = ISPAG_Standard_Article_Service::search(['supplier' => $supplier_id, 'search' => $q, 'page' => 1, 'status' => 'active']);
         global $wpdb;
         $p  = $wpdb->prefix . 'achats_articles_purchase';
         $ph = $wpdb->prefix . 'achats_articles_purchase_price_history';
